@@ -1,0 +1,13 @@
+datasets/
+ml_models/
+
+.idea
+
+__pycache__/
+*.py[cod]
+
+.ipynb_checkpoints/
+
+.python-version
+
+*.ipynb

@@ -1,0 +1,6 @@
+BindingOfIsaacRebirthGameAgentPlugin: {collect_character_interval: 2, collect_frames_interval: 1,
+  frame_handler: PLAY, character: ISAAC, difficulty: NORMAL}
+
+SuperHexagonGameAgentPlugin: {frame_handler: PLAY}
+SuperHexagonGamePlugin: {frame_rate: 3}
+YouMustBuildABoatGamePlugin: {steam_app_id: 290890}

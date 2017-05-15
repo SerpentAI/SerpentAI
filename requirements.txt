@@ -1,0 +1,13 @@
+offshoot==0.1.1
+numpy==1.12.1
+scikit-image==0.13.0
+redis==2.10.5
+scikit-learn==0.18.1
+editdistance==0.3.1
+invoke==0.16.3
+PyUserInput==0.1.11
+h5py==2.7.0
+Keras==2.0.4
+tensorflow-gpu==1.1.0
+Cython==0.25.2
+Kivy==1.10.0
