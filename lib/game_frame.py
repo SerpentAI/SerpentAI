@@ -1,6 +1,8 @@
 import skimage.color
 import skimage.measure
 import skimage.transform
+import skimage.filters
+import skimage.morphology
 
 import numpy as np
 
@@ -39,6 +41,12 @@ class GameFrame:
 
     def compare_ssim(self, previous_game_frame):
         return skimage.measure.compare_ssim(previous_game_frame.ssim_frame, self.ssim_frame)
+
+    def difference(self, previous_game_frame):
+        current = skimage.filters.gaussian(self.grayscale_frame, 8)
+        previous = skimage.filters.gaussian(previous_game_frame.grayscale_frame, 8)
+
+        return current - previous
 
     def _to_grayscale(self):
         return np.array(skimage.color.rgb2gray(self.frame_array) * 255, dtype="uint8")

@@ -16,10 +16,7 @@ class VisualDebugger:
         self.bucket_generator = itertools.cycle(self.available_buckets)
 
         self.redis_client = StrictRedis(**config["redis"])
-
-        for bucket in self.available_buckets:
-            self.redis_client.delete(f"{config['visual_debugger']['redis_key_prefix']}:{bucket}:SHAPE")
-            self.redis_client.delete(f"{config['visual_debugger']['redis_key_prefix']}:{bucket}")
+        self.clear_image_data()
 
     def store_image_data(self, image_data, image_shape, bucket="debug"):
         self.redis_client.lpush(f"{config['visual_debugger']['redis_key_prefix']}:{bucket}:SHAPE", pickle.dumps(image_shape))
@@ -49,6 +46,12 @@ class VisualDebugger:
                 image_data = image_data.astype("uint8") * 255
 
             skimage.io.imsave(f"{bucket}.png", image_data)
+
+    def clear_image_data(self):
+        visual_debugger_keys = self.redis_client.keys(f"{config['visual_debugger']['redis_key_prefix']}*")
+
+        for key in visual_debugger_keys:
+            self.redis_client.delete(key.decode("utf-8"))
 
     def get_bucket_queue_length(self, bucket):
         return self.redis_client.llen(f"{config['visual_debugger']['redis_key_prefix']}:{bucket}")

@@ -16,7 +16,14 @@ import uuid
 import subprocess
 import itertools
 
+import numpy as np
+
 import skimage.io
+import skimage.filters
+import skimage.morphology
+import skimage.measure
+import skimage.draw
+import skimage.segmentation
 
 
 class BindingOfIsaacRebirthGameAgent(GameAgent):
@@ -39,27 +46,11 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
         self.frame_handlers["PLAY"] = self.handle_play
 
-        self.game_state = {
-            "character_select_generator": itertools.cycle(self.characters),
-            "seed_entered": False,
-            "navigation": {
-                "previous_map_image_data": None
-            },
-            "health": None,
-            "inventory": {
-                "pickups": {
-                    "coins": 0,
-                    "bombs": 0,
-                    "keys": 0
-                },
-                "items": [],
-                "trinkets": [],
-                "single_use_item": None,
-                "charge_item": None
-            },
-            "game_floor": None,
-            "minimap": None
-        }
+        self.game_frame_ssim = None
+        self.previous_game_frame_difference = None
+
+        self.game_state = None
+        self._reset_game_state()
 
     @property
     def characters(self):
@@ -88,11 +79,23 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         )
 
     def handle_play(self, game_frame):
-        if self.game_context is None or game_frame.compare_ssim(self.previous_game_frame) <= 0.75:
+        if self.game_frame_buffer.previous_game_frame:
+            self.game_frame_ssim = game_frame.compare_ssim(self.game_frame_buffer.previous_game_frame)
+        else:
+            self.game_frame_ssim = 0.0
+
+        if self.game_context is None or self.game_frame_ssim <= 0.75:
+            previous_context = self.game_context
             self.game_context = self.machine_learning_models["context_classifier"].predict(game_frame.frame)
 
             if self.game_context == "character_select_screen":
                 self.game_state["character_select_generator"] = itertools.cycle(self.characters)
+            elif self.game_context == "game":
+                if self.game_context != previous_context:
+                    self.flag = "ENTERING_GAME"
+                    print("setting ENTERING_GAME")
+                    time.sleep(3)
+                    return None
 
         self.game_context_handlers.get(self.game_context, lambda gf: True)(game_frame)
 
@@ -109,6 +112,8 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         time.sleep(1)
 
     def handle_context_menu(self, game_frame):
+        self._reset_game_state()
+
         new_game_image = lib.cv.extract_region_from_image(
             game_frame.grayscale_frame,
             self.game.screen_regions["MENU_NEW_GAME"]
@@ -167,9 +172,13 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         time.sleep(1)
 
     def handle_context_game(self, game_frame):
+        #subprocess.call(["clear"])
+
+        # Initialize GameFloor if needed...
         if not self.game_state["game_floor"]:
             self.game_state["game_floor"] = GameFloor()
 
+        # Create / Update GameMinimap...
         minimap_image = get_map_grid_image_data(game_frame.grayscale_frame, self.game)
 
         if not self.game_state["minimap"]:
@@ -177,35 +186,110 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         else:
             self.game_state["minimap"].update(minimap_image)
 
+        minimap_ssim = self.game_state["minimap"].get_ssim()
+
+        if minimap_ssim < 0.95:
+            print(minimap_ssim)
+
         room_layout = get_room_layout_type(game_frame.grayscale_frame, self.game)
 
-        center = self.game_state["minimap"].center
-        adjacent_cells = self.game_state["minimap"].get_adjacent_cells(room_layout)
+        if self.flag == "ENTERING_GAME":
+            self.flag = None
 
-        top_cell = adjacent_cells.get((0, 1))
-        right_cell = adjacent_cells.get((1, 0))
-        bottom_cell = adjacent_cells.get((0, -1))
-        left_cell = adjacent_cells.get((-1, 0))
+            self._discover_rooms(room_layout)
 
-        # skimage.io.imsave(f"datasets/tmp/{str(uuid.uuid4())}.png", np.array(center.image_data * 255), dtype="uint8")
-        # skimage.io.imsave(f"datasets/tmp/{str(uuid.uuid4())}.png", np.array(top_cell.image_data * 255), dtype="uint8")
-        # skimage.io.imsave(f"datasets/tmp/{str(uuid.uuid4())}.png", np.array(right_cell.image_data * 255), dtype="uint8")
-        # skimage.io.imsave(f"datasets/tmp/{str(uuid.uuid4())}.png", np.array(bottom_cell.image_data * 255), dtype="uint8")
-        # skimage.io.imsave(f"datasets/tmp/{str(uuid.uuid4())}.png", np.array(left_cell.image_data * 255), dtype="uint8")
+        if self.flag == "CHANGING_ROOM":
+            self.flag = None
 
-        subprocess.call(["clear"])
-        print(f"I'm in a: {center.identify(self.game_state['minimap'].minimap_room_types)} ({room_layout})")
+            self._update_current_room(game_frame)
+            self._discover_rooms(room_layout)
 
-        print(f"On top of me: {top_cell.identify(self.game_state['minimap'].minimap_room_types) or 'NOTHING'}")
-        print(f"On my right: {right_cell.identify(self.game_state['minimap'].minimap_room_types) or 'NOTHING'}")
-        print(f"Under me: {bottom_cell.identify(self.game_state['minimap'].minimap_room_types) or 'NOTHING'}")
-        print(f"On my left: {left_cell.identify(self.game_state['minimap'].minimap_room_types) or 'NOTHING'}")
+        # Check for room changes...
+        if minimap_ssim < 0.75:
+            print("ROOM HAS CHANGED...")
 
-        time.sleep(0.5)
+            if len(self.game_state["game_floor"].rooms) > 1:
+                self.flag = "CHANGING_ROOM"
+                time.sleep(0.2)
+
+                return None
+            else:
+                self._discover_rooms(room_layout)
+
+        if self.game_frame_ssim < 0.6 and minimap_ssim < 0.88:
+            print("ROOM HAS POTENTIALLY CHANGED...")
+
+            if len(self.game_state["game_floor"].rooms) > 1:
+                self.flag = "CHANGING_ROOM"
+                time.sleep(0.2)
+
+                return None
+            else:
+                self._discover_rooms(room_layout)
 
     def handle_context_death_screen(self, game_frame):
+        self._reset_game_state()
         self.input_controller.tap_key(" ")
 
         time.sleep(1)
 
+    def _reset_game_state(self):
+        self.game_state = {
+            "character_select_generator": itertools.cycle(self.characters),
+            "seed_entered": False,
+            "health": None,
+            "inventory": {
+                "pickups": {
+                    "coins": 0,
+                    "bombs": 0,
+                    "keys": 0
+                },
+                "items": [],
+                "trinkets": [],
+                "single_use_item": None,
+                "charge_item": None
+            },
+            "game_floor": None,
+            "minimap": None
+        }
+
+    def _update_current_room(self, game_frame):
+        door_image_data = get_door_image_data(game_frame.grayscale_frame, self.game, debug=True)
+        door_white_pixel_counts = [(image[image >= 1].size, label) for label, image in door_image_data.items()]
+        door_label = max(door_white_pixel_counts, key=lambda t: t[0])[1]
+
+        # TODO: Add support for irregular room layouts... Assuming Normal Room layout
+        if door_label == "GAME_ISAAC_DOOR_TOP":
+            self.game_state["game_floor"].current_room = (
+                self.game_state["game_floor"].current_room[0],
+                self.game_state["game_floor"].current_room[1] - 1
+            )
+        elif door_label == "GAME_ISAAC_DOOR_RIGHT":
+            self.game_state["game_floor"].current_room = (
+                self.game_state["game_floor"].current_room[0] - 1,
+                self.game_state["game_floor"].current_room[1]
+            )
+        elif door_label == "GAME_ISAAC_DOOR_BOTTOM":
+            self.game_state["game_floor"].current_room = (
+                self.game_state["game_floor"].current_room[0],
+                self.game_state["game_floor"].current_room[1] + 1
+            )
+        elif door_label == "GAME_ISAAC_DOOR_LEFT":
+            self.game_state["game_floor"].current_room = (
+                self.game_state["game_floor"].current_room[0] + 1,
+                self.game_state["game_floor"].current_room[1]
+            )
+
+    def _discover_rooms(self, room_layout):
+        adjacent_cells = self.game_state["minimap"].get_adjacent_cells(room_layout)
+
+        for coordinates, minimap_cell in adjacent_cells.items():
+            room_type = minimap_cell.identify()
+
+            if room_type == "empty":
+                continue
+
+            self.game_state["game_floor"].register_room(coordinates, minimap_cell)
+
+        print(self.game_state["game_floor"].rooms)
 

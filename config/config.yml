@@ -14,28 +14,7 @@ frame_grabber:
 visual_debugger:
     redis_key_prefix: PROJECT_EC:VISUAL_DEBUGGER
     available_buckets:
-        - minimap_0
-        - minimap_1
-        - minimap_2
-        - minimap_3
-        - minimap_4
-        - minimap_5
-        - minimap_6
-        - minimap_7
-        - minimap_8
-        - minimap_9
-        - minimap_10
-        - minimap_11
-        - minimap_12
-        - minimap_13
-        - minimap_14
-        - minimap_15
-        - minimap_16
-        - minimap_17
-        - minimap_18
-        - minimap_19
-        - minimap_20
-        - minimap_21
-        - minimap_22
-        - minimap_23
-        - minimap_24
+        - GAME_ISAAC_DOOR_TOP
+        - GAME_ISAAC_DOOR_RIGHT
+        - GAME_ISAAC_DOOR_BOTTOM
+        - GAME_ISAAC_DOOR_LEFT

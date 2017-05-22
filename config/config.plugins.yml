@@ -1,5 +1,5 @@
 BindingOfIsaacRebirthGameAgentPlugin: {collect_character_interval: 2, collect_frames_interval: 1,
-  frame_handler: PLAY, character: ISAAC, difficulty: NORMAL}
+  frame_handler: PLAY, character: ISAAC, difficulty: NORMAL, seed: xh8czefw}
 
 SuperHexagonGameAgentPlugin: {frame_handler: PLAY}
 SuperHexagonGamePlugin: {frame_rate: 3}

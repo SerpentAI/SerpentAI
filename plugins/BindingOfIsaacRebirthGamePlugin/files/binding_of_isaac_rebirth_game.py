@@ -26,5 +26,9 @@ class BindingOfIsaacRebirthGame(Game):
             HUD_KEYS=(142, 67, 167, 117),
             HUD_ITEM_ACQUIRED=(81, 167, 113, 787),
             HUD_MAP=(32, 800, 125, 910),
-            HUD_MAP_CENTER=(71, 845, 85, 861)
+            HUD_MAP_CENTER=(71, 845, 85, 861),
+            GAME_ISAAC_DOOR_TOP=(43, 435, 134, 524),
+            GAME_ISAAC_DOOR_RIGHT=(202, 760, 307, 825),
+            GAME_ISAAC_DOOR_BOTTOM=(359, 435, 444, 524),
+            GAME_ISAAC_DOOR_LEFT=(202, 138, 307, 198)
         )

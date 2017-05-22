@@ -1,24 +1,53 @@
 import skimage.measure
+import skimage.io
 
 import numpy as np
 
 
 class GameMinimapCell:
+    plugin_data_path = "plugins/BindingOfIsaacRebirthGameAgentPlugin/files/data"
+
+    minimap_room_types = [
+        (np.zeros(224).reshape(14, 16), "empty"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_room.png", as_grey=True), "room"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_locked.png", as_grey=True), "locked"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_treasure.png", as_grey=True), "treasure"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_boss.png", as_grey=True), "boss"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_shop.png", as_grey=True), "shop"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_room_bomb.png", as_grey=True), "room_bomb"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_room_coin.png", as_grey=True), "room_coin"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_room_heart.png", as_grey=True), "room_heart"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_room_key.png", as_grey=True), "room_key"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_room_pill.png", as_grey=True), "room_pill"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_room_trinket.png", as_grey=True), "room_trinket"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_curse.png", as_grey=True), "curse"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_sacrifice.png", as_grey=True), "sacrifice"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_miniboss.png", as_grey=True), "miniboss"),
+        (skimage.io.imread(f"{plugin_data_path}/cell_secret.png", as_grey=True), "secret")
+    ]
 
     def __init__(self, image_data=None):
         self.image_data = image_data
+        self.room_type_label = None
 
-    def identify(self, room_types):
+    @property
+    def room_type(self):
+        if self.room_type_label is None:
+            self.room_type_label = self.identify()
+
+        return self.room_type_label
+
+    def identify(self):
         room_type_ssims = [
             (skimage.measure.compare_ssim(
                 np.array(self.image_data, dtype="uint8"),
                 np.array(image * 255, dtype="uint8")
-            ), room_type) for image, room_type in room_types
+            ), room_type) for image, room_type in self.__class__.minimap_room_types
         ]
 
         ssim, room_type = max(room_type_ssims, key=lambda t: t[0])
 
-        return room_type if ssim > 0.9 else None
+        return room_type if ssim > 0.9 else "Unknown"
 
     @classmethod
     def divide_minimap(cls, minimap_bw_image):

@@ -10,6 +10,8 @@ import os
 import os.path
 
 import lib.ocr
+
+from lib.game_frame_buffer import GameFrameBuffer
 from lib.visual_debugger.visual_debugger import VisualDebugger
 
 import skimage.io
@@ -47,8 +49,10 @@ class GameAgent(offshoot.Pluggable):
         if self.config.get("frame_handler", "NOOP") in self.frame_handler_setups:
             self.frame_handler_setups[self.config.get("frame_handler", "NOOP")]()
 
-        self.previous_game_frame = None
+        self.game_frame_buffer = GameFrameBuffer(size=self.config.get("game_frame_buffer_size", 5))
         self.game_context = None
+
+        self.flag = None
 
     @offshoot.forbidden
     def on_game_frame(self, game_frame):
@@ -56,7 +60,7 @@ class GameAgent(offshoot.Pluggable):
 
         frame_handler(game_frame)
 
-        self.previous_game_frame = game_frame
+        self.game_frame_buffer.add_game_frame(game_frame)
 
     @offshoot.forbidden
     def load_machine_learning_model(self, file_path):

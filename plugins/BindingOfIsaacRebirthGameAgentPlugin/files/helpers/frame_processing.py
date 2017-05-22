@@ -76,3 +76,35 @@ def get_room_layout_type(gray_frame, game):
 
     return room_layouts.get(room_layout, "UNKNOWN")
 
+
+def get_door_image_data(gray_frame, game, debug=False):
+    screen_regions = [
+        "GAME_ISAAC_DOOR_TOP",
+        "GAME_ISAAC_DOOR_RIGHT",
+        "GAME_ISAAC_DOOR_BOTTOM",
+        "GAME_ISAAC_DOOR_LEFT"
+    ]
+
+    image_data = dict()
+
+    for screen_region in screen_regions:
+        door = lib.cv.extract_region_from_image(gray_frame, game.screen_regions[screen_region])
+
+        try:
+            threshold = skimage.filters.threshold_otsu(door)
+        except ValueError:
+            threshold = - 1
+
+        bw_door = skimage.segmentation.clear_border(door > threshold)
+        bw_door = skimage.morphology.closing(bw_door, skimage.morphology.square(10))
+
+        image_data[screen_region] = bw_door
+
+        if debug:
+            visual_debugger.store_image_data(
+                np.array(bw_door * 255, dtype="uint8"),
+                bw_door.shape,
+                screen_region
+            )
+
+    return image_data
