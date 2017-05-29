@@ -44,10 +44,9 @@ class GameAgent(offshoot.Pluggable):
             COLLECT_FRAMES_FOR_CONTEXT=self.setup_collect_frames_for_context
         )
 
-        self.visual_debugger = VisualDebugger()
+        self.frame_handler_setup_performed = False
 
-        if self.config.get("frame_handler", "NOOP") in self.frame_handler_setups:
-            self.frame_handler_setups[self.config.get("frame_handler", "NOOP")]()
+        self.visual_debugger = VisualDebugger()
 
         self.game_frame_buffer = GameFrameBuffer(size=self.config.get("game_frame_buffer_size", 5))
         self.game_context = None
@@ -56,6 +55,9 @@ class GameAgent(offshoot.Pluggable):
 
     @offshoot.forbidden
     def on_game_frame(self, game_frame):
+        if not self.frame_handler_setup_performed:
+            self._setup_frame_handler()
+
         frame_handler = self.frame_handlers.get(self.config.get("frame_handler", "NOOP"))
 
         frame_handler(game_frame)
@@ -104,3 +106,9 @@ class GameAgent(offshoot.Pluggable):
         lib.ocr.prepare_dataset_tokens(game_frame.frame, frame_uuid)
 
         time.sleep(self.config.get("collect_character_interval") or 1)
+
+    def _setup_frame_handler(self):
+        if self.config.get("frame_handler", "NOOP") in self.frame_handler_setups:
+            self.frame_handler_setups[self.config.get("frame_handler", "NOOP")]()
+
+        self.frame_handler_setup_performed = True
