@@ -63,6 +63,12 @@ class Game(offshoot.Pluggable):
     def screen_regions(self):
         raise NotImplementedError()
 
+    @property
+    @offshoot.forbidden
+    def is_focused(self):
+        focused_window_id = subprocess.check_output(shlex.split("xdotool getwindowfocus")).decode("utf-8").strip()
+        return focused_window_id == self.window_id
+
     @offshoot.forbidden
     def launch(self, dry_run=False):
         self.before_launch()
@@ -110,7 +116,13 @@ class Game(offshoot.Pluggable):
         while True:
             game_frame = self.grab_latest_frame()
             try:
-                game_agent.on_game_frame(game_frame)
+                if self.is_focused:
+                    game_agent.on_game_frame(game_frame)
+                else:
+                    subprocess.call(["clear"])
+                    print("PAUSED")
+
+                    time.sleep(1)
             except Exception as e:
                 raise e
                 # print(e)

@@ -40,6 +40,15 @@ class GameFrame:
         return self.frame_variants["quarter"]
 
     @property
+    def eighth_resolution_frame(self):
+        """ A 1/32-sized version of the frame (eighth-width, eighth-height)"""
+
+        if "eighth" not in self.frame_variants:
+            self.frame_variants["eighth"] = self._to_eighth_resolution()
+
+        return self.frame_variants["eighth"]
+
+    @property
     def grayscale_frame(self):
         """ A full-size grayscale version of the frame"""
 
@@ -66,6 +75,7 @@ class GameFrame:
 
         return current - previous
 
+    # TODO: Refactor Fraction of Resolution Frames...
     def _to_half_resolution(self):
         shape = (
             self.frame_array.shape[0] // 2,
@@ -78,6 +88,14 @@ class GameFrame:
         shape = (
             self.frame_array.shape[0] // 4,
             self.frame_array.shape[1] // 4
+        )
+
+        return np.array(skimage.transform.resize(self.frame_array, shape, mode="reflect", order=1) * 255, dtype="uint8")
+
+    def _to_eighth_resolution(self):
+        shape = (
+            self.frame_array.shape[0] // 8,
+            self.frame_array.shape[1] // 8
         )
 
         return np.array(skimage.transform.resize(self.frame_array, shape, mode="reflect", order=1) * 255, dtype="uint8")

@@ -12,3 +12,5 @@ keras-rl==0.3.0
 tensorflow-gpu==1.1.0
 Cython==0.25.2
 Kivy==1.10.0
+termcolor==1.1.0
+pyperclip==1.5.27

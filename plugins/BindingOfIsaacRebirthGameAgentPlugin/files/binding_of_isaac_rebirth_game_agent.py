@@ -3,7 +3,9 @@ from lib.game_agent import GameAgent
 import lib.cv
 
 from lib.machine_learning.context_classification.context_classifiers import *
-from lib.machine_learning.reinforcement_learning.keyboard_mouse_input_space import KeyboardMouseInputSpace
+
+from lib.machine_learning.reinforcement_learning.dqn import DQN
+from lib.machine_learning.reinforcement_learning.keyboard_mouse_action_space import KeyboardMouseActionSpace
 
 from .helpers.frame_processing import *
 
@@ -15,8 +17,9 @@ import offshoot
 import time
 import uuid
 import subprocess
+import shlex
 import itertools
-import json
+import os.path
 
 import numpy as np
 
@@ -27,14 +30,14 @@ import skimage.measure
 import skimage.draw
 import skimage.segmentation
 
-from keras.models import Sequential
-from keras.layers import Dense, Activation, Flatten, Convolution2D, Permute
-from keras.optimizers import Adam
-from keras.callbacks import History
+import random
+
+import pyperclip
+from termcolor import cprint
 
 from collections import deque
 
-import random
+from datetime import datetime, timedelta
 
 
 class BindingOfIsaacRebirthGameAgent(GameAgent):
@@ -44,9 +47,11 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
         self.frame_handlers["PLAY"] = self.handle_play
         self.frame_handlers["GAME_TRAIN"] = self.handle_game_train
+        self.frame_handlers["BOSS_TRAIN"] = self.handle_boss_train
 
         self.frame_handler_setups["PLAY"] = self.setup_play
         self.frame_handler_setups["GAME_TRAIN"] = self.setup_game_train
+        self.frame_handler_setups["BOSS_TRAIN"] = self.setup_boss_train
 
         self.game_state = None
         self._reset_game_state()
@@ -92,14 +97,10 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         self.machine_learning_models["context_classifier"] = context_classifier
 
     def setup_game_train(self):
-        self.input_shape = (3, 135, 240, 4)
+        pass
 
-        self.input_space = KeyboardMouseInputSpace(
-            directional_keys=["W", "A", "S", "D", "WA", "WD", "SA", "SD"],
-            projectile_keys=["UP", "LEFT", "DOWN", "RIGHT"]
-        )
-
-        self.input_mapping = {
+    def setup_boss_train(self):
+        input_mapping = {
             "W": ["w"],
             "A": ["a"],
             "S": ["s"],
@@ -114,180 +115,202 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             "RIGHT": [self.input_controller.keyboard.right_key]
         }
 
-        model = Sequential()
-
-        # Broken...
-        model.add(Permute((4, 2, 3, 1), input_shape=self.input_shape))
-        model.add(Convolution2D(32, 8, 8, subsample=(4, 4)))
-        model.add(Activation("relu"))
-        model.add(Convolution2D(64, 4, 4, subsample=(2, 2)))
-        model.add(Activation("relu"))
-        model.add(Convolution2D(64, 3, 3, subsample=(1, 1)))
-        model.add(Activation("relu"))
-        model.add(Flatten())
-        model.add(Dense(512))
-        model.add(Activation("relu"))
-        model.add(Dense(len(self.input_space.permutations)))
-        model.add(Activation("linear"))
-
-        self.machine_learning_models["isaac_dqn"] = model
-
-        self.dqn_state = dict(
-            memory=deque(),
-            replay_memory=50000,
-            batch_size=32,
-            action_count=len(self.input_space.permutations),
-            frame_stack=None,
-            observe_steps=3200,
-            epsilon=1.0,
-            epsilon_initial=1.0,
-            epsilon_final=0.1,
-            gamma=0.99,
-            current_step=0,
-            max_steps=3000000,
-            action_index=None
+        action_space = KeyboardMouseActionSpace(
+            directional_keys=["W", "A", "S", "D", "WA", "WD", "SA", "SD"],
+            projectile_keys=["UP", "LEFT", "DOWN", "RIGHT"]
         )
 
+        model_file_path = "datasets/binding_of_isaac_rebirth_boss_1010_dqn_180000_0.8_.h5efefe"
+
+        self.dqn = DQN(
+            model_file_path=model_file_path if os.path.isfile(model_file_path) else None,
+            input_shape=(67, 120, 12),
+            input_mapping=input_mapping,
+            action_space=action_space,
+            max_steps=1000000,
+            observe_steps=1000,
+            initial_epsilon=1.0,
+            final_epsilon=0.1
+        )
+
+        pyperclip.set_clipboard("xsel")
+        pyperclip.copy(f"goto s.boss.{str(self.config['boss'])}")
+
     def handle_play(self, game_frame):
-        if self.game_frame_buffer.previous_game_frame:
-            self.game_frame_ssim = game_frame.compare_ssim(self.game_frame_buffer.previous_game_frame)
-        else:
-            self.game_frame_ssim = 0.0
+        pass
 
-        if self.game_context is None or self.game_frame_ssim <= 0.75:
-            previous_context = self.game_context
-            self.game_context = self.machine_learning_models["context_classifier"].predict(game_frame.frame)
-
-            if self.game_context == "character_select_screen":
-                self.game_state["character_select_generator"] = itertools.cycle(self.characters)
-            elif self.game_context == "game":
-                if self.game_context != previous_context:
-                    self.flag = "ENTERING_GAME"
-                    print("setting ENTERING_GAME")
-                    time.sleep(3)
-                    return None
-
-        self.game_context_handlers.get(self.game_context, lambda gf: True)(game_frame)
+        # if self.game_frame_buffer.previous_game_frame:
+        #     self.game_frame_ssim = game_frame.compare_ssim(self.game_frame_buffer.previous_game_frame)
+        # else:
+        #     self.game_frame_ssim = 0.0
+        #
+        # if self.game_context is None or self.game_frame_ssim <= 0.75:
+        #     previous_context = self.game_context
+        #     self.game_context = self.machine_learning_models["context_classifier"].predict(game_frame.frame)
+        #
+        #     if self.game_context == "character_select_screen":
+        #         self.game_state["character_select_generator"] = itertools.cycle(self.characters)
+        #     elif self.game_context == "game":
+        #         if self.game_context != previous_context:
+        #             self.flag = "ENTERING_GAME"
+        #             print("setting ENTERING_GAME")
+        #             time.sleep(3)
+        #             return None
+        #
+        # self.game_context_handlers.get(self.game_context, lambda gf: True)(game_frame)
 
     def handle_game_train(self, game_frame):
-        if self.dqn_state.get("frame_stack") is None:
-            frame_stack = np.stack((
-                game_frame.quarter_resolution_frame,
-                game_frame.quarter_resolution_frame,
-                game_frame.quarter_resolution_frame,
-                game_frame.quarter_resolution_frame
-            ), axis=2)
+        pass
 
-            self.dqn_state["frame_stack"] = frame_stack.reshape(
-                3,
-                frame_stack.shape[0],
-                frame_stack.shape[1],
-                frame_stack.shape[2]
-            )
+    def handle_boss_train(self, game_frame):
+        if self.dqn.first_run:
+            self._goto_boss()
+            self.dqn.first_run = False
+
+            return None
+
+        previous_health = self.game_state["health"]
+        hearts = frame_to_hearts(game_frame.frame, self.game)
+
+        # Check for Curse of Unknown
+        if not len(hearts):
+            self.input_controller.tap_key("r", duration=1.5)
+            self._goto_boss()
+
+            return None
+
+        self.game_state["health"] = 24 - hearts.count(None)
+
+        previous_boss_health = self.game_state["boss_health"]
+        self.game_state["boss_health"] = self._get_boss_health(game_frame)
+
+        if self.dqn.frame_stack is None:
+            self.dqn.build_frame_stack(game_frame.eighth_resolution_frame, is_color=True)
         else:
-            # Reward Calculation ...
-            reward = random.random()
+            reward = 0
 
-            observation = game_frame.quarter_resolution_frame.reshape(
-                3,
-                game_frame.quarter_resolution_frame.shape[0],
-                game_frame.quarter_resolution_frame.shape[1],
-                1
-            )
-
-            frame_stack = np.append(observation, self.dqn_state["frame_stack"][:, :, :, :3], axis=3)
-
-            self.dqn_state["memory"].append((
-                self.dqn_state["frame_stack"],
-                self.dqn_state["action_index"],
-                reward,
-                frame_stack,
-                False
-            ))
-
-            if len(self.dqn_state["memory"]) > self.dqn_state["replay_memory"]:
-                self.dqn_state["memory"].popleft()
-
-            loss = 0
-            projected_future_rewards = [0]
-
-            if self.dqn_state["current_step"] > self.dqn_state["observe_steps"]:
-                mini_batch = random.sample(self.dqn_state["memory"], self.dqn_state["batch_size"])
-
-                inputs = np.zeros((
-                    self.dqn_state["batch_size"],
-                    3,
-                    self.dqn_state["frame_stack"].shape[1],
-                    self.dqn_state["frame_stack"].shape[2],
-                    self.dqn_state["frame_stack"].shape[3]
-                ))
-
-                targets = np.zeros((inputs.shape[0], len(self.input_space.permutations)))  # 32, 2
-
-                for i in range(0, len(mini_batch)):
-                    previous_frame_stack = mini_batch[i][0]
-                    action_index = mini_batch[i][1]
-                    reward = mini_batch[i][2]
-                    frame_stack = mini_batch[i][3]
-                    terminal = mini_batch[i][4]
-
-                    inputs[i:i + 1] = previous_frame_stack
-
-                    targets[i] = self.machine_learning_models["isaac_dqn"].predict(previous_frame_stack)
-                    projected_future_rewards = self.machine_learning_models["isaac_dqn"].predict(frame_stack)
-
-                    if terminal:
-                        targets[i, action_index] = reward
-                    else:
-                        targets[i, action_index] = reward + self.dqn_state["gamma"] * np.max(projected_future_rewards)
-
-                loss = self.machine_learning_models["isaac_dqn"].train_on_batch(inputs, targets)
-
-            self.dqn_state["frame_stack"] = frame_stack
-
-            if self.dqn_state["current_step"] % 1000 == 0:
-                self.machine_learning_models["isaac_dqn"].save_weights(
-                    "datasets/binding_of_isaac_rebirth_dqn.h5",
-                    overwrite=True
+            if self.dqn.mode == "TRAIN":
+                reward = self._calculate_boss_train_reward(
+                    self.game_state["health"],
+                    previous_health,
+                    self.game_state["boss_health"],
+                    previous_boss_health,
                 )
 
-                with open("datasets/binding_of_isaac_rebirth_dqn.json", "w") as f:
-                    json.dump(self.machine_learning_models["isaac_dqn"].to_json(), f)
+                if reward != 0:
+                    self.game_state["activity_log"].appendleft(reward)
+
+                self.dqn.append_to_replay_memory(game_frame.eighth_resolution_frame, reward)
+
+                # Every 2000 steps, save latest weights to disk
+                if self.dqn.current_step % 2000 == 0:
+                    self.dqn.save_model_weights(
+                        file_path_prefix=f"datasets/binding_of_isaac_rebirth_boss_{self.config['boss']}"
+                    )
+
+                # Every 20000 steps, save weights checkpoint to disk
+                if self.dqn.current_step % 20000 == 0:
+                    self.dqn.save_model_weights(
+                        file_path_prefix=f"datasets/binding_of_isaac_rebirth_boss_{self.config['boss']}",
+                        is_checkpoint=True
+                    )
 
             subprocess.call(["clear"])
 
-            print(f"CURRENT STEP: {self.dqn_state['current_step']}")
-            print(f"CURRENT EPSILON: {self.dqn_state['epsilon']}")
+            self.dqn.output_step_data(reward)
 
-            action = self.input_space.permutations[self.dqn_state["action_index"]]
-            input_value_collections = [self.input_mapping[input_label] for input_label in self.input_space.values_for_permutation(action) if input_label is not None]
-            input_values = list(itertools.chain.from_iterable(input_value_collections))
+            print("")
+            print(f"CURRENT RUN: {self.game_state['current_run']}")
+            print(f"CURRENT HEALTH: {self.game_state['health']}")
+            print(f"CURRENT BOSS HEALTH: {self.game_state['boss_health']}")
+            print("")
+            print(f"LAST RUN DURATION: {self.game_state['last_run_duration']} second(s)")
+            print("")
 
-            print(f"ACTION: {input_values}")
-            print(f"REWARD: {reward}")
-            print(f"MAXIMUM PROJECTED FUTURE REWARD: {np.max(projected_future_rewards)}")
-            print(f"LOSS: {loss}")
+            for eps, eta in self.game_state["eta"].items():
+                print(f"ESTIMATED TIME TO EPSILON {eps}:\n {eta}")
 
-        # Epsilon Greedy Q-Policy
-        if random.random() <= self.dqn_state.get("epsilon"):
-            action_index = random.randrange(self.dqn_state.get("action_count"))
-            action = self.input_space.permutations[action_index]
-        else:
-            q = self.machine_learning_models["isaac_dqn"].predict(self.dqn_state["frame_stack"])
-            action_index = np.argmax(q)
-            action = self.input_space.permutations[action_index]
+            print("")
+            for reward in self.game_state["activity_log"]:
+                if reward < -0.99:
+                    cprint(f"Isaac lost 1 heart! Penalty: {reward}", "red", attrs=["bold"])
+                elif -0.66 < reward < -0.64:
+                    cprint(f"Isaac lost 1 heart but also hit the boss! Penalty: {round(reward, 2)}", "red")
+                elif -0.51 < reward < -0.49:
+                    cprint(f"Isaac lost 1/2 heart! Penalty: {reward}", "red")
+                elif -0.16 < reward < -0.14:
+                    cprint(f"Isaac lost 1/2 heart but also hit the boss! Penalty: {round(reward, 2)}", "yellow")
+                elif reward > 0:
+                    cprint(f"Isaac hit the boss! Reward: {reward}", "green")
 
-        if self.dqn_state["epsilon"] > self.dqn_state["epsilon_final"] and self.dqn_state["current_step"] > self.dqn_state["observe_steps"]:
-            self.dqn_state["epsilon"] -= (self.dqn_state["epsilon_initial"] - self.dqn_state["epsilon_final"]) / self.dqn_state["max_steps"]
+            previous_is_boss_dead = self._is_boss_dead(self.game_frame_buffer.previous_game_frame)
+            is_boss_dead = self._is_boss_dead(game_frame)
 
-        input_value_collections = [self.input_mapping[input_label] for input_label in self.input_space.values_for_permutation(action) if input_label is not None]
-        input_values = list(itertools.chain.from_iterable(input_value_collections))
+            if (self.game_state["health"] <= 0 and previous_health <= 0) or (is_boss_dead and previous_is_boss_dead):
+                subprocess.call(["clear"])
+                timestamp = datetime.utcnow()
 
-        print(input_values)
-        self.input_controller.tap_keys(input_values)
+                epsilon_delta = self.game_state["run_epsilon"] - self.dqn.epsilon_greedy_q_policy.epsilon
+                timestamp_delta = timestamp - self.game_state["run_timestamp"]
 
-        self.dqn_state["action_index"] = action_index
-        self.dqn_state["current_step"] += 1
+                self.game_state["run_timestamp"] = timestamp
+                self.game_state["last_run_duration"] = timestamp_delta.seconds
+
+                if epsilon_delta > 0:
+                    self.game_state["eta"] = dict()
+
+                    self.game_state["eta"][self.dqn.final_epsilon] = self._eta_on_epsilon(
+                        self.dqn.final_epsilon,
+                        epsilon_delta,
+                        timestamp_delta
+                    )
+
+                    self.game_state["eta"][self.dqn.epsilon_greedy_q_policy.epsilon - 0.1] = self._eta_on_epsilon(
+                        self.dqn.epsilon_greedy_q_policy.epsilon - 0.1,
+                        epsilon_delta,
+                        timestamp_delta
+                    )
+
+                if is_boss_dead:
+                    subprocess.call(shlex.split("play /home/serpent/horn.wav"))
+
+                self.input_controller.release_keys()
+                self.input_controller.tap_key("r", duration=1.5)
+
+                if self.dqn.current_observe_step > self.dqn.observe_steps and self.dqn.mode == "TRAIN":
+                    for i in range(100):
+                        subprocess.call(["clear"])
+                        print(f"TRAINING ON MINI-BATCH: {i + 1}/100")
+
+                        self.dqn.train_on_mini_batch()
+
+                self.game_state["boss_skull_image"] = None
+                self.game_state["current_run"] += 1
+                self.game_state["activity_log"].clear()
+
+                if self.dqn.current_observe_step > self.dqn.observe_steps:
+                    if self.game_state["current_run"] > 0 and self.game_state["current_run"] % 20 == 0:
+                        self.dqn.enter_run_mode()
+                    else:
+                        self.dqn.enter_train_mode()
+
+                self._goto_boss()
+
+                return None
+
+        self.dqn.compute_action_type()
+
+        if self.dqn.current_action_type == "RANDOM":
+            self.dqn.current_action_index = random.randrange(self.dqn.action_count)
+        elif self.dqn.current_action_type == "PREDICTED":
+            self.dqn.current_action_index = np.argmax(self.dqn.model.predict(self.dqn.frame_stack))
+
+        self.dqn.generate_action()
+        self.dqn.erode_epsilon()
+
+        self.input_controller.handle_keys(self.dqn.get_input_values())
+
+        self.dqn.next_step()
 
     def handle_context_intro(self, game_frame):
         self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
@@ -378,7 +401,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         self.game_state = {
             "character_select_generator": itertools.cycle(self.characters),
             "seed_entered": False,
-            "health": None,
+            "health": 0,
             "inventory": {
                 "pickups": {
                     "coins": 0,
@@ -391,7 +414,15 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                 "charge_item": None
             },
             "game_floor": None,
-            "minimap": None
+            "minimap": None,
+            "boss_health": 0,
+            "boss_skull_image": None,
+            "current_run": 1,
+            "run_epsilon": 1.0,
+            "run_timestamp": datetime.utcnow(),
+            "last_run_duration": 0,
+            "eta": dict(),
+            "activity_log": deque(maxlen=10)
         }
 
     def _update_current_room(self, game_frame):
@@ -433,4 +464,74 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             self.game_state["game_floor"].register_room(coordinates, minimap_cell)
 
         print(self.game_state["game_floor"].rooms)
+
+    def _goto_boss(self):
+        self.input_controller.tap_key(" ")
+        time.sleep(1)
+        self.input_controller.tap_key("~")
+        time.sleep(0.5)
+
+        self.input_controller.type_string(f"g c334")
+        self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
+        self.input_controller.tap_keys([self.input_controller.keyboard.control_key, "v"])
+
+        self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
+        self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
+        time.sleep(0.5)
+        self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
+        time.sleep(0.5)
+        self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
+        time.sleep(0.5)
+
+    def _get_boss_health(self, game_frame):
+        gray_boss_health_bar = lib.cv.extract_region_from_image(
+            game_frame.grayscale_frame,
+            self.game.screen_regions["HUD_BOSS_HP"]
+        )
+
+        try:
+            threshold = skimage.filters.threshold_otsu(gray_boss_health_bar)
+        except ValueError:
+            threshold = 1
+
+        bw_boss_health_bar = gray_boss_health_bar > threshold
+
+        return bw_boss_health_bar[bw_boss_health_bar > 0].size
+
+    def _is_boss_dead(self, game_frame):
+        gray_boss_skull = lib.cv.extract_region_from_image(
+            game_frame.grayscale_frame,
+            self.game.screen_regions["HUD_BOSS_SKULL"]
+        )
+
+        if self.game_state["boss_skull_image"] is None:
+            self.game_state["boss_skull_image"] = gray_boss_skull
+
+        is_dead = False
+
+        if skimage.measure.compare_ssim(gray_boss_skull, self.game_state["boss_skull_image"]) < 0.5:
+            is_dead =True
+
+        self.game_state["boss_skull_image"] = gray_boss_skull
+
+        return is_dead
+
+    def _calculate_boss_train_reward(self, health, previous_health, boss_health, previous_boss_health):
+        reward = 0
+
+        # Punish on Isaac HP Down
+        if health < previous_health:
+            reward -= 0.5 * (previous_health - health)
+
+        # Reward on Boss HP Down
+        if boss_health < previous_boss_health:
+            reward += 0.35
+
+        return reward
+
+    def _eta_on_epsilon(self, target_epsilon, epsilon_delta, timestamp_delta):
+        target_epsilon_delta = (self.dqn.epsilon_greedy_q_policy.epsilon - target_epsilon)
+        eta = timedelta(seconds=(timestamp_delta.seconds * target_epsilon_delta) / epsilon_delta)
+
+        return f"{eta.days} day(s), {eta.seconds // 3600} hour(s), {(eta.seconds // 60) % 60} minutes, {eta.seconds % 60} seconds"
 

@@ -17,6 +17,8 @@ from lib.visual_debugger.visual_debugger import VisualDebugger
 import skimage.io
 import skimage.transform
 
+from redis import StrictRedis
+
 
 class GameAgentError(BaseException):
     pass
@@ -29,6 +31,8 @@ class GameAgent(offshoot.Pluggable):
 
         self.game = kwargs["game"]
         self.config = config.get(f"{self.__class__.__name__}Plugin")
+
+        self.redis_client = StrictRedis(**config["redis"])
 
         self.input_controller = kwargs["input_controller"]
         self.machine_learning_models = dict()

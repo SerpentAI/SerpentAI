@@ -14,4 +14,9 @@ frame_grabber:
 visual_debugger:
     redis_key_prefix: PROJECT_EC:VISUAL_DEBUGGER
     available_buckets:
-        - quarter_frame
+        - flashback_1
+        - flashback_2
+        - flashback_3
+        - flashback_4
+        - flashback_5
+        - flashback_6
