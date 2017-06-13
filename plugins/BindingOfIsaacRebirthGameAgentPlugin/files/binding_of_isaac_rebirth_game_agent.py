@@ -120,7 +120,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             projectile_keys=["UP", "LEFT", "DOWN", "RIGHT"]
         )
 
-        model_file_path = "datasets/binding_of_isaac_rebirth_boss_1010_dqn_180000_0.8_.h5efefe"
+        model_file_path = "datasets/binding_of_isaac_rebirth_boss_1010_dqn_84017_0.9254242000024553_.h5"
 
         self.dqn = DQN(
             model_file_path=model_file_path if os.path.isfile(model_file_path) else None,
@@ -130,7 +130,8 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             max_steps=1000000,
             observe_steps=1000,
             initial_epsilon=1.0,
-            final_epsilon=0.1
+            final_epsilon=0.1,
+            override_epsilon=True
         )
 
         pyperclip.set_clipboard("xsel")
@@ -214,6 +215,8 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                         file_path_prefix=f"datasets/binding_of_isaac_rebirth_boss_{self.config['boss']}",
                         is_checkpoint=True
                     )
+            elif self.dqn.mode == "RUN":
+                self.dqn.update_frame_stack(game_frame.eighth_resolution_frame)
 
             subprocess.call(["clear"])
 

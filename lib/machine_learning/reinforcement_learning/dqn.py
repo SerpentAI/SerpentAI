@@ -61,6 +61,7 @@ class DQN:
         self.first_run = True
         self.mode = "TRAIN"
 
+        self.model_learning_rate = model_learning_rate
         self.model = self._initialize_model(model_learning_rate)
 
         if model_file_path is not None:
@@ -188,12 +189,13 @@ class DQN:
 
     def load_model_weights(self, file_path, override_epsilon):
         self.model.load_weights(file_path)
-        self.model.compile(loss="mse", optimizer=self.model.optimizer)
+        self.model.compile(loss="mse", optimizer=Adam(lr=self.model_learning_rate))
 
         *args, steps, epsilon, extension = file_path.split("_")
         self.current_step = int(steps)
 
         if override_epsilon:
+            self.previous_epsilon = float(epsilon)
             self.epsilon_greedy_q_policy.epsilon = float(epsilon)
 
     def output_step_data(self, reward):
