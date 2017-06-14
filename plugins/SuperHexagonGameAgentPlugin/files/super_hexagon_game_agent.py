@@ -8,8 +8,6 @@ import offshoot
 
 import time
 import json
-import subprocess
-
 from pprint import pprint
 
 from .helpers.frame_processing import *
@@ -163,7 +161,7 @@ class SuperHexagonGameAgent(GameAgent):
 
             score_averages = {duration: (np.max(scores or [0.0]), np.mean(scores or [0.0])) for duration, scores in self.game_state["scores"].items()}
 
-            subprocess.call(["clear"])
+            print("\033c")
 
             pprint(score_averages)
 

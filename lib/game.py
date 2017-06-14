@@ -119,7 +119,7 @@ class Game(offshoot.Pluggable):
                 if self.is_focused:
                     game_agent.on_game_frame(game_frame)
                 else:
-                    subprocess.call(["clear"])
+                    print("\033c")
                     print("PAUSED")
 
                     time.sleep(1)

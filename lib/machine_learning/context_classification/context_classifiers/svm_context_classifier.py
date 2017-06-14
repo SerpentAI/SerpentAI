@@ -4,7 +4,6 @@ from lib.visual_debugger.visual_debugger import VisualDebugger
 
 import os
 import pickle
-import subprocess
 
 import skimage.io
 import skimage.transform
@@ -77,7 +76,7 @@ class SVMContextClassifier(ContextClassifier):
                     if predicted_class == current_label:
                         correct_sample_count += 1
 
-                    subprocess.call(["clear"])
+                    print("\033c")
                     print(f"SVM Accuracy: {correct_sample_count / sample_count}")
 
     def predict(self, input_frame):

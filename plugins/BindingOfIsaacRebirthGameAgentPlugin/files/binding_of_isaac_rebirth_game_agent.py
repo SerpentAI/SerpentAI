@@ -213,7 +213,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                     is_checkpoint=True
                 )
 
-            subprocess.call(["clear"])
+            print("\033c")
 
             self.dqn.output_step_data(reward)
 
@@ -245,7 +245,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             is_boss_dead = self._is_boss_dead(game_frame)
 
             if (self.game_state["health"] <= 0 and previous_health <= 0) or (is_boss_dead and previous_is_boss_dead):
-                subprocess.call(["clear"])
+                print("\033c")
                 timestamp = datetime.utcnow()
 
                 epsilon_delta = self.game_state["run_epsilon"] - self.dqn.epsilon_greedy_q_policy.epsilon
@@ -279,7 +279,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
                 if self.dqn.current_observe_step > self.dqn.observe_steps:
                     for i in range(50):
-                        subprocess.call(["clear"])
+                        print("\033c")
                         print(f"TRAINING ON MINI-BATCH: {i + 1}/50")
                         print(f"NEXT RUN: {self.game_state['current_run'] + 1} {'- AI RUN' if (self.game_state['current_run'] + 1) % 20 == 0 else ''}")
 
