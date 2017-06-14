@@ -23,7 +23,7 @@ class DQN:
         self,
         input_shape=None,
         input_mapping=None,
-        replay_memory_size=10000,
+        replay_memory_size=15000,
         batch_size=32,
         action_space=None,
         max_steps=1000000,
@@ -32,7 +32,7 @@ class DQN:
         final_epsilon=0.1,
         gamma=0.99,
         model_file_path=None,
-        model_learning_rate=1e-4,
+        model_learning_rate=1e-5,
         override_epsilon=False
     ):
         self.input_shape = input_shape
@@ -88,43 +88,43 @@ class DQN:
             self.current_step += 1
             self.current_observe_step += 1
 
-    def build_frame_stack(self, game_frame, is_color=False):
+    def build_frame_stack(self, game_frame):
         frame_stack = np.stack((
+            game_frame,
+            game_frame,
+            game_frame,
+            game_frame,
             game_frame,
             game_frame,
             game_frame,
             game_frame
         ), axis=2)
 
-        if is_color:
-            self.frame_stack = frame_stack.reshape((1,) + frame_stack.shape[:-2] + (-1,))
-        else:
-            raise NotImplementedError()
+        self.frame_stack = frame_stack.reshape((1,) + frame_stack.shape)
 
     def update_frame_stack(self, game_frame):
-        game_frame = game_frame.reshape((1,) + game_frame.shape)
-        self.frame_stack = np.append(game_frame, self.frame_stack[:, :, :, :-3], axis=3)
+        game_frame = game_frame.reshape((1,) + game_frame.shape + (1,))
+        self.frame_stack = np.append(game_frame, self.frame_stack[:, :, :, :-1], axis=3)
 
     def append_to_replay_memory(self, game_frame, reward):
-        if self.mode == "TRAIN":
-            previous_frame_stack = self.frame_stack
-            self.update_frame_stack(game_frame)
+        previous_frame_stack = self.frame_stack
+        self.update_frame_stack(game_frame)
 
-            self.replay_memory.append((
-                previous_frame_stack,
-                self.current_action_index,
-                reward,
-                self.frame_stack,
-                False
-            ))
+        self.replay_memory.append((
+            previous_frame_stack,
+            self.current_action_index,
+            reward,
+            self.frame_stack,
+            False
+        ))
 
     def compute_action_type(self):
         use_random = self.epsilon_greedy_q_policy.use_random()
         self.current_action_type = "RANDOM" if use_random else "PREDICTED"
 
-    def erode_epsilon(self):
+    def erode_epsilon(self, factor=1):
         if self.current_observe_step > self.observe_steps and self.mode == "TRAIN":
-            self.epsilon_greedy_q_policy.erode()
+            self.epsilon_greedy_q_policy.erode(factor=factor)
 
     def train_on_mini_batch(self):
         if self.current_observe_step <= self.observe_steps:
@@ -145,10 +145,10 @@ class DQN:
 
         for i in range(0, len(mini_batch)):
             if i in flashback_indices:
-                flashback_image = np.squeeze(mini_batch[i][3][:, :, :, 3])
+                flashback_image = np.squeeze(mini_batch[i][3][:, :, :, 1])
 
                 self.visual_debugger.store_image_data(
-                    flashback_image,
+                    np.array(flashback_image * 255, dtype="uint8"),
                     flashback_image.shape,
                     f"flashback_{flashback_indices.index(i) + 1}"
                 )
@@ -168,6 +168,7 @@ class DQN:
                 targets[i, action_index] = reward
             else:
                 targets[i, action_index] = reward + self.gamma * np.max(projected_future_rewards)
+                # Normalize ?
 
         self.model_loss = self.model.train_on_batch(inputs, targets)
 
@@ -236,7 +237,7 @@ class DQN:
         model.add(Activation("linear"))
 
         adam = Adam(lr=learning_rate)
-        model.compile(loss="mse", optimizer=adam)
+        model.compile(loss="logcosh", optimizer=adam)
 
         return model
 

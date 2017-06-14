@@ -14,5 +14,8 @@ class EpsilonGreedyQPolicy:
     def use_random(self):
         return random.random() <= self.epsilon
 
-    def erode(self):
-        self.epsilon -= (self.initial_epsilon - self.final_epsilon) / self.max_steps
+    def erode(self, factor=1):
+        if self.epsilon > self.final_epsilon:
+            self.epsilon -= (self.initial_epsilon - self.final_epsilon) / (self.max_steps / factor)
+        else:
+            self.epsilon = self.final_epsilon

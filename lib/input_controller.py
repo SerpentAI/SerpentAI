@@ -66,6 +66,8 @@ class InputController:
         for key in self.previous_key_collection_set:
             self.release_key(key)
 
+        self.previous_key_collection_set = set()
+
     def release_key(self, key):
         if self.game_is_focused:
             self.keyboard.release_key(key)

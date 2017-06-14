@@ -49,6 +49,15 @@ class GameFrame:
         return self.frame_variants["eighth"]
 
     @property
+    def eighth_resolution_grayscale_frame(self):
+        """ A 1/32-sized, grayscale version of the frame (eighth-width, eighth-height)"""
+
+        if "eighth_grayscale" not in self.frame_variants:
+            self.frame_variants["eighth_grayscale"] = self._to_eighth_grayscale_resolution()
+
+        return self.frame_variants["eighth_grayscale"]
+
+    @property
     def grayscale_frame(self):
         """ A full-size grayscale version of the frame"""
 
@@ -99,6 +108,14 @@ class GameFrame:
         )
 
         return np.array(skimage.transform.resize(self.frame_array, shape, mode="reflect", order=1) * 255, dtype="uint8")
+
+    def _to_eighth_grayscale_resolution(self):
+        shape = (
+            self.frame_array.shape[0] // 8,
+            self.frame_array.shape[1] // 8
+        )
+
+        return np.array(skimage.transform.resize(self.grayscale_frame, shape, mode="reflect", order=1) * 255, dtype="uint8")
 
     def _to_grayscale(self):
         return np.array(skimage.color.rgb2gray(self.frame_array) * 255, dtype="uint8")

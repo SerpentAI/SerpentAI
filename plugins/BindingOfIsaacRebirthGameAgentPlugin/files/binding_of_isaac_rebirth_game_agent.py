@@ -120,18 +120,18 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             projectile_keys=["UP", "LEFT", "DOWN", "RIGHT"]
         )
 
-        model_file_path = "datasets/binding_of_isaac_rebirth_boss_1010_dqn_84017_0.9254242000024553_.h5"
+        model_file_path = "datasets/binding_of_isaac_rebirth_boss_1010_dqn_160000_0.8580250000046743_.h55555555"
 
         self.dqn = DQN(
             model_file_path=model_file_path if os.path.isfile(model_file_path) else None,
-            input_shape=(67, 120, 12),
+            input_shape=(67, 120, 8),
             input_mapping=input_mapping,
             action_space=action_space,
-            max_steps=1000000,
+            max_steps=100000,
             observe_steps=1000,
             initial_epsilon=1.0,
             final_epsilon=0.1,
-            override_epsilon=True
+            override_epsilon=False
         )
 
         pyperclip.set_clipboard("xsel")
@@ -186,37 +186,32 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         self.game_state["boss_health"] = self._get_boss_health(game_frame)
 
         if self.dqn.frame_stack is None:
-            self.dqn.build_frame_stack(game_frame.eighth_resolution_frame, is_color=True)
+            self.dqn.build_frame_stack(game_frame.eighth_resolution_grayscale_frame / 255)
         else:
-            reward = 0
+            reward = self._calculate_boss_train_reward(
+                self.game_state["health"],
+                previous_health,
+                self.game_state["boss_health"],
+                previous_boss_health,
+            )
 
-            if self.dqn.mode == "TRAIN":
-                reward = self._calculate_boss_train_reward(
-                    self.game_state["health"],
-                    previous_health,
-                    self.game_state["boss_health"],
-                    previous_boss_health,
+            if reward != 0:
+                self.game_state["activity_log"].appendleft(reward)
+
+            self.dqn.append_to_replay_memory(game_frame.eighth_resolution_grayscale_frame / 255, reward)
+
+            # Every 2000 steps, save latest weights to disk
+            if self.dqn.current_step % 2000 == 0:
+                self.dqn.save_model_weights(
+                    file_path_prefix=f"datasets/binding_of_isaac_rebirth_boss_{self.config['boss']}"
                 )
 
-                if reward != 0:
-                    self.game_state["activity_log"].appendleft(reward)
-
-                self.dqn.append_to_replay_memory(game_frame.eighth_resolution_frame, reward)
-
-                # Every 2000 steps, save latest weights to disk
-                if self.dqn.current_step % 2000 == 0:
-                    self.dqn.save_model_weights(
-                        file_path_prefix=f"datasets/binding_of_isaac_rebirth_boss_{self.config['boss']}"
-                    )
-
-                # Every 20000 steps, save weights checkpoint to disk
-                if self.dqn.current_step % 20000 == 0:
-                    self.dqn.save_model_weights(
-                        file_path_prefix=f"datasets/binding_of_isaac_rebirth_boss_{self.config['boss']}",
-                        is_checkpoint=True
-                    )
-            elif self.dqn.mode == "RUN":
-                self.dqn.update_frame_stack(game_frame.eighth_resolution_frame)
+            # Every 20000 steps, save weights checkpoint to disk
+            if self.dqn.current_step % 20000 == 0:
+                self.dqn.save_model_weights(
+                    file_path_prefix=f"datasets/binding_of_isaac_rebirth_boss_{self.config['boss']}",
+                    is_checkpoint=True
+                )
 
             subprocess.call(["clear"])
 
@@ -254,6 +249,8 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                 timestamp = datetime.utcnow()
 
                 epsilon_delta = self.game_state["run_epsilon"] - self.dqn.epsilon_greedy_q_policy.epsilon
+                self.game_state["run_epsilon"] = self.dqn.epsilon_greedy_q_policy.epsilon
+
                 timestamp_delta = timestamp - self.game_state["run_timestamp"]
 
                 self.game_state["run_timestamp"] = timestamp
@@ -275,15 +272,16 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                     )
 
                 if is_boss_dead:
-                    subprocess.call(shlex.split("play /home/serpent/horn.wav"))
+                    subprocess.call(shlex.split("play -v 0.3 /home/serpent/horn.wav"))
 
                 self.input_controller.release_keys()
                 self.input_controller.tap_key("r", duration=1.5)
 
-                if self.dqn.current_observe_step > self.dqn.observe_steps and self.dqn.mode == "TRAIN":
-                    for i in range(100):
+                if self.dqn.current_observe_step > self.dqn.observe_steps:
+                    for i in range(50):
                         subprocess.call(["clear"])
-                        print(f"TRAINING ON MINI-BATCH: {i + 1}/100")
+                        print(f"TRAINING ON MINI-BATCH: {i + 1}/50")
+                        print(f"NEXT RUN: {self.game_state['current_run'] + 1} {'- AI RUN' if (self.game_state['current_run'] + 1) % 20 == 0 else ''}")
 
                         self.dqn.train_on_mini_batch()
 
@@ -294,6 +292,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                 if self.dqn.current_observe_step > self.dqn.observe_steps:
                     if self.game_state["current_run"] > 0 and self.game_state["current_run"] % 20 == 0:
                         self.dqn.enter_run_mode()
+                        subprocess.call(shlex.split("play -v 0.3 /home/serpent/Gong.wav"))
                     else:
                         self.dqn.enter_train_mode()
 
@@ -309,7 +308,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             self.dqn.current_action_index = np.argmax(self.dqn.model.predict(self.dqn.frame_stack))
 
         self.dqn.generate_action()
-        self.dqn.erode_epsilon()
+        self.dqn.erode_epsilon(factor=2)
 
         self.input_controller.handle_keys(self.dqn.get_input_values())
 
@@ -474,8 +473,9 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         self.input_controller.tap_key("~")
         time.sleep(0.5)
 
-        self.input_controller.type_string(f"g c334")
-        self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
+        #self.input_controller.type_string(f"g c334")
+        #self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
+
         self.input_controller.tap_keys([self.input_controller.keyboard.control_key, "v"])
 
         self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
@@ -484,7 +484,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
         time.sleep(0.5)
         self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
-        time.sleep(0.5)
+        time.sleep(0.2)
 
     def _get_boss_health(self, game_frame):
         gray_boss_health_bar = lib.cv.extract_region_from_image(
