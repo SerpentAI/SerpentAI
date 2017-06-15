@@ -23,7 +23,7 @@ class DQN:
         self,
         input_shape=None,
         input_mapping=None,
-        replay_memory_size=15000,
+        replay_memory_size=10000,
         batch_size=32,
         action_space=None,
         max_steps=1000000,
@@ -126,11 +126,15 @@ class DQN:
         if self.current_observe_step > self.observe_steps and self.mode == "TRAIN":
             self.epsilon_greedy_q_policy.erode(factor=factor)
 
-    def train_on_mini_batch(self):
+    def train_on_mini_batch(self, balanced=False):
         if self.current_observe_step <= self.observe_steps:
             return None
 
-        mini_batch = random.sample(self.replay_memory, self.batch_size)
+        # Experimental...
+        if balanced:
+            mini_batch = self.generate_balanced_mini_batch()
+        else:
+            mini_batch = random.sample(self.replay_memory, self.batch_size)
 
         inputs = np.zeros((
             self.batch_size,
@@ -153,6 +157,8 @@ class DQN:
                     f"flashback_{flashback_indices.index(i) + 1}"
                 )
 
+                del flashback_image
+
             previous_frame_stack = mini_batch[i][0]
             action_index = mini_batch[i][1]
             reward = mini_batch[i][2]
@@ -172,6 +178,27 @@ class DQN:
 
         self.model_loss = self.model.train_on_batch(inputs, targets)
 
+    def generate_balanced_mini_batch(self):
+        mini_batch_items = dict()
+        mini_batch = list()
+
+        for i in range(5):
+            mini_batch_samples = random.sample(self.replay_memory, self.batch_size)
+
+            for sample in mini_batch_samples:
+                if sample[1] not in mini_batch_items:
+                    mini_batch_items[sample[1]] = sample
+
+        for item in mini_batch_items.values():
+            mini_batch.append(item)
+
+        mini_batch_sample = random.sample(self.replay_memory, self.batch_size)
+
+        if len(mini_batch) < self.batch_size:
+            mini_batch = mini_batch + mini_batch_sample[:self.batch_size - len(mini_batch)]
+
+        return mini_batch
+
     def generate_action(self):
         self.current_action = self.action_space.combinations[self.current_action_index]
 
@@ -190,7 +217,7 @@ class DQN:
 
     def load_model_weights(self, file_path, override_epsilon):
         self.model.load_weights(file_path)
-        self.model.compile(loss="mse", optimizer=Adam(lr=self.model_learning_rate))
+        self.model.compile(loss="mse", optimizer=Adam(lr=self.model_learning_rate, clipvalue=1))
 
         *args, steps, epsilon, extension = file_path.split("_")
         self.current_step = int(steps)
@@ -236,8 +263,8 @@ class DQN:
         model.add(Dense(self.action_count))
         model.add(Activation("linear"))
 
-        adam = Adam(lr=learning_rate)
-        model.compile(loss="logcosh", optimizer=adam)
+        adam = Adam(lr=learning_rate, clipvalue=1)
+        model.compile(loss="mse", optimizer=adam)
 
         return model
 

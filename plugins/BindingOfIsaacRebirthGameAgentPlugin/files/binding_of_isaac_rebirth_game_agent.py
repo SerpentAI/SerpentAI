@@ -2,6 +2,8 @@ from lib.game_agent import GameAgent
 
 import lib.cv
 
+from lib.analytics_client import AnalyticsClient
+
 from lib.machine_learning.context_classification.context_classifiers import *
 
 from lib.machine_learning.reinforcement_learning.dqn import DQN
@@ -29,6 +31,7 @@ import skimage.morphology
 import skimage.measure
 import skimage.draw
 import skimage.segmentation
+import skimage.color
 
 import random
 
@@ -55,6 +58,8 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
         self.game_state = None
         self._reset_game_state()
+
+        self.analytics_client = None
 
     @property
     def characters(self):
@@ -100,6 +105,8 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         pass
 
     def setup_boss_train(self):
+        self.analytics_client = AnalyticsClient(project_key="AISAAC_MONSTRO_0.4.0")
+
         input_mapping = {
             "W": ["w"],
             "A": ["a"],
@@ -116,19 +123,20 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         }
 
         action_space = KeyboardMouseActionSpace(
-            directional_keys=["W", "A", "S", "D", "WA", "WD", "SA", "SD"],
+            directional_keys=[None, "W", "A", "S", "D", "WA", "WD", "SA", "SD"],
             projectile_keys=["UP", "LEFT", "DOWN", "RIGHT"]
         )
 
-        model_file_path = "datasets/binding_of_isaac_rebirth_boss_1010_dqn_160000_0.8580250000046743_.h55555555"
+        model_file_path = "datasets/binding_of_isaac_rebirth_boss_1010_dqn_60000_0.1_.h555555"
 
         self.dqn = DQN(
             model_file_path=model_file_path if os.path.isfile(model_file_path) else None,
             input_shape=(67, 120, 8),
             input_mapping=input_mapping,
             action_space=action_space,
-            max_steps=100000,
-            observe_steps=1000,
+            max_steps=200000,
+            observe_steps=2000,
+            batch_size=36,
             initial_epsilon=1.0,
             final_epsilon=0.1,
             override_epsilon=False
@@ -181,12 +189,14 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             return None
 
         self.game_state["health"] = 24 - hearts.count(None)
+        self.analytics_client.track(event_key="ISAAC_HP", data=self.game_state["health"])
 
         previous_boss_health = self.game_state["boss_health"]
         self.game_state["boss_health"] = self._get_boss_health(game_frame)
+        self.analytics_client.track(event_key="BOSS_HP", data=self.game_state["boss_health"])
 
         if self.dqn.frame_stack is None:
-            self.dqn.build_frame_stack(game_frame.eighth_resolution_grayscale_frame / 255)
+            self.dqn.build_frame_stack(np.array(skimage.color.rgb2gray(game_frame.eighth_resolution_frame), dtype="float16"))
         else:
             reward = self._calculate_boss_train_reward(
                 self.game_state["health"],
@@ -195,10 +205,15 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                 previous_boss_health,
             )
 
+            self.analytics_client.track(event_key="DQN_REWARD", data=reward)
+
             if reward != 0:
                 self.game_state["activity_log"].appendleft(reward)
 
-            self.dqn.append_to_replay_memory(game_frame.eighth_resolution_grayscale_frame / 255, reward)
+            self.dqn.append_to_replay_memory(
+                np.array(skimage.color.rgb2gray(game_frame.eighth_resolution_frame), dtype="float16"),
+                reward
+            )
 
             # Every 2000 steps, save latest weights to disk
             if self.dqn.current_step % 2000 == 0:
@@ -230,14 +245,8 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
             print("")
             for reward in self.game_state["activity_log"]:
-                if reward < -0.99:
-                    cprint(f"Isaac lost 1 heart! Penalty: {reward}", "red", attrs=["bold"])
-                elif -0.66 < reward < -0.64:
-                    cprint(f"Isaac lost 1 heart but also hit the boss! Penalty: {round(reward, 2)}", "red")
-                elif -0.51 < reward < -0.49:
-                    cprint(f"Isaac lost 1/2 heart! Penalty: {reward}", "red")
-                elif -0.16 < reward < -0.14:
-                    cprint(f"Isaac lost 1/2 heart but also hit the boss! Penalty: {round(reward, 2)}", "yellow")
+                if reward < 0:
+                    cprint(f"Isaac lost HP! Penalty: {reward}", "red")
                 elif reward > 0:
                     cprint(f"Isaac hit the boss! Reward: {reward}", "green")
 
@@ -283,18 +292,41 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                         print(f"TRAINING ON MINI-BATCH: {i + 1}/50")
                         print(f"NEXT RUN: {self.game_state['current_run'] + 1} {'- AI RUN' if (self.game_state['current_run'] + 1) % 20 == 0 else ''}")
 
-                        self.dqn.train_on_mini_batch()
+                        if self.dqn.epsilon_greedy_q_policy.epsilon == self.dqn.final_epsilon:
+                            self.dqn.train_on_mini_batch()
+                        else:
+                            self.dqn.train_on_mini_batch(balanced=True)
+
+                    self.analytics_client.track(event_key="DQN_MODEL_LOSS", data=float(self.dqn.model_loss))
 
                 self.game_state["boss_skull_image"] = None
+
                 self.game_state["current_run"] += 1
                 self.game_state["activity_log"].clear()
 
                 if self.dqn.current_observe_step > self.dqn.observe_steps:
                     if self.game_state["current_run"] > 0 and self.game_state["current_run"] % 20 == 0:
                         self.dqn.enter_run_mode()
+
+                        self.analytics_client.track(
+                            event_key="NEW_RUN",
+                            data={
+                                "run": self.game_state["current_run"],
+                                "run_type": "RUN"
+                            }
+                        )
+
                         subprocess.call(shlex.split("play -v 0.3 /home/serpent/Gong.wav"))
                     else:
                         self.dqn.enter_train_mode()
+
+                        self.analytics_client.track(
+                            event_key="NEW_RUN",
+                            data={
+                                "run": self.game_state["current_run"],
+                                "run_type": "TRAIN"
+                            }
+                        )
 
                 self._goto_boss()
 
@@ -305,10 +337,23 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         if self.dqn.current_action_type == "RANDOM":
             self.dqn.current_action_index = random.randrange(self.dqn.action_count)
         elif self.dqn.current_action_type == "PREDICTED":
-            self.dqn.current_action_index = np.argmax(self.dqn.model.predict(self.dqn.frame_stack))
+            qs = self.dqn.model.predict(self.dqn.frame_stack)
+            self.analytics_client.track(event_key="DQN_FUTURE_REWARDS", data=[float(q) for q in list(qs.reshape((self.dqn.action_count,)))])
+
+            self.dqn.current_action_index = np.argmax(qs)
 
         self.dqn.generate_action()
+
+        self.analytics_client.track(
+            event_key="ACTIONS",
+            data={
+                "actions": [(self.input_controller.human_readable_key_mapping().get(input_value) or input_value).upper() for input_value in self.dqn.get_input_values()],
+                "action_type": self.dqn.current_action_type
+            }
+        )
+
         self.dqn.erode_epsilon(factor=2)
+        self.analytics_client.track(event_key="DQN_EPSILON", data=self.dqn.epsilon_greedy_q_policy.epsilon)
 
         self.input_controller.handle_keys(self.dqn.get_input_values())
 
@@ -473,8 +518,8 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         self.input_controller.tap_key("~")
         time.sleep(0.5)
 
-        #self.input_controller.type_string(f"g c334")
-        #self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
+        # self.input_controller.type_string(f"g c334")
+        # self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
 
         self.input_controller.tap_keys([self.input_controller.keyboard.control_key, "v"])
 
@@ -524,11 +569,10 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
         # Punish on Isaac HP Down
         if health < previous_health:
-            reward -= 0.5 * (previous_health - health)
-
+            reward -= (1 / 5)
         # Reward on Boss HP Down
         if boss_health < previous_boss_health:
-            reward += 0.35
+            reward += (9 / 654)
 
         return reward
 

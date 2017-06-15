@@ -18,7 +18,7 @@ class KeyboardMouseActionSpace:
     @property
     def combinations(self):
         if self.combination_values is None:
-            input_groups = [[None] + inputs for inputs in self.labeled_inputs.values()]
+            input_groups = [inputs for inputs in self.labeled_inputs.values()]
 
             self.combination_values = list(
                 itertools.product(*[list(map(lambda t: t[0], enumerate(input_group))) for input_group in input_groups])
