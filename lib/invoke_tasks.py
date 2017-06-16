@@ -9,6 +9,8 @@ from lib.config import config
 
 import itertools
 
+import cProfile
+
 
 @task
 def start_frame_grabber(ctx, width=640, height=480, x_offset=0, y_offset=0):

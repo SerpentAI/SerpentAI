@@ -6,7 +6,7 @@ from lib.machine_learning.reinforcement_learning.epsilon_greedy_q_policy import 
 from lib.visual_debugger.visual_debugger import VisualDebugger
 
 from keras.models import Sequential
-from keras.layers import Dense, Activation, Flatten, Convolution2D
+from keras.layers import Dense, Activation, Flatten, Convolution2D, Dropout, MaxPooling2D
 from keras.optimizers import Adam
 
 import numpy as np
@@ -68,6 +68,7 @@ class DQN:
             self.load_model_weights(model_file_path, override_epsilon)
 
         self.model_loss = 0
+        self.model_cross_validation_loss = 0
 
         self.visual_debugger = VisualDebugger()
 
@@ -199,6 +200,53 @@ class DQN:
 
         return mini_batch
 
+    def cross_validate_on_mini_batch(self, pool_size=50):
+        replay_memory_pool = list(itertools.islice(
+            self.replay_memory,
+            len(self.replay_memory) - pool_size,
+            len(self.replay_memory)
+        ))
+
+        inputs = np.zeros((
+            self.batch_size,
+            self.frame_stack.shape[1],
+            self.frame_stack.shape[2],
+            self.frame_stack.shape[3]
+        ))
+
+        targets = np.zeros((self.batch_size, self.action_count))
+
+        mini_batch = random.sample(replay_memory_pool, self.batch_size)
+
+        del replay_memory_pool
+
+        for i in range(0, len(mini_batch)):
+            previous_frame_stack = mini_batch[i][0]
+            action_index = mini_batch[i][1]
+            reward = mini_batch[i][2]
+            frame_stack = mini_batch[i][3]
+            terminal = mini_batch[i][4]
+
+            inputs[i:i + 1] = previous_frame_stack
+
+            targets[i] = self.model.predict(previous_frame_stack)
+            projected_future_rewards = self.model.predict(frame_stack)
+
+            if terminal:
+                targets[i, action_index] = reward
+            else:
+                targets[i, action_index] = reward + self.gamma * np.max(projected_future_rewards)
+
+        self.model.save_weights("datasets/temp_model.h5", overwrite=True)
+
+        cross_validation_model = self._initialize_model(self.model_learning_rate)
+        cross_validation_model.load_weights("datasets/temp_model.h5")
+        cross_validation_model.compile(loss="mse", optimizer=Adam(lr=self.model_learning_rate, clipvalue=1))
+
+        self.model_cross_validation_loss = cross_validation_model.train_on_batch(inputs, targets)
+
+        del cross_validation_model
+
     def generate_action(self):
         self.current_action = self.action_space.combinations[self.current_action_index]
 
@@ -247,6 +295,7 @@ class DQN:
         else:
             cprint(f"REWARD: {round(reward, 2)}", "white", "on_green" if reward > 0 else "on_red")
         print(f"LOSS: {self.model_loss}")
+        print(f"CROSS-VALIDATION LOSS: {self.model_cross_validation_loss}")
 
     def _initialize_model(self, learning_rate):
         model = Sequential()
@@ -280,18 +329,26 @@ class DQN:
         return action_input_mapping
 
 
+def _initialize_model(self, learning_rate):
+    model = Sequential()
 
+    model.add(Convolution2D(32, 8, 8, strides=(1, 1), activation="relu", input_shape=self.input_shape))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.1))
+    model.add(Convolution2D(64, 4, 4, strides=(1, 1), activation="relu"))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.1))
+    model.add(Convolution2D(64, 3, 3, strides=(1, 1), activation="relu"))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.2))
+    model.add(Flatten())
+    model.add(Dense(512))
+    model.add(Activation("relu"))
+    model.add(Dropout(0.5))
+    model.add(Dense(self.action_count))
+    model.add(Activation("linear"))
 
+    adam = Adam(lr=learning_rate, clipvalue=1)
+    model.compile(loss="mse", optimizer=adam)
 
-
-
-
-
-
-
-
-
-
-
-
-
+    return model

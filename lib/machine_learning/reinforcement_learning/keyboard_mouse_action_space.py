@@ -30,6 +30,6 @@ class KeyboardMouseActionSpace:
         values = list()
 
         for index, value_index in enumerate(combination):
-            values.append(([None] + self.labeled_inputs[list(self.labeled_inputs.keys())[index]])[value_index])
+            values.append((self.labeled_inputs[list(self.labeled_inputs.keys())[index]])[value_index])
 
         return values

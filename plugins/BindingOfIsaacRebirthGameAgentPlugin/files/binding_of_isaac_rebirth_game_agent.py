@@ -135,9 +135,9 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             input_mapping=input_mapping,
             action_space=action_space,
             max_steps=200000,
-            observe_steps=2000,
+            observe_steps=50,
             batch_size=36,
-            initial_epsilon=1.0,
+            initial_epsilon=0.5,
             final_epsilon=0.1,
             override_epsilon=False
         )
@@ -228,7 +228,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                     is_checkpoint=True
                 )
 
-            subprocess.call(["clear"])
+            print("\033c")
 
             self.dqn.output_step_data(reward)
 
@@ -254,7 +254,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             is_boss_dead = self._is_boss_dead(game_frame)
 
             if (self.game_state["health"] <= 0 and previous_health <= 0) or (is_boss_dead and previous_is_boss_dead):
-                subprocess.call(["clear"])
+                print("\033c")
                 timestamp = datetime.utcnow()
 
                 epsilon_delta = self.game_state["run_epsilon"] - self.dqn.epsilon_greedy_q_policy.epsilon
@@ -288,7 +288,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
                 if self.dqn.current_observe_step > self.dqn.observe_steps:
                     for i in range(50):
-                        subprocess.call(["clear"])
+                        print("\033c")
                         print(f"TRAINING ON MINI-BATCH: {i + 1}/50")
                         print(f"NEXT RUN: {self.game_state['current_run'] + 1} {'- AI RUN' if (self.game_state['current_run'] + 1) % 20 == 0 else ''}")
 
@@ -299,13 +299,21 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
                     self.analytics_client.track(event_key="DQN_MODEL_LOSS", data=float(self.dqn.model_loss))
 
+                    # Do some cross-validation after AI run
+                    if self.dqn.mode == "RUN":
+                        print("\033c")
+                        print(f"CROSS-VALIDATING...")
+                        print(f"NEXT RUN: {self.game_state['current_run'] + 1} {'- AI RUN' if (self.game_state['current_run'] + 1) % 20 == 0 else ''}")
+
+                        self.dqn.cross_validate_on_mini_batch(pool_size=50)
+
                 self.game_state["boss_skull_image"] = None
 
                 self.game_state["current_run"] += 1
                 self.game_state["activity_log"].clear()
 
                 if self.dqn.current_observe_step > self.dqn.observe_steps:
-                    if self.game_state["current_run"] > 0 and self.game_state["current_run"] % 20 == 0:
+                    if self.game_state["current_run"] > 0 and self.game_state["current_run"] % 2 == 0:
                         self.dqn.enter_run_mode()
 
                         self.analytics_client.track(
