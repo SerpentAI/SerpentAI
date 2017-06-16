@@ -1,5 +1,13 @@
 # AIsaac - Changelog
 
+## 0.4.0
+
+* Switched optimizer clipping from clipnorm=1 to clipvalue=1
+* Added a way to generate balanced mini-batches. It attempts to use 1 observation per combination of the action space
+* Balanced mini-batches are used until we reach final Epsilon and then random ones are used
+* Created a new reward function: -(1 / 5) for damage taken, (9 / 654) for damage dealt
+* Created an analytics client for general use in the framework
+* Tagged analytics events in the BOSS_TRAIN mode
 
 ## 0.3.0
 
