@@ -1,5 +1,11 @@
 # AIsaac - Changelog
 
+## V5
+
+* Brand new, revised [neural network structure](https://github.com/SerpentAI/Serpent/blob/master/lib/machine_learning/reinforcement_learning/dqn.py#L332) (Thanks @jhaluska on Twitch!)
+* Added a live cross-validation step after an AI and now outputing cross-validation loss
+* Use octal code to clear terminal instead of subprocess.call(["clear"]) (Thanks @dtusk on GitHub!)
+
 ## 0.4.0
 
 * Switched optimizer clipping from clipnorm=1 to clipvalue=1
