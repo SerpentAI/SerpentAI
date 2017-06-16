@@ -17,7 +17,7 @@ import json
 redis_client = StrictRedis(**config["redis"])
 
 while True:
-    event = redis_client.brpop("SERPENT:AISAAC_MONSTRO_0.4.0:EVENTS")
+    event = redis_client.brpop("SERPENT:AISAAC_MONSTRO:EVENTS")
     event = event[1].decode("utf-8")
 
     pprint.pprint(json.loads(event))

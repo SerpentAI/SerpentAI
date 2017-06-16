@@ -19,6 +19,8 @@ import skimage.transform
 
 from redis import StrictRedis
 
+from datetime import datetime
+
 
 class GameAgentError(BaseException):
     pass
@@ -56,6 +58,8 @@ class GameAgent(offshoot.Pluggable):
         self.game_context = None
 
         self.flag = None
+
+        self.started_at = datetime.now()
 
     @offshoot.forbidden
     def on_game_frame(self, game_frame):

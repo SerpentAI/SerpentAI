@@ -14,3 +14,4 @@ Cython==0.25.2
 Kivy==1.10.0
 termcolor==1.1.0
 pyperclip==1.5.27
+autobahn==17.6.1

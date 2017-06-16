@@ -5,9 +5,9 @@ from lib.machine_learning.reinforcement_learning.epsilon_greedy_q_policy import 
 
 from lib.visual_debugger.visual_debugger import VisualDebugger
 
-from keras.models import Sequential
-from keras.layers import Dense, Activation, Flatten, Convolution2D, Dropout, MaxPooling2D
-from keras.optimizers import Adam
+from keras.models import Model, Sequential
+from keras.layers import Dense, Activation, Flatten, Convolution2D, Dropout, MaxPooling2D, AveragePooling2D, Input, merge
+from keras.optimizers import Adam, rmsprop
 
 import numpy as np
 
@@ -62,7 +62,7 @@ class DQN:
         self.mode = "TRAIN"
 
         self.model_learning_rate = model_learning_rate
-        self.model = self._initialize_model(model_learning_rate)
+        self.model = self._initialize_model()
 
         if model_file_path is not None:
             self.load_model_weights(model_file_path, override_epsilon)
@@ -239,7 +239,7 @@ class DQN:
 
         self.model.save_weights("datasets/temp_model.h5", overwrite=True)
 
-        cross_validation_model = self._initialize_model(self.model_learning_rate)
+        cross_validation_model = self._initialize_model()
         cross_validation_model.load_weights("datasets/temp_model.h5")
         cross_validation_model.compile(loss="mse", optimizer=Adam(lr=self.model_learning_rate, clipvalue=1))
 
@@ -297,23 +297,27 @@ class DQN:
         print(f"LOSS: {self.model_loss}")
         print(f"CROSS-VALIDATION LOSS: {self.model_cross_validation_loss}")
 
-    def _initialize_model(self, learning_rate):
-        model = Sequential()
+    def _initialize_model(self):
+        input_layer = Input(shape=self.input_shape)
+        
+        tower_1 = Convolution2D(16, 1, 1, border_mode="same", activation="elu")(input_layer)
+        tower_1 = Convolution2D(16, 3, 3, border_mode="same", activation="elu")(tower_1)
+        
+        tower_2 = Convolution2D(16, 1, 1, border_mode="same", activation="elu")(input_layer)
+        tower_2 = Convolution2D(16, 3, 3, border_mode="same", activation="elu")(tower_2)
+        tower_2 = Convolution2D(16, 3, 3, border_mode="same", activation="elu")(tower_2)
+        
+        tower_3 = MaxPooling2D((3, 3), strides=(1, 1), border_mode="same")(input_layer)
+        tower_3 = Convolution2D(16, 1, 1, border_mode="same", activation="elu")(tower_3)
+        
+        merged_layer = merge([tower_1, tower_2, tower_3], mode="concat", concat_axis=1)
+        
+        output = AveragePooling2D((7, 7), strides=(8, 8))(merged_layer)
+        output = Flatten()(output)
+        output = Dense(self.action_count)(output)
 
-        model.add(Convolution2D(32, 8, 8, subsample=(4, 4), input_shape=self.input_shape))
-        model.add(Activation("relu"))
-        model.add(Convolution2D(64, 4, 4, subsample=(2, 2)))
-        model.add(Activation("relu"))
-        model.add(Convolution2D(64, 3, 3, subsample=(1, 1)))
-        model.add(Activation("relu"))
-        model.add(Flatten())
-        model.add(Dense(512))
-        model.add(Activation("relu"))
-        model.add(Dense(self.action_count))
-        model.add(Activation("linear"))
-
-        adam = Adam(lr=learning_rate, clipvalue=1)
-        model.compile(loss="mse", optimizer=adam)
+        model = Model(input=input_layer, output=output)
+        model.compile(rmsprop(lr=self.model_learning_rate, clipvalue=1), "mse")
 
         return model
 
@@ -327,28 +331,3 @@ class DQN:
             action_input_mapping[combination] = list(itertools.chain.from_iterable(input_values))
 
         return action_input_mapping
-
-
-def _initialize_model(self, learning_rate):
-    model = Sequential()
-
-    model.add(Convolution2D(32, 8, 8, strides=(1, 1), activation="relu", input_shape=self.input_shape))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.1))
-    model.add(Convolution2D(64, 4, 4, strides=(1, 1), activation="relu"))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.1))
-    model.add(Convolution2D(64, 3, 3, strides=(1, 1), activation="relu"))
-    model.add(MaxPooling2D(pool_size=(2, 2)))
-    model.add(Dropout(0.2))
-    model.add(Flatten())
-    model.add(Dense(512))
-    model.add(Activation("relu"))
-    model.add(Dropout(0.5))
-    model.add(Dense(self.action_count))
-    model.add(Activation("linear"))
-
-    adam = Adam(lr=learning_rate, clipvalue=1)
-    model.compile(loss="mse", optimizer=adam)
-
-    return model

@@ -3,6 +3,14 @@ redis:
     port: 6379
     db: 0
 
+analytics:
+    host: localhost
+    port: 9999
+    realm: serpent
+    auth:
+        username: backend
+        password: "12345"
+
 frame_handlers:
     COLLECT_FRAMES_FOR_CONTEXT:
         context: character_select_screen

@@ -105,7 +105,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         pass
 
     def setup_boss_train(self):
-        self.analytics_client = AnalyticsClient(project_key="AISAAC_MONSTRO_0.4.0")
+        self.analytics_client = AnalyticsClient(project_key="AISAAC_MONSTRO")
 
         input_mapping = {
             "W": ["w"],
@@ -135,9 +135,9 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             input_mapping=input_mapping,
             action_space=action_space,
             max_steps=200000,
-            observe_steps=50,
+            observe_steps=2000,
             batch_size=36,
-            initial_epsilon=0.5,
+            initial_epsilon=1.0,
             final_epsilon=0.1,
             override_epsilon=False
         )
@@ -228,7 +228,8 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                     is_checkpoint=True
                 )
 
-            print("\033c")
+            print("\033c" + f"EPISODE START TIME: {self.started_at.isoformat()}")
+            print("")
 
             self.dqn.output_step_data(reward)
 
@@ -280,9 +281,6 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                         timestamp_delta
                     )
 
-                if is_boss_dead:
-                    subprocess.call(shlex.split("play -v 0.3 /home/serpent/horn.wav"))
-
                 self.input_controller.release_keys()
                 self.input_controller.tap_key("r", duration=1.5)
 
@@ -307,13 +305,15 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
                         self.dqn.cross_validate_on_mini_batch(pool_size=50)
 
+                        self.analytics_client.track(event_key="DQN_MODEL_CV_LOSS", data=float(self.dqn.model_cross_validation_loss))
+
                 self.game_state["boss_skull_image"] = None
 
                 self.game_state["current_run"] += 1
                 self.game_state["activity_log"].clear()
 
                 if self.dqn.current_observe_step > self.dqn.observe_steps:
-                    if self.game_state["current_run"] > 0 and self.game_state["current_run"] % 2 == 0:
+                    if self.game_state["current_run"] > 0 and self.game_state["current_run"] % 20 == 0:
                         self.dqn.enter_run_mode()
 
                         self.analytics_client.track(
@@ -324,7 +324,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                             }
                         )
 
-                        subprocess.call(shlex.split("play -v 0.3 /home/serpent/Gong.wav"))
+                        subprocess.call(shlex.split(f"play -v 0.125 {self.config.get('ai_run_sound_path')}"))
                     else:
                         self.dqn.enter_train_mode()
 
@@ -566,7 +566,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         is_dead = False
 
         if skimage.measure.compare_ssim(gray_boss_skull, self.game_state["boss_skull_image"]) < 0.5:
-            is_dead =True
+            is_dead = True
 
         self.game_state["boss_skull_image"] = gray_boss_skull
 
@@ -577,10 +577,10 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
         # Punish on Isaac HP Down
         if health < previous_health:
-            reward -= (1 / 5)
+            reward -= (1 / 5) * 5
         # Reward on Boss HP Down
         if boss_health < previous_boss_health:
-            reward += (9 / 654)
+            reward += (9 / 654) * 5
 
         return reward
 
