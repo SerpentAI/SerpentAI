@@ -1,5 +1,14 @@
 # AIsaac - Changelog
 
+## V6
+
+* Another(!!) [neural network structure](https://github.com/SerpentAI/Serpent/blob/master/lib/machine_learning/reinforcement_learning/dqn.py#L300-L322) (Inception layer and ELU activations)
+* Rewards are now properly scaled between -1 and 1
+* Build a WAMP Component to dispatch analytics events to a Crossbar router
+* Added an instance variable in the base GameAgent class to collect the start time of an episode
+* Displaying the episode start time in the terminal output
+* New AI run sound!
+
 ## V5
 
 * Brand new, revised [neural network structure](https://github.com/SerpentAI/Serpent/blob/master/lib/machine_learning/reinforcement_learning/dqn.py#L332) (Thanks @jhaluska on Twitch!)
