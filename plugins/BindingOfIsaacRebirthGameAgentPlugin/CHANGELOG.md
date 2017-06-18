@@ -1,5 +1,22 @@
 # AIsaac - Changelog
 
+## V7
+
+* Now possible to pass a frame cap to the FrameGrabber (default: 30fps)
+* The FrameGrabber will now process an additional image at 1/8 width and 1/8 height grayscale and make that available
+* GameFrame class now accepts pre-built frame variants in the constructor
+* Abstracted the replay memory to its own class
+* ReplayMemory now uses a numpy array with circular buffer instead of a collections.deque
+* Fixed an important DQN implementation bug where the terminal states were not handled at all
+* Removed balanced mini-batches
+* Removed cross-validation after AI runs
+* Increased mini-batch size to 64
+* Increased learning rate to 1e-4
+* Starting Epsilon value is now 0.5
+* Experimenting with disabling the GC during gameplay
+* Added a new statistic: Average Actions per Second (APS)
+* Overall went from 1 APS to 4 APS with update. AIsaac now has faster reaction speeds.
+
 ## V6
 
 * Another(!!) [neural network structure](https://github.com/SerpentAI/Serpent/blob/master/lib/machine_learning/reinforcement_learning/dqn.py#L300-L322) (Inception layer and ELU activations)
