@@ -13,9 +13,9 @@ class GameFrameError(BaseException):
 
 class GameFrame:
 
-    def __init__(self, frame_array):
+    def __init__(self, frame_array, frame_variants=None):
         self.frame_array = frame_array
-        self.frame_variants = dict()
+        self.frame_variants = frame_variants or dict()
 
     @property
     def frame(self):

@@ -1,6 +1,5 @@
-import collections
-
 from lib.input_controller import InputController
+from lib.machine_learning.reinforcement_learning.replay_memory import ReplayMemory
 from lib.machine_learning.reinforcement_learning.epsilon_greedy_q_policy import EpsilonGreedyQPolicy
 
 from lib.visual_debugger.visual_debugger import VisualDebugger
@@ -32,11 +31,11 @@ class DQN:
         final_epsilon=0.1,
         gamma=0.99,
         model_file_path=None,
-        model_learning_rate=1e-5,
+        model_learning_rate=1e-4,
         override_epsilon=False
     ):
         self.input_shape = input_shape
-        self.replay_memory = collections.deque(maxlen=replay_memory_size)
+        self.replay_memory = ReplayMemory(memory_size=replay_memory_size)
         self.batch_size = batch_size
         self.action_space = action_space
         self.action_count = len(self.action_space.combinations)
@@ -107,16 +106,16 @@ class DQN:
         game_frame = game_frame.reshape((1,) + game_frame.shape + (1,))
         self.frame_stack = np.append(game_frame, self.frame_stack[:, :, :, :-1], axis=3)
 
-    def append_to_replay_memory(self, game_frame, reward):
+    def append_to_replay_memory(self, game_frame, reward, terminal=False):
         previous_frame_stack = self.frame_stack
         self.update_frame_stack(game_frame)
 
-        self.replay_memory.append((
+        self.replay_memory.update((
             previous_frame_stack,
             self.current_action_index,
             reward,
             self.frame_stack,
-            False
+            terminal
         ))
 
     def compute_action_type(self):
@@ -127,15 +126,11 @@ class DQN:
         if self.current_observe_step > self.observe_steps and self.mode == "TRAIN":
             self.epsilon_greedy_q_policy.erode(factor=factor)
 
-    def train_on_mini_batch(self, balanced=False):
+    def train_on_mini_batch(self):
         if self.current_observe_step <= self.observe_steps:
             return None
 
-        # Experimental...
-        if balanced:
-            mini_batch = self.generate_balanced_mini_batch()
-        else:
-            mini_batch = random.sample(self.replay_memory, self.batch_size)
+        mini_batch = self.replay_memory.sample(self.batch_size)
 
         inputs = np.zeros((
             self.batch_size,
@@ -175,7 +170,6 @@ class DQN:
                 targets[i, action_index] = reward
             else:
                 targets[i, action_index] = reward + self.gamma * np.max(projected_future_rewards)
-                # Normalize ?
 
         self.model_loss = self.model.train_on_batch(inputs, targets)
 
@@ -184,7 +178,7 @@ class DQN:
         mini_batch = list()
 
         for i in range(5):
-            mini_batch_samples = random.sample(self.replay_memory, self.batch_size)
+            mini_batch_samples = self.replay_memory.sample(self.batch_size)
 
             for sample in mini_batch_samples:
                 if sample[1] not in mini_batch_items:
@@ -193,7 +187,7 @@ class DQN:
         for item in mini_batch_items.values():
             mini_batch.append(item)
 
-        mini_batch_sample = random.sample(self.replay_memory, self.batch_size)
+        mini_batch_sample = self.replay_memory.sample(self.batch_size)
 
         if len(mini_batch) < self.batch_size:
             mini_batch = mini_batch + mini_batch_sample[:self.batch_size - len(mini_batch)]
@@ -202,9 +196,9 @@ class DQN:
 
     def cross_validate_on_mini_batch(self, pool_size=50):
         replay_memory_pool = list(itertools.islice(
-            self.replay_memory,
-            len(self.replay_memory) - pool_size,
-            len(self.replay_memory)
+            self.replay_memory.memory,
+            len(self.replay_memory.memory) - pool_size,
+            len(self.replay_memory.memory)
         ))
 
         inputs = np.zeros((
