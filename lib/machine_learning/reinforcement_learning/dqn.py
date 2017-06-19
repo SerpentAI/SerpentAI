@@ -67,7 +67,6 @@ class DQN:
             self.load_model_weights(model_file_path, override_epsilon)
 
         self.model_loss = 0
-        self.model_cross_validation_loss = 0
 
         self.visual_debugger = VisualDebugger()
 
@@ -102,13 +101,13 @@ class DQN:
 
         self.frame_stack = frame_stack.reshape((1,) + frame_stack.shape)
 
-    def update_frame_stack(self, game_frame):
-        game_frame = game_frame.reshape((1,) + game_frame.shape + (1,))
-        self.frame_stack = np.append(game_frame, self.frame_stack[:, :, :, :-1], axis=3)
-
-    def append_to_replay_memory(self, game_frame, reward, terminal=False):
+    def append_to_replay_memory(self, game_frame_buffer, reward, terminal=False):
         previous_frame_stack = self.frame_stack
-        self.update_frame_stack(game_frame)
+
+        game_frames = [game_frame.eighth_resolution_grayscale_frame for game_frame in game_frame_buffer.frames]
+        frame_stack = np.stack(game_frames, axis=2)
+
+        self.frame_stack = frame_stack.reshape((1,) + frame_stack.shape)
 
         self.replay_memory.update((
             previous_frame_stack,
@@ -194,53 +193,6 @@ class DQN:
 
         return mini_batch
 
-    def cross_validate_on_mini_batch(self, pool_size=50):
-        replay_memory_pool = list(itertools.islice(
-            self.replay_memory.memory,
-            len(self.replay_memory.memory) - pool_size,
-            len(self.replay_memory.memory)
-        ))
-
-        inputs = np.zeros((
-            self.batch_size,
-            self.frame_stack.shape[1],
-            self.frame_stack.shape[2],
-            self.frame_stack.shape[3]
-        ))
-
-        targets = np.zeros((self.batch_size, self.action_count))
-
-        mini_batch = random.sample(replay_memory_pool, self.batch_size)
-
-        del replay_memory_pool
-
-        for i in range(0, len(mini_batch)):
-            previous_frame_stack = mini_batch[i][0]
-            action_index = mini_batch[i][1]
-            reward = mini_batch[i][2]
-            frame_stack = mini_batch[i][3]
-            terminal = mini_batch[i][4]
-
-            inputs[i:i + 1] = previous_frame_stack
-
-            targets[i] = self.model.predict(previous_frame_stack)
-            projected_future_rewards = self.model.predict(frame_stack)
-
-            if terminal:
-                targets[i, action_index] = reward
-            else:
-                targets[i, action_index] = reward + self.gamma * np.max(projected_future_rewards)
-
-        self.model.save_weights("datasets/temp_model.h5", overwrite=True)
-
-        cross_validation_model = self._initialize_model()
-        cross_validation_model.load_weights("datasets/temp_model.h5")
-        cross_validation_model.compile(loss="mse", optimizer=Adam(lr=self.model_learning_rate, clipvalue=1))
-
-        self.model_cross_validation_loss = cross_validation_model.train_on_batch(inputs, targets)
-
-        del cross_validation_model
-
     def generate_action(self):
         self.current_action = self.action_space.combinations[self.current_action_index]
 
@@ -282,14 +234,7 @@ class DQN:
 
         print(f"CURRENT EPSILON: {round(self.epsilon_greedy_q_policy.epsilon, 6)}")
         print(f"CURRENT RANDOM ACTION PROBABILITY: {round(self.epsilon_greedy_q_policy.epsilon * 100.0, 2)}%")
-        print(f"ACTION: {[(InputController.human_readable_key_mapping().get(input_value) or input_value).upper() for input_value in self.get_input_values()]}")
-        cprint(f"ACTION TYPE: {self.current_action_type}", "white", "on_green" if self.current_action_type == "PREDICTED" else "on_red")
-        if reward == 0:
-            print(f"REWARD: {reward}")
-        else:
-            cprint(f"REWARD: {round(reward, 2)}", "white", "on_green" if reward > 0 else "on_red")
         print(f"LOSS: {self.model_loss}")
-        print(f"CROSS-VALIDATION LOSS: {self.model_cross_validation_loss}")
 
     def _initialize_model(self):
         input_layer = Input(shape=self.input_shape)

@@ -17,10 +17,10 @@ frame_handlers:
         interval: 0.1
 
 frame_grabber:
-    redis_key: PROJECT_EC:LATEST_FRAME
+    redis_key: SERPENT:FRAMES
 
 visual_debugger:
-    redis_key_prefix: PROJECT_EC:VISUAL_DEBUGGER
+    redis_key_prefix: SERPENT:VISUAL_DEBUGGER
     available_buckets:
         - flashback_1
         - flashback_2
