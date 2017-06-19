@@ -3,6 +3,7 @@ from lib.game_launcher import GameLauncher, GameLauncherException
 import sys
 import shlex
 import subprocess
+import webbrowser
 
 
 class SteamGameLauncher(GameLauncher):
@@ -21,4 +22,4 @@ class SteamGameLauncher(GameLauncher):
         elif sys.platform == "darwin":
             subprocess.call(shlex.split(f"open steam://run/{app_id}"))
         elif sys.platform == "windows":
-            pass  # ???
+            webbrowser.open(f"steam://run/{app_id}")
