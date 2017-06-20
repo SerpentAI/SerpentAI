@@ -46,6 +46,8 @@ from collections import deque
 
 from datetime import datetime, timedelta
 
+import keras.backend as K
+
 
 class BindingOfIsaacRebirthGameAgent(GameAgent):
 
@@ -131,19 +133,19 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             projectile_keys=["UP", "LEFT", "DOWN", "RIGHT"]
         )
 
-        model_file_path = "datasets/binding_of_isaac_rebirth_boss_1010_dqn_60000_0.1_.h555555"
+        model_file_path = "datasets/binding_of_isaac_rebirth_boss_1010_dqn_100000_0.1_.h5555"
 
         self.dqn = DQN(
             model_file_path=model_file_path if os.path.isfile(model_file_path) else None,
-            input_shape=(67, 120, 8),
+            input_shape=(67, 120, 4),
             input_mapping=input_mapping,
             action_space=action_space,
-            replay_memory_size=1000,
+            replay_memory_size=5000,
             max_steps=100000,
-            observe_steps=1000,
-            batch_size=64,
-            initial_epsilon=0.5,
-            final_epsilon=0.1,
+            observe_steps=5000,
+            batch_size=128,
+            initial_epsilon=1,
+            final_epsilon=0.05,
             override_epsilon=False
         )
 
@@ -204,24 +206,26 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             self.dqn.build_frame_stack(game_frame.eighth_resolution_grayscale_frame)
         else:
             reward = self._calculate_boss_train_reward()
-            self.game_state["rewards"].appendleft(reward)
-            self.game_state["run_reward"] += self.game_state["rewards"][7]
+            self.game_state["run_reward"] += reward
 
-            self.analytics_client.track(event_key="DQN_REWARD", data=float(self.game_state["rewards"][7]))
-
-            self.game_state["activity_log"].appendleft(self.game_state["rewards"][7])
+            self.analytics_client.track(event_key="DQN_REWARD", data=float(reward))
 
             game_frame_buffer = FrameGrabber.get_frames(
-                range(0, 32, 4),
+                [0, 8, 16, 32],
                 game_frame.frame.shape,
                 mode="MINI"
             )
 
             self.dqn.append_to_replay_memory(
                 game_frame_buffer,
-                self.game_state["rewards"][7],
+                reward,
                 terminal=self.game_state["health"] == 0
             )
+
+            replay_memory_observation = self.dqn.replay_memory.memory[self.dqn.replay_memory.index - 1]
+
+            if replay_memory_observation:
+                self.game_state["activity_log"].appendleft(replay_memory_observation[1:3])
 
             # Every 2000 steps, save latest weights to disk
             if self.dqn.current_step % 2000 == 0:
@@ -239,29 +243,30 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             print("\033c" + f"EPISODE START TIME: {self.started_at.isoformat()}")
             print("")
 
-            self.dqn.output_step_data(reward)
+            self.dqn.output_step_data()
 
             print("")
             print(f"CURRENT RUN: {self.game_state['current_run']}")
             print(f"CURRENT RUN REWARD: {self.game_state['run_reward']}")
+            print(f"CURRENT RUN PREDICTED ACTIONS: {self.game_state['run_predicted_actions']}")
+            print(f"AVERAGE FUTURE REWARDS: {self.game_state['previous_run_future_rewards']}")
             print(f"AVERAGE ACTIONS PER SECOND: {self.game_state['average_aps']}")
             print(f"CURRENT HEALTH: {self.game_state['health'][0]}")
             print(f"CURRENT BOSS HEALTH: {self.game_state['boss_health'][0]}")
             print("")
             print(f"LAST RUN DURATION: {self.game_state['last_run_duration']} second(s)")
-            print("")
-
-            # for eps, eta in self.game_state["eta"].items():
-            #     print(f"ESTIMATED TIME TO EPSILON {eps}:\n {eta}")
 
             print("")
-            for reward in self.game_state["activity_log"]:
+            print("DELAYED FRAME PAYOFFS:")
+            print("")
+
+            for action_index, reward in self.game_state["activity_log"]:
                 if reward < 0:
-                    cprint(f"FRAME PAYOFF => Penalty: {reward}", "red")
+                    cprint(f"{self.dqn.get_action_for_index(action_index)}".ljust(22) + f"=>  Penalty: {round(reward, 6)}", "red")
                 elif reward > 0:
-                    cprint(f"FRAME PAYOFF => Reward: {reward}", "green")
+                    cprint(f"{self.dqn.get_action_for_index(action_index)}".ljust(22) + f"=>  Reward: {round(reward, 6)}", "green")
                 else:
-                    print("FRAME PAYOFF => Neutral: 0")
+                    print(f"{self.dqn.get_action_for_index(action_index)}".ljust(22) + "=>  Neutral: 0")
 
             is_boss_dead = self._is_boss_dead(self.game_frame_buffer.previous_game_frame)
 
@@ -281,7 +286,6 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                 gc.collect()
                 gc.disable()
 
-                #epsilon_delta = self.game_state["run_epsilon"] - self.dqn.epsilon_greedy_q_policy.epsilon
                 self.game_state["run_epsilon"] = self.dqn.epsilon_greedy_q_policy.epsilon
 
                 timestamp_delta = timestamp - self.game_state["run_timestamp"]
@@ -292,39 +296,29 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                 self.game_state["average_aps"] = self.game_state["current_run_steps"] / self.game_state["last_run_duration"]
                 self.game_state["current_run_steps"] = 0
 
-                # if epsilon_delta > 0:
-                #     self.game_state["eta"] = dict()
-                #
-                #     self.game_state["eta"][self.dqn.final_epsilon] = self._eta_on_epsilon(
-                #         self.dqn.final_epsilon,
-                #         epsilon_delta,
-                #         timestamp_delta
-                #     )
-                #
-                #     self.game_state["eta"][self.dqn.epsilon_greedy_q_policy.epsilon - 0.1] = self._eta_on_epsilon(
-                #         self.dqn.epsilon_greedy_q_policy.epsilon - 0.1,
-                #         epsilon_delta,
-                #         timestamp_delta
-                #     )
-
                 self.input_controller.release_keys()
                 self.input_controller.tap_key("r", duration=1.5)
 
                 if self.dqn.current_observe_step > self.dqn.observe_steps:
-                    for i in range(50):
+                    for i in range(25):
                         print("\033c")
-                        print(f"TRAINING ON MINI-BATCH: {i + 1}/50")
+                        print(f"TRAINING ON MINI-BATCH: {i + 1}/25")
                         print(f"NEXT RUN: {self.game_state['current_run'] + 1} {'- AI RUN' if (self.game_state['current_run'] + 1) % 20 == 0 else ''}")
 
                         self.dqn.train_on_mini_batch()
 
                     self.analytics_client.track(event_key="DQN_MODEL_LOSS", data=float(self.dqn.model_loss))
+                    self.analytics_client.track(event_key="DQN_MODEL_LEARNING_RATE", data=float(K.get_value(self.dqn.model.optimizer.lr)))
+
+                self.game_state["previous_run_future_rewards"] = self.game_state["run_future_rewards"] / (self.game_state["run_predicted_actions"] or 1000000)
 
                 self.game_state["boss_skull_image"] = None
 
                 self.game_state["run_timestamp"] = datetime.utcnow()
                 self.game_state["current_run"] += 1
                 self.game_state["run_reward"] = 0
+                self.game_state["run_future_rewards"] = 0
+                self.game_state["run_predicted_actions"] = 0
                 self.game_state["rewards"] = collections.deque(np.full((8,), 0), maxlen=8)
                 self.game_state["health"] = collections.deque(np.full((8,), 6), maxlen=8)
                 self.game_state["boss_health"] = collections.deque(np.full((8,), 654), maxlen=8)
@@ -360,13 +354,17 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
         self.dqn.compute_action_type()
 
+        qs = self.dqn.model.predict(self.dqn.frame_stack)
+
         if self.dqn.current_action_type == "RANDOM":
             self.dqn.current_action_index = random.randrange(self.dqn.action_count)
+            self.dqn.maximum_future_rewards = None
         elif self.dqn.current_action_type == "PREDICTED":
-            qs = self.dqn.model.predict(self.dqn.frame_stack)
             self.analytics_client.track(event_key="DQN_FUTURE_REWARDS", data=[float(q) for q in list(qs.reshape((self.dqn.action_count,)))])
 
             self.dqn.current_action_index = np.argmax(qs)
+            self.game_state["run_future_rewards"] += qs[0][self.dqn.current_action_index]
+            self.game_state["run_predicted_actions"] += 1
 
         self.dqn.generate_action()
 
@@ -386,6 +384,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
         self.dqn.next_step()
         self.game_state["current_run_steps"] += 1
+
 
     def handle_context_intro(self, game_frame):
         self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
@@ -496,7 +495,10 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             "current_run_steps": 0,
             "average_aps": 0,
             "rewards": collections.deque(np.full((8,), 0), maxlen=8),
+            "previous_run_future_rewards": 0,
             "run_reward": 0,
+            "run_future_rewards": 0,
+            "run_predicted_actions": 0,
             "run_epsilon": 1.0,
             "run_timestamp": datetime.utcnow(),
             "last_run_duration": 0,
@@ -551,6 +553,10 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         time.sleep(0.5)
 
         # self.input_controller.type_string(f"g c334")
+        # self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
+        # self.input_controller.tap_key(self.input_controller.keyboard.up_key)
+        # self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
+        # self.input_controller.tap_key(self.input_controller.keyboard.up_key)
         # self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
 
         self.input_controller.tap_keys([self.input_controller.keyboard.control_key, "v"])

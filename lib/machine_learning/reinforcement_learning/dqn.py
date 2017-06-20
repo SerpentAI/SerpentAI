@@ -12,6 +12,7 @@ import numpy as np
 
 import random
 import itertools
+import collections
 
 from termcolor import cprint
 
@@ -41,6 +42,7 @@ class DQN:
         self.action_count = len(self.action_space.combinations)
         self.action_input_mapping = self._generate_action_space_combination_input_mapping(input_mapping)
         self.frame_stack = None
+        self.observations = collections.deque(np.full((8,), None, dtype="object"))
         self.max_steps = max_steps
         self.observe_steps = observe_steps or (0.1 * replay_memory_size)
         self.current_observe_step = 0
@@ -92,10 +94,6 @@ class DQN:
             game_frame,
             game_frame,
             game_frame,
-            game_frame,
-            game_frame,
-            game_frame,
-            game_frame,
             game_frame
         ), axis=2)
 
@@ -109,13 +107,21 @@ class DQN:
 
         self.frame_stack = frame_stack.reshape((1,) + frame_stack.shape)
 
-        self.replay_memory.update((
+        observation = [
             previous_frame_stack,
             self.current_action_index,
-            reward,
+            None,
             self.frame_stack,
             terminal
-        ))
+        ]
+
+        self.observations.appendleft(observation)
+
+        replay_memory_observation = self.observations.pop()
+
+        if replay_memory_observation:
+            replay_memory_observation[2] = reward
+            self.replay_memory.update(replay_memory_observation)
 
     def compute_action_type(self):
         use_random = self.epsilon_greedy_q_policy.use_random()
@@ -196,6 +202,11 @@ class DQN:
     def generate_action(self):
         self.current_action = self.action_space.combinations[self.current_action_index]
 
+    def get_action_for_index(self, action_index):
+        special_key_mapping = InputController.human_readable_key_mapping()
+
+        return [(special_key_mapping.get(action_input) or action_input).upper() for action_input in self.action_input_mapping[self.action_space.combinations[action_index]]]
+
     def get_input_values(self):
         return self.action_input_mapping[self.current_action]
 
@@ -211,7 +222,7 @@ class DQN:
 
     def load_model_weights(self, file_path, override_epsilon):
         self.model.load_weights(file_path)
-        self.model.compile(loss="mse", optimizer=Adam(lr=self.model_learning_rate, clipvalue=1))
+        self.model.compile(loss="logcosh", optimizer=Adam(lr=self.model_learning_rate, clipvalue=1))
 
         *args, steps, epsilon, extension = file_path.split("_")
         self.current_step = int(steps)
@@ -220,7 +231,7 @@ class DQN:
             self.previous_epsilon = float(epsilon)
             self.epsilon_greedy_q_policy.epsilon = float(epsilon)
 
-    def output_step_data(self, reward):
+    def output_step_data(self):
         if self.mode == "TRAIN":
             print(f"CURRENT MODE: {self.mode}")
         else:
@@ -256,7 +267,7 @@ class DQN:
         output = Dense(self.action_count)(output)
 
         model = Model(input=input_layer, output=output)
-        model.compile(rmsprop(lr=self.model_learning_rate, clipvalue=1), "mse")
+        model.compile(Adam(lr=self.model_learning_rate, clipvalue=1), "logcosh")
 
         return model
 
