@@ -11,3 +11,5 @@ __pycache__/
 .python-version
 
 *.ipynb
+
+config/config.private.yml
