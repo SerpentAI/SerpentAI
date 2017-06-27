@@ -1,5 +1,22 @@
 # AIsaac - Changelog
 
+## V10
+
+* Major departure from the previous versions!
+* Everything reverted back to pure DQN
+* Implemented Double-DQN (DDQN) for stability
+* Implemented Prioritized Experience Replay (PER)
+* Added record tracking for time alive and lowest boss HP
+* Streaming API has been launched. You can ask for credentials on Twitch or Discord
+
+## V9
+
+* There was a version 9
+
+## V8
+
+* There was a version 8
+
 ## V7
 
 * Now possible to pass a frame cap to the FrameGrabber (default: 30fps)
