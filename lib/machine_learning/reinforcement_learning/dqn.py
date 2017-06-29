@@ -130,8 +130,11 @@ class DQN:
 
         return np.abs(target - previous_target)
 
-    def pick_action(self):
-        self.compute_action_type()
+    def pick_action(self, action_type=None):
+        if action_type is None:
+            self.compute_action_type()
+        else:
+            self.current_action_type = action_type
 
         qs = self.model.predict(self.frame_stack)
 
@@ -254,25 +257,17 @@ class DQN:
         print(f"LOSS: {self.model_loss}")
 
     def _initialize_model(self):
-        input_layer = Input(shape=self.input_shape)
-        
-        tower_1 = Convolution2D(16, 1, 1, border_mode="same", activation="elu")(input_layer)
-        tower_1 = Convolution2D(16, 3, 3, border_mode="same", activation="elu")(tower_1)
-        
-        tower_2 = Convolution2D(16, 1, 1, border_mode="same", activation="elu")(input_layer)
-        tower_2 = Convolution2D(16, 3, 3, border_mode="same", activation="elu")(tower_2)
-        tower_2 = Convolution2D(16, 3, 3, border_mode="same", activation="elu")(tower_2)
-        
-        tower_3 = MaxPooling2D((3, 3), strides=(1, 1), border_mode="same")(input_layer)
-        tower_3 = Convolution2D(16, 1, 1, border_mode="same", activation="elu")(tower_3)
-        
-        merged_layer = merge([tower_1, tower_2, tower_3], mode="concat", concat_axis=1)
-        
-        output = AveragePooling2D((7, 7), strides=(8, 8))(merged_layer)
-        output = Flatten()(output)
-        output = Dense(self.action_count)(output)
+        model = Sequential()
 
-        model = Model(input=input_layer, output=output)
+        model.add(Convolution2D(16, (3, 3), strides=(2, 2), activation="relu", input_shape=self.input_shape, init="uniform", trainable=True))
+        model.add(Convolution2D(32, (3, 3), strides=(2, 2), activation="relu", init="uniform", trainable=True))
+        model.add(Convolution2D(64, (3, 3), strides=(2, 2), activation="relu", init="uniform", trainable=True))
+        model.add(Convolution2D(128, (3, 3), strides=(1, 1), activation="relu", init="uniform"))
+        model.add(Convolution2D(256, (3, 3), strides=(1, 1), activation="relu", init="uniform"))
+        model.add(Flatten())
+        model.add(Dense(512, activation="relu", init="uniform"))
+        model.add(Dense(self.action_count, init="uniform"))
+
         model.compile(Adam(lr=self.model_learning_rate, clipvalue=10), "logcosh")
 
         return model

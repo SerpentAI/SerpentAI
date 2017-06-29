@@ -107,8 +107,11 @@ class DDQN(DQN):
 
         self.model_loss = self.model_online.train_on_batch(inputs, targets)
 
-    def pick_action(self):
-        self.compute_action_type()
+    def pick_action(self, action_type=None):
+        if action_type is None:
+            self.compute_action_type()
+        else:
+            self.current_action_type = action_type
 
         qs = self.model_online.predict(self.frame_stack)
 
