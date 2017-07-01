@@ -3,24 +3,16 @@ redis:
     port: 6379
     db: 0
 
-analytics:
-    host: localhost
-    port: 9999
-    realm: serpent
-    auth:
-        username: backend
-        password: "12345"
-
 frame_handlers:
     COLLECT_FRAMES_FOR_CONTEXT:
         context: character_select_screen
         interval: 0.1
 
 frame_grabber:
-    redis_key: PROJECT_EC:LATEST_FRAME
+    redis_key: SERPENT:FRAMES
 
 visual_debugger:
-    redis_key_prefix: PROJECT_EC:VISUAL_DEBUGGER
+    redis_key_prefix: SERPENT:VISUAL_DEBUGGER
     available_buckets:
         - flashback_1
         - flashback_2

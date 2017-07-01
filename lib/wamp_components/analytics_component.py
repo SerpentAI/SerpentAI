@@ -6,8 +6,7 @@ from autobahn.wamp import auth
 
 from lib.config import config
 
-from redis import StrictRedis
-
+import aioredis
 import json
 
 
@@ -26,8 +25,6 @@ class AnalyticsWAMPComponent(ApplicationSession):
     def __init__(self, c=None):
         super().__init__(c)
 
-        self.redis_client = StrictRedis(**config["redis"])
-
     def onConnect(self):
         self.join(config["analytics"]["realm"], ["wampcra"], config["analytics"]["auth"]["username"])
 
@@ -41,9 +38,17 @@ class AnalyticsWAMPComponent(ApplicationSession):
         return signature.decode('ascii')
 
     async def onJoin(self, details):
+        self.redis_client = await self._initialize_redis_client()
+
         while True:
-            redis_key, event = self.redis_client.brpop("SERPENT:AISAAC_MONSTRO:EVENTS")
+            redis_key, event = await self.redis_client.brpop("SERPENT:AISAAC_MONSTRO:EVENTS")
             event = json.loads(event.decode("utf-8"))
 
             topic = event.pop("project_key")
             self.publish(topic, event)
+
+    async def _initialize_redis_client(self):
+        return await aioredis.create_redis(
+            (config["redis"]["host"], config["redis"]["port"]),
+            loop=asyncio.get_event_loop()
+        )

@@ -1,5 +1,5 @@
 BindingOfIsaacRebirthGameAgentPlugin: {collect_character_interval: 2, collect_frames_interval: 0.1,
-  frame_handler: BOSS_TRAIN, character: ISAAC, difficulty: NORMAL, seed: xh8czefw, boss: 1010, ai_run_sound_path: "/home/serpent/InceptionShort.wav"}
+  frame_handler: BOSS_TRAIN_DDQN, character: ISAAC, difficulty: NORMAL, seed: xh8czefw, boss: 1010, ai_run_sound_path: "/home/serpent/InceptionShort.wav"}
 
 SuperHexagonGameAgentPlugin: {frame_handler: PLAY}
 SuperHexagonGamePlugin: {frame_rate: 3}

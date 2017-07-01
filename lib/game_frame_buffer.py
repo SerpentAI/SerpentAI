@@ -1,3 +1,7 @@
+from lib.visual_debugger.visual_debugger import VisualDebugger
+
+import numpy as np
+
 
 class GameFrameBufferError(BaseException):
     pass
@@ -8,6 +12,8 @@ class GameFrameBuffer:
     def __init__(self, size=5):
         self.size = size
         self.frames = list()
+
+        self.visual_debugger = VisualDebugger()
 
     @property
     def full(self):
@@ -22,3 +28,11 @@ class GameFrameBuffer:
             self.frames = [game_frame] + self.frames[:-1]
         else:
             self.frames = [game_frame] + self.frames
+
+    def to_visual_debugger(self):
+        for i, game_frame in enumerate(self.frames):
+            self.visual_debugger.store_image_data(
+                np.array(game_frame.frame * 255, dtype="uint8"),
+                game_frame.frame.shape,
+                f"frame_{i + 1}"
+            )

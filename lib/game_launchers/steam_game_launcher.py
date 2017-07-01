@@ -28,5 +28,6 @@ class SteamGameLauncher(GameLauncher):
             subprocess.call(shlex.split(f"xdg-open {proto_string}"))
         elif sys.platform == "darwin":
             subprocess.call(shlex.split(f"open {proto_string}"))
-        elif sys.platform == "windows":
+        elif sys.platform == "win32":
             webbrowser.open(f"{proto_string}")
+

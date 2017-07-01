@@ -16,7 +16,7 @@ from lib.game_launchers.steam_game_launcher import SteamGameLauncher
 
 from lib.input_controller import InputController
 
-from lib.game_frame import GameFrame
+from lib.frame_grabber import FrameGrabber
 
 from redis import StrictRedis
 
@@ -174,26 +174,17 @@ class Game(offshoot.Pluggable):
 
     @offshoot.forbidden
     def grab_latest_frame(self):
-        frame_bytes = self.redis_client.get(config["frame_grabber"]["redis_key"])
-        mini_frame_gray_bytes = self.redis_client.get(config["frame_grabber"]["redis_key"] + ":MINI")
-
-        frame_array = np.fromstring(frame_bytes, dtype="uint8").reshape((
-            self.window_geometry.get("height"),
-            self.window_geometry.get("width"),
-            3
-        ))
-
-        mini_frame_gray_array = np.fromstring(mini_frame_gray_bytes, dtype="float16").reshape((
-            self.window_geometry.get("height") // 8,
-            self.window_geometry.get("width") // 8
-        ))
-
-        return GameFrame(
-            frame_array=frame_array,
-            frame_variants={
-                "eighth_grayscale": mini_frame_gray_array
-            }
+        game_frame_buffer = FrameGrabber.get_frames(
+            [0],
+            (
+                self.window_geometry.get("height"),
+                self.window_geometry.get("width"),
+                3
+            ),
+            mode="BOTH"
         )
+
+        return game_frame_buffer.frames[0]
 
     def _handle_signal(self, signum=15, frame=None, do_exit=True):
         if self.frame_grabber_process is not None:
