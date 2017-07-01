@@ -21,5 +21,5 @@ class SteamGameLauncher(GameLauncher):
             subprocess.call(shlex.split(f"xdg-open steam://run/{app_id}"))
         elif sys.platform == "darwin":
             subprocess.call(shlex.split(f"open steam://run/{app_id}"))
-        elif sys.platform == "windows":
+        elif sys.platform == "win32":
             webbrowser.open(f"steam://run/{app_id}")

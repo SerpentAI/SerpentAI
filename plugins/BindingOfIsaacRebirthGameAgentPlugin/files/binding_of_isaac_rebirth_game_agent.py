@@ -139,7 +139,9 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             model_file_path=model_file_path if os.path.isfile(model_file_path) else None,
             input_shape=(67, 120, 4),
             input_mapping=input_mapping,
-            action_space=action_space,
+            action_space=actio
+            intro=self.handle_context_intro,
+            splasn_space,
             replay_memory_size=4000,
             max_steps=100000,
             observe_steps=2000,
@@ -185,9 +187,9 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             input_shape=(67, 120, 4),
             input_mapping=input_mapping,
             action_space=movement_action_space,
-            replay_memory_size=2000,
+            replay_memory_size=4000,
             max_steps=500000,
-            observe_steps=2000,
+            observe_steps=4000,
             batch_size=64,
             initial_epsilon=1,
             final_epsilon=0.1,
@@ -199,9 +201,9 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             input_shape=(67, 120, 4),
             input_mapping=input_mapping,
             action_space=projectile_action_space,
-            replay_memory_size=2000,
+            replay_memory_size=4000,
             max_steps=500000,
-            observe_steps=2000,
+            observe_steps=4000,
             batch_size=64,
             initial_epsilon=1,
             final_epsilon=0.1,
@@ -267,6 +269,12 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             self.dqn_movement.build_frame_stack(game_frame.eighth_resolution_grayscale_frame)
             self.dqn_projectile.frame_stack = self.dqn_movement.frame_stack
         else:
+            game_frame_buffer = FrameGrabber.get_frames(
+                [0, 4, 8, 12],
+                game_frame.frame.shape,
+                mode="MINI"
+            )
+
             if self.dqn_movement.mode == "TRAIN":
                 reward_movement, reward_projectile = self._calculate_boss_train_reward()
 
@@ -275,24 +283,17 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
                 self.analytics_client.track(event_key="DQN_REWARD", data={"movement": reward_movement, "projectile": reward_projectile})
 
-                game_frame_buffer = FrameGrabber.get_frames(
-                    [0, 4, 8, 12],
-                    game_frame.frame.shape,
-                    mode="MINI"
-                )
-
                 self.dqn_movement.append_to_replay_memory(
                     game_frame_buffer,
                     reward_movement,
                     terminal=self.game_state["health"] == 0
                 )
 
-                if (self.dqn_movement.mode == "OBSERVE" and self.dqn_movement.current_observe_step % 4 == 0) or (self.dqn_movement.mode == "TRAIN" and self.dqn_movement.current_step % 4 == 0):
-                    self.dqn_projectile.append_to_replay_memory(
-                        game_frame_buffer,
-                        reward_projectile,
-                        terminal=self.game_state["health"] == 0
-                    )
+                self.dqn_projectile.append_to_replay_memory(
+                    game_frame_buffer,
+                    reward_projectile,
+                    terminal=self.game_state["health"] == 0
+                )
 
                 # Every 2000 steps, save latest weights to disk
                 if self.dqn_movement.current_step % 2000 == 0:
@@ -315,6 +316,9 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                         file_path_prefix=f"datasets/binding_of_isaac_rebirth_boss_{self.config['boss']}_projectile",
                         is_checkpoint=True
                     )
+            elif self.dqn_movement.mode == "RUN":
+                self.dqn_movement.update_frame_stack(game_frame_buffer)
+                self.dqn_projectile.update_frame_stack(game_frame_buffer)
 
             run_time = datetime.now() - self.started_at
 
@@ -330,9 +334,9 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
             print("")
             print(f"CURRENT RUN: {self.game_state['current_run']}")
-            print(f"CURRENT RUN REWARD: {self.game_state['run_reward_movement'] + self.game_state['run_reward_projectile']}")
+            print(f"CURRENT RUN REWARD: {round(self.game_state['run_reward_movement'] + self.game_state['run_reward_projectile'], 2)}")
             print(f"CURRENT RUN PREDICTED ACTIONS: {self.game_state['run_predicted_actions']}")
-            print(f"AVERAGE ACTIONS PER SECOND: {self.game_state['average_aps']}")
+            print(f"AVERAGE ACTIONS PER SECOND: {round(self.game_state['average_aps'], 2)}")
             print(f"CURRENT HEALTH: {self.game_state['health'][0]}")
             print(f"CURRENT BOSS HEALTH: {self.game_state['boss_health'][0]}")
             print("")
@@ -399,9 +403,9 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                 self.input_controller.tap_key("r", duration=1.5)
 
                 if self.dqn_movement.mode == "TRAIN":
-                    for i in range(24):
+                    for i in range(32):
                         print("\033c")
-                        print(f"TRAINING ON MINI-BATCHES: {i + 1}/24")
+                        print(f"TRAINING ON MINI-BATCHES: {i + 1}/32")
                         print(f"NEXT RUN: {self.game_state['current_run'] + 1} {'- AI RUN' if (self.game_state['current_run'] + 1) % 20 == 0 else ''}")
 
                         self.dqn_movement.train_on_mini_batch()
@@ -416,7 +420,8 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
                 self.game_state["run_timestamp"] = datetime.utcnow()
                 self.game_state["current_run"] += 1
-                self.game_state["run_reward"] = 0
+                self.game_state["run_reward_movement"] = 0
+                self.game_state["run_reward_projectile"] = 0
                 self.game_state["run_predicted_actions"] = 0
                 self.game_state["health"] = collections.deque(np.full((8,), 6), maxlen=8)
                 self.game_state["boss_health"] = collections.deque(np.full((8,), 654), maxlen=8)
@@ -459,9 +464,8 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         self.dqn_movement.pick_action()
         self.dqn_movement.generate_action()
 
-        if (self.dqn_movement.mode == "OBSERVE" and self.dqn_movement.current_observe_step % 4 == 0) or (self.dqn_movement.mode == "TRAIN" and self.dqn_movement.current_step % 4 == 0):
-            self.dqn_projectile.pick_action(action_type=self.dqn_movement.current_action_type)
-            self.dqn_projectile.generate_action()
+        self.dqn_projectile.pick_action(action_type=self.dqn_movement.current_action_type)
+        self.dqn_projectile.generate_action()
 
         self.input_controller.handle_keys(self.dqn_movement.get_input_values() + self.dqn_projectile.get_input_values())
 
@@ -469,19 +473,12 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             self.analytics_client.track(
                 event_key="DQN_FUTURE_REWARDS",
                 data={
-                    "movement": [float(q) for q in list(self.dqn_movement.maximum_future_rewards.reshape((self.dqn_movement.action_count,)))]
+                    "movement": [float(q) for q in list(self.dqn_movement.maximum_future_rewards.reshape((self.dqn_movement.action_count,)))],
+                    "projectile": [float(q) for q in list(self.dqn_projectile.maximum_future_rewards.reshape((self.dqn_projectile.action_count,)))]
                 }
             )
 
             self.game_state["run_predicted_actions"] += 1
-
-        if self.dqn_projectile.current_action_type == "PREDICTED":
-            self.analytics_client.track(
-                event_key="DQN_FUTURE_REWARDS",
-                data={
-                    "projectile": [float(q) for q in list(self.dqn_projectile.maximum_future_rewards.reshape((self.dqn_projectile.action_count,)))]
-                }
-            )
 
         self.analytics_client.track(
             event_key="ACTIONS",
@@ -723,7 +720,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         reward_movement = 0
         reward_projectile = 0
 
-        reward_movement -= 1 if self.game_state["health"][1] - self.game_state["health"][0] != 0 else -0.05
-        reward_projectile += 1 if self.game_state["boss_health"][3] - self.game_state["boss_health"][0] else -0.05
+        reward_movement += (-1 if self.game_state["health"][0] < self.game_state["health"][1] else 0.05)
+        reward_projectile += (1 if self.game_state["boss_health"][0] < self.game_state["boss_health"][3] else -0.05)
 
         return reward_movement, reward_projectile

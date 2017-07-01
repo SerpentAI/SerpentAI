@@ -102,13 +102,15 @@ class DQN:
 
         self.frame_stack = frame_stack.reshape((1,) + frame_stack.shape)
 
-    def append_to_replay_memory(self, game_frame_buffer, reward, terminal=False):
-        previous_frame_stack = self.frame_stack
-
+    def update_frame_stack(self, game_frame_buffer):
         game_frames = [game_frame.eighth_resolution_grayscale_frame for game_frame in game_frame_buffer.frames]
         frame_stack = np.stack(game_frames, axis=2)
 
         self.frame_stack = frame_stack.reshape((1,) + frame_stack.shape)
+
+    def append_to_replay_memory(self, game_frame_buffer, reward, terminal=False):
+        previous_frame_stack = self.frame_stack
+        self.update_frame_stack(game_frame_buffer)
 
         observation = [
             previous_frame_stack,
@@ -259,7 +261,7 @@ class DQN:
     def _initialize_model(self):
         model = Sequential()
 
-        model.add(Convolution2D(16, (3, 3), strides=(2, 2), activation="relu", input_shape=self.input_shape, init="uniform", trainable=True))
+        model.add(Convolution2D(16, (3, 3), strides=(2, 2), activation="relu", init="uniform", trainable=True, input_shape=self.input_shape))
         model.add(Convolution2D(32, (3, 3), strides=(2, 2), activation="relu", init="uniform", trainable=True))
         model.add(Convolution2D(64, (3, 3), strides=(2, 2), activation="relu", init="uniform", trainable=True))
         model.add(Convolution2D(128, (3, 3), strides=(1, 1), activation="relu", init="uniform"))
