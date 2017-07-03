@@ -1,6 +1,7 @@
-BindingOfIsaacRebirthGameAgentPlugin: {collect_character_interval: 2, collect_frames_interval: 0.1,
-  frame_handler: BOSS_TRAIN_DDQN, character: ISAAC, difficulty: NORMAL, seed: xh8czefw, boss: 1010, ai_run_sound_path: "/home/serpent/InceptionShort.wav"}
-
+BindingOfIsaacRebirthGameAgentPlugin: {ai_run_sound_path: /home/serpent/InceptionShort.wav,
+  boss: 1010, character: ISAAC, collect_character_interval: 2, collect_frames_interval: 0.1,
+  difficulty: NORMAL, frame_handler: MAZE_TRAIN_DDQN, seed: xh8czefw}
+BindingOfIsaacRebirthGamePlugin: {fps: 4}
 SuperHexagonGameAgentPlugin: {frame_handler: PLAY}
 SuperHexagonGamePlugin: {frame_rate: 3}
 YouMustBuildABoatGamePlugin: {steam_app_id: 290890}

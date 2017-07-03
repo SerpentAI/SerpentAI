@@ -8,7 +8,7 @@ editdistance==0.3.1
 invoke==0.16.3
 PyUserInput==0.1.11
 h5py==2.7.0
-Keras==2.0.4
+Keras==2.0.5
 keras-rl==0.3.0
 tensorflow-gpu==1.1.0
 Cython==0.25.2
@@ -16,3 +16,4 @@ Kivy==1.10.0
 termcolor==1.1.0
 pyperclip==1.5.27
 autobahn==17.6.1
+elasticsearch==5.4.0

@@ -52,7 +52,9 @@
                 }
             ],
             "libraries": [],
-            "config": {}
+            "config": {
+                "fps": 2
+            }
         },
         "BindingOfIsaacRebirthGameAgentPlugin": {
             "name": "BindingOfIsaacRebirthGameAgentPlugin",

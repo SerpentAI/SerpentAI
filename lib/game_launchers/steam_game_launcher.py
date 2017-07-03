@@ -13,21 +13,20 @@ class SteamGameLauncher(GameLauncher):
 
     def launch(self, **kwargs):
         app_id = kwargs.get("app_id")
-        app_args = kwargs.get("app_args")
+        app_args = kwargs.get("app_args", dict())
 
         if app_id is None:
             raise GameLauncherException("An 'app_id' kwarg is required...")
 
-        proto_string = f"steam://run/{app_id}"
+        protocol_string = f"steam://run/{app_id}"
 
         if app_args is not None:
-            args_list = ["--{}={}".format(k, v) for k, v in app_args.items()]
-            proto_string += "/en/" + " ".join(args_list)
+            args_list = [f"--{k}={v}" for k, v in app_args.items()]
+            protocol_string += "/en/" + " ".join(args_list)
 
         if sys.platform in ["linux", "linux2"]:
-            subprocess.call(shlex.split(f"xdg-open {proto_string}"))
+            subprocess.call(shlex.split(f"xdg-open '{protocol_string}'"))
         elif sys.platform == "darwin":
-            subprocess.call(shlex.split(f"open {proto_string}"))
+            subprocess.call(shlex.split(f"open '{protocol_string}'"))
         elif sys.platform == "win32":
-            webbrowser.open(f"{proto_string}")
-
+            webbrowser.open(f"{protocol_string}")

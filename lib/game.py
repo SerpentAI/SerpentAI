@@ -10,13 +10,12 @@ import time
 import re
 import atexit
 
-import numpy as np
-
 from lib.game_launchers.steam_game_launcher import SteamGameLauncher
 
 from lib.input_controller import InputController
 
 from lib.frame_grabber import FrameGrabber
+from lib.game_frame_limiter import GameFrameLimiter
 
 from redis import StrictRedis
 
@@ -31,6 +30,7 @@ class Game(offshoot.Pluggable):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.config = config.get(f"{self.__class__.__name__}Plugin")
 
         self.platform = kwargs.get("platform")
 
@@ -41,6 +41,7 @@ class Game(offshoot.Pluggable):
         self.is_launched = False
 
         self.frame_grabber_process = None
+        self.game_frame_limiter = GameFrameLimiter(fps=self.config.get("fps", 4))
 
         self.redis_client = StrictRedis(**config["redis"])
 
@@ -114,6 +115,8 @@ class Game(offshoot.Pluggable):
         subprocess.call(shlex.split(f"xdotool windowactivate {self.window_id}"))
 
         while True:
+            self.game_frame_limiter.start()
+
             game_frame = self.grab_latest_frame()
             try:
                 if self.is_focused:
@@ -127,6 +130,8 @@ class Game(offshoot.Pluggable):
                 raise e
                 # print(e)
                 # time.sleep(0.1)
+
+            self.game_frame_limiter.stop_and_delay()
 
     @offshoot.forbidden
     def extract_window_geometry(self):

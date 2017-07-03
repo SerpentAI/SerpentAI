@@ -59,6 +59,7 @@ class GameAgent(offshoot.Pluggable):
 
         self.flag = None
 
+        self.uuid = str(uuid.uuid4())
         self.started_at = datetime.now()
 
     @offshoot.forbidden

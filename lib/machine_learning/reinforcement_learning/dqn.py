@@ -7,6 +7,7 @@ from lib.visual_debugger.visual_debugger import VisualDebugger
 from keras.models import Model, Sequential
 from keras.layers import Dense, Activation, Flatten, Convolution2D, MaxPooling2D, AveragePooling2D, Input, merge
 from keras.optimizers import Adam, rmsprop
+from keras.callbacks import TensorBoard
 
 import numpy as np
 
@@ -31,7 +32,7 @@ class DQN:
         final_epsilon=0.1,
         gamma=0.99,
         model_file_path=None,
-        model_learning_rate=1e-4,
+        model_learning_rate=2.5e-4,
         override_epsilon=False
     ):
         self.type = "DQN"
@@ -69,6 +70,9 @@ class DQN:
 
         self.model_loss = 0
 
+        #self.keras_callbacks = list()
+        #self.keras_callbacks.append(TensorBoard(log_dir='/tmp/logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=True, write_images=True, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None))
+
         self.visual_debugger = VisualDebugger()
 
     def enter_train_mode(self):
@@ -80,7 +84,7 @@ class DQN:
 
     def enter_run_mode(self):
         self.previous_epsilon = self.epsilon_greedy_q_policy.epsilon
-        self.epsilon_greedy_q_policy.epsilon = 0
+        self.epsilon_greedy_q_policy.epsilon = 0.01
         self.mode = "RUN"
 
     def next_step(self):
@@ -164,15 +168,6 @@ class DQN:
     def train_on_mini_batch(self):
         mini_batch = self.generate_mini_batch()
 
-        inputs = np.zeros((
-            self.batch_size,
-            self.frame_stack.shape[1],
-            self.frame_stack.shape[2],
-            self.frame_stack.shape[3]
-        ))
-
-        targets = np.zeros((self.batch_size, self.action_count))
-
         flashback_indices = random.sample(range(self.batch_size), 6)
 
         for i in range(0, len(mini_batch)):
@@ -193,22 +188,20 @@ class DQN:
             frame_stack = mini_batch[i][1][3]
             terminal = mini_batch[i][1][4]
 
-            inputs[i:i + 1] = previous_frame_stack
-
-            targets[i] = self.model.predict(previous_frame_stack)
-            previous_target = targets[i, action_index]
+            target = self.model.predict(previous_frame_stack)
+            previous_target = target[action_index]
 
             projected_future_rewards = self.model.predict(frame_stack)
 
             if terminal:
-                targets[i, action_index] = reward
+                target[action_index] = reward
             else:
-                targets[i, action_index] = reward + self.gamma * np.max(projected_future_rewards)
+                target[action_index] = reward + self.gamma * np.max(projected_future_rewards)
 
-            error = np.abs(targets[i, action_index] - previous_target)
+            error = np.abs(target[action_index] - previous_target)
             self.replay_memory.update(mini_batch[i][0], error)
 
-        self.model_loss = self.model.train_on_batch(inputs, targets)
+            self.model.fit(previous_frame_stack, target, epochs=1, verbose=0)
 
     def generate_action(self):
         self.current_action = self.action_space.combinations[self.current_action_index]
@@ -259,18 +252,26 @@ class DQN:
         print(f"LOSS: {self.model_loss}")
 
     def _initialize_model(self):
-        model = Sequential()
+        input_layer = Input(shape=self.input_shape)
 
-        model.add(Convolution2D(16, (3, 3), strides=(2, 2), activation="relu", init="uniform", trainable=True, input_shape=self.input_shape))
-        model.add(Convolution2D(32, (3, 3), strides=(2, 2), activation="relu", init="uniform", trainable=True))
-        model.add(Convolution2D(64, (3, 3), strides=(2, 2), activation="relu", init="uniform", trainable=True))
-        model.add(Convolution2D(128, (3, 3), strides=(1, 1), activation="relu", init="uniform"))
-        model.add(Convolution2D(256, (3, 3), strides=(1, 1), activation="relu", init="uniform"))
-        model.add(Flatten())
-        model.add(Dense(512, activation="relu", init="uniform"))
-        model.add(Dense(self.action_count, init="uniform"))
+        tower_1 = Convolution2D(16, 1, 1, border_mode="same", activation="elu")(input_layer)
+        tower_1 = Convolution2D(16, 3, 3, border_mode="same", activation="elu")(tower_1)
 
-        model.compile(Adam(lr=self.model_learning_rate, clipvalue=10), "logcosh")
+        tower_2 = Convolution2D(16, 1, 1, border_mode="same", activation="elu")(input_layer)
+        tower_2 = Convolution2D(16, 3, 3, border_mode="same", activation="elu")(tower_2)
+        tower_2 = Convolution2D(16, 3, 3, border_mode="same", activation="elu")(tower_2)
+
+        tower_3 = MaxPooling2D((3, 3), strides=(1, 1), border_mode="same")(input_layer)
+        tower_3 = Convolution2D(16, 1, 1, border_mode="same", activation="elu")(tower_3)
+
+        merged_layer = merge([tower_1, tower_2, tower_3], mode="concat", concat_axis=1)
+
+        output = AveragePooling2D((7, 7), strides=(8, 8))(merged_layer)
+        output = Flatten()(output)
+        output = Dense(self.action_count)(output)
+
+        model = Model(input=input_layer, output=output)
+        model.compile(rmsprop(lr=self.model_learning_rate, clipvalue=1), "mse")
 
         return model
 

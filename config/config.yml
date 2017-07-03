@@ -3,6 +3,10 @@ redis:
     port: 6379
     db: 0
 
+elasticsearch:
+    hosts:
+        - localhost
+
 frame_handlers:
     COLLECT_FRAMES_FOR_CONTEXT:
         context: character_select_screen

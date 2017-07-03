@@ -1,16 +1,16 @@
 import asyncio
 
 from autobahn.asyncio.wamp import ApplicationSession, ApplicationRunner
-from autobahn.wamp.types import RegisterOptions, SubscribeOptions
 from autobahn.wamp import auth
+
+from elasticsearch import Elasticsearch
 
 from lib.config import config
 
-import aioredis
-import json
+import uuid
 
 
-class AnalyticsComponent:
+class AnalyticsElasticsearchComponent:
     @classmethod
     def run(cls):
         print(f"Starting {cls.__name__}...")
@@ -18,12 +18,15 @@ class AnalyticsComponent:
         url = "ws://%s:%s" % (config["analytics"]["host"], config["analytics"]["port"])
 
         runner = ApplicationRunner(url=url, realm=config["analytics"]["realm"])
-        runner.run(AnalyticsWAMPComponent)
+        runner.run(AnalyticsElasticsearchWAMPComponent)
 
 
-class AnalyticsWAMPComponent(ApplicationSession):
+class AnalyticsElasticsearchWAMPComponent(ApplicationSession):
     def __init__(self, c=None):
         super().__init__(c)
+
+        self.es_client = Elasticsearch(hosts=config["elasticsearch"]["hosts"])
+        self.event_buffer = list()
 
     def onConnect(self):
         self.join(config["analytics"]["realm"], ["wampcra"], config["analytics"]["auth"]["username"])
@@ -38,17 +41,21 @@ class AnalyticsWAMPComponent(ApplicationSession):
         return signature.decode('ascii')
 
     async def onJoin(self, details):
-        self.redis_client = await self._initialize_redis_client()
 
-        while True:
-            redis_key, event = await self.redis_client.brpop("SERPENT:AISAAC_MAZE:EVENTS")
-            event = json.loads(event.decode("utf-8"))
+        async def on_event_message(event):
+            if not isinstance(event, dict):
+                return None
 
-            topic = event.pop("project_key")
-            self.publish(topic, event)
+            event["uuid"] = str(uuid.uuid4())
 
-    async def _initialize_redis_client(self):
-        return await aioredis.create_redis(
-            (config["redis"]["host"], config["redis"]["port"]),
-            loop=asyncio.get_event_loop()
+            self.es_client.index(
+                index=f"serpent:{config['analytics']['topic']}:events".lower(),
+                doc_type="event",
+                body=event,
+                id=event["uuid"]
+            )
+
+        self.subscribe(
+            on_event_message,
+            config["analytics"]["topic"]
         )

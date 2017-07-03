@@ -1,6 +1,7 @@
 from lib.game_agent import GameAgent
 
 import lib.cv
+import lib.ocr
 
 from lib.analytics_client import AnalyticsClient
 from lib.frame_grabber import FrameGrabber
@@ -56,11 +57,13 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         self.frame_handlers["GAME_TRAIN"] = self.handle_game_train
         self.frame_handlers["BOSS_TRAIN_DQN"] = self.handle_boss_train_dqn
         self.frame_handlers["BOSS_TRAIN_DDQN"] = self.handle_boss_train_dqn
+        self.frame_handlers["MAZE_TRAIN_DDQN"] = self.handle_maze_train_ddqn
 
         self.frame_handler_setups["PLAY"] = self.setup_play
         self.frame_handler_setups["GAME_TRAIN"] = self.setup_game_train
         self.frame_handler_setups["BOSS_TRAIN_DQN"] = self.setup_boss_train_dqn
         self.frame_handler_setups["BOSS_TRAIN_DDQN"] = self.setup_boss_train_ddqn
+        self.frame_handler_setups["MAZE_TRAIN_DDQN"] = self.setup_maze_train_ddqn
 
         self.game_state = None
         self._reset_game_state()
@@ -139,9 +142,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             model_file_path=model_file_path if os.path.isfile(model_file_path) else None,
             input_shape=(67, 120, 4),
             input_mapping=input_mapping,
-            action_space=actio
-            intro=self.handle_context_intro,
-            splasn_space,
+            action_space=action_space,
             replay_memory_size=4000,
             max_steps=100000,
             observe_steps=2000,
@@ -213,28 +214,46 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         pyperclip.set_clipboard("xsel")
         pyperclip.copy(f"goto s.boss.{str(self.config['boss'])}")
 
+    def setup_maze_train_ddqn(self):
+        self.analytics_client = AnalyticsClient(project_key="AISAAC_MAZE")
+
+        plugin_path = offshoot.config["file_paths"]["plugins"]
+
+        ocr_classifier_path = f"{plugin_path}/BindingOfIsaacRebirthGameAgentPlugin/files/ml_models/binding_of_isaac_rebirth_ocr.model"
+        self.machine_learning_models["ocr_classifier"] = self.load_machine_learning_model(ocr_classifier_path)
+
+        input_mapping = {
+            "W": ["w"],
+            "A": ["a"],
+            "S": ["s"],
+            "D": ["d"]
+        }
+
+        action_space = KeyboardMouseActionSpace(
+            directional_keys=["W", "A", "S", "D"]
+        )
+
+        model_file_path = "datasets/binding_of_isaac_rebirth_boss_1010_dqn_100000_0.1_.h5555"
+
+        self.dqn = DDQN(
+            model_file_path=model_file_path if os.path.isfile(model_file_path) else None,
+            input_shape=(67, 120, 4),
+            input_mapping=input_mapping,
+            action_space=action_space,
+            replay_memory_size=5000,
+            max_steps=100000,
+            observe_steps=500,
+            batch_size=32,
+            initial_epsilon=0.5,
+            final_epsilon=0.01,
+            override_epsilon=False
+        )
+
+        pyperclip.set_clipboard("xsel")
+        pyperclip.copy(f"luarun resources/scripts/aisaac.lua")
+
     def handle_play(self, game_frame):
         pass
-
-        # if self.game_frame_buffer.previous_game_frame:
-        #     self.game_frame_ssim = game_frame.compare_ssim(self.game_frame_buffer.previous_game_frame)
-        # else:
-        #     self.game_frame_ssim = 0.0
-        #
-        # if self.game_context is None or self.game_frame_ssim <= 0.75:
-        #     previous_context = self.game_context
-        #     self.game_context = self.machine_learning_models["context_classifier"].predict(game_frame.frame)
-        #
-        #     if self.game_context == "character_select_screen":
-        #         self.game_state["character_select_generator"] = itertools.cycle(self.characters)
-        #     elif self.game_context == "game":
-        #         if self.game_context != previous_context:
-        #             self.flag = "ENTERING_GAME"
-        #             print("setting ENTERING_GAME")
-        #             time.sleep(3)
-        #             return None
-        #
-        # self.game_context_handlers.get(self.game_context, lambda gf: True)(game_frame)
 
     def handle_game_train(self, game_frame):
         pass
@@ -270,7 +289,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             self.dqn_projectile.frame_stack = self.dqn_movement.frame_stack
         else:
             game_frame_buffer = FrameGrabber.get_frames(
-                [0, 4, 8, 12],
+                [0, 2, 4, 6],
                 game_frame.frame.shape,
                 mode="MINI"
             )
@@ -286,13 +305,13 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
                 self.dqn_movement.append_to_replay_memory(
                     game_frame_buffer,
                     reward_movement,
-                    terminal=self.game_state["health"] == 0
+                    terminal=self.game_state["health"][0] == 0
                 )
 
                 self.dqn_projectile.append_to_replay_memory(
                     game_frame_buffer,
                     reward_projectile,
-                    terminal=self.game_state["health"] == 0
+                    terminal=self.game_state["health"][0] == 0
                 )
 
                 # Every 2000 steps, save latest weights to disk
@@ -498,6 +517,225 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
 
         self.game_state["current_run_steps"] += 1
 
+    def handle_maze_train_ddqn(self, game_frame):
+        gc.disable()
+
+        if self.dqn.first_run:
+            self.dqn.update_target_model()
+
+            self.input_controller.tap_key("r", duration=1.5)
+            self._setup_maze()
+
+            self.dqn.first_run = False
+            return None
+
+        hearts = frame_to_hearts(game_frame.frame, self.game)
+
+        # Check for Curse of Unknown
+        if not len(hearts):
+            self.input_controller.tap_key("r", duration=1.5)
+            return None
+
+        self.game_state["health"].appendleft(24 - hearts.count(None))
+
+        coin_words = lib.ocr.words_in_image_region(
+            game_frame.frame,
+            self.game.screen_regions["HUD_COINS"],
+            self.machine_learning_models["ocr_classifier"],
+            word_window_size=(1, 10)
+        )
+
+        if len(coin_words):
+            try:
+                self.game_state["coins"].appendleft(int(coin_words[0]))
+
+                if self.game_state["coins"][0] > self.game_state["coins"][1]:
+                    self.analytics_client.track(
+                        event_key="COIN_PICKUP",
+                        data={
+                            "count": self.game_state["coins"][0],
+                            "game_agent": self.uuid,
+                            "run": self.game_state["current_run"],
+                            "run_type": self.dqn.mode,
+                            "run_seconds": (datetime.utcnow() - self.game_state["run_timestamp"]).seconds
+                        }
+                    )
+            except ValueError:
+                pass
+
+        if self.dqn.frame_stack is None:
+            self.dqn.build_frame_stack(game_frame.eighth_resolution_grayscale_frame)
+        else:
+            game_frame_buffer = FrameGrabber.get_frames(
+                [0, 2, 4, 6],
+                game_frame.frame.shape,
+                mode="MINI"
+            )
+
+            if self.dqn.mode in ["TRAIN", "OBSERVE"]:
+                reward = self._calculate_maze_train_reward()
+
+                self.game_state["run_reward"] += reward
+
+                self._set_is_maze_terminal()
+
+                self.dqn.append_to_replay_memory(
+                    game_frame_buffer,
+                    reward,
+                    terminal=self.game_state["is_terminal"][0]
+                )
+
+                # Every 2000 steps, save latest weights to disk
+                if self.dqn.current_step % 2000 == 0:
+                    self.dqn.save_model_weights(
+                        file_path_prefix=f"datasets/binding_of_isaac_rebirth_maze"
+                    )
+            elif self.dqn.mode == "RUN":
+                self._set_is_maze_terminal()
+                self.dqn.update_frame_stack(game_frame_buffer)
+
+            run_time = datetime.now() - self.started_at
+
+            print("\033c" + f"SESSION RUN TIME: {run_time.days} days, {run_time.seconds // 3600} hours, {(run_time.seconds // 60) % 60} minutes, {run_time.seconds % 60} seconds")
+            print("")
+
+            print("NEURAL NETWORK:\n")
+            self.dqn.output_step_data()
+
+            print("")
+            print(f"CURRENT RUN: {self.game_state['current_run']}")
+            print(f"CURRENT RUN REWARD: {round(self.game_state['run_reward'], 3)}")
+            print(f"CURRENT RUN PREDICTED ACTIONS: {self.game_state['run_predicted_actions']}")
+            print(f"AVERAGE ACTIONS PER SECOND: {round(self.game_state['average_aps'], 2)}")
+            print(f"CURRENT HEALTH: {self.game_state['health'][0]}")
+            print("")
+            print(f"LAST RUN DURATION: {self.game_state['last_run_duration']} seconds")
+
+            if self.game_state["is_terminal"][0]:
+                self.analytics_client.track(
+                    event_key="ACTIONS",
+                    data={
+                        "actions": [],
+                        "action_type": self.dqn.current_action_type,
+                        "game_agent": self.uuid,
+                        "run": self.game_state["current_run"],
+                        "run_type": self.dqn.mode,
+                        "run_seconds": (datetime.utcnow() - self.game_state["run_timestamp"]).seconds
+                    }
+                )
+
+                print("\033c")
+                timestamp = datetime.utcnow()
+
+                gc.enable()
+                gc.collect()
+                gc.disable()
+
+                timestamp_delta = timestamp - self.game_state["run_timestamp"]
+                self.game_state["last_run_duration"] = timestamp_delta.seconds
+
+                self.analytics_client.track(
+                    event_key="END_RUN",
+                    data={
+                        "run_duration": self.game_state["last_run_duration"],
+                        "game_agent": self.uuid,
+                        "run": self.game_state["current_run"],
+                        "run_type": self.dqn.mode,
+                        "run_seconds": (datetime.utcnow() - self.game_state["run_timestamp"]).seconds,
+                        "run_reward": self.game_state["run_reward"],
+                        "run_coins": self.game_state["coins"][0],
+                        "end_reason": self.game_state["is_terminal"][1]
+                    }
+                )
+
+                # Compute APS
+                self.game_state["average_aps"] = self.game_state["current_run_steps"] / self.game_state["last_run_duration"]
+                self.game_state["current_run_steps"] = 0
+
+                self.input_controller.release_keys()
+
+                if self.dqn.mode == "TRAIN":
+                    for i in range(10):
+                        print("\033c")
+                        print(f"TRAINING ON MINI-BATCHES: {i + 1}/10")
+                        print(f"NEXT RUN: {self.game_state['current_run'] + 1} {'- AI RUN' if (self.game_state['current_run'] + 1) % 50 == 0 else ''}")
+
+                        self.dqn.train_on_mini_batch()
+
+                self.game_state["boss_skull_image"] = None
+
+                self.game_state["run_timestamp"] = datetime.utcnow()
+                self.game_state["current_run"] += 1
+                self.game_state["run_reward"] = 0
+                self.game_state["run_reward_movement"] = 0
+                self.game_state["run_reward_projectile"] = 0
+                self.game_state["run_predicted_actions"] = 0
+                self.game_state["health"] = collections.deque(np.full((8,), 2), maxlen=8)
+                self.game_state["boss_health"] = collections.deque(np.full((8,), 654), maxlen=8)
+                self.game_state["coins"] = collections.deque(np.full((8,), 0), maxlen=8)
+
+                if self.dqn.mode in ["TRAIN", "RUN"]:
+                    if self.game_state["current_run"] > 0 and self.game_state["current_run"] % 500 == 0:
+                        if self.dqn.type == "DDQN":
+                            self.dqn.update_target_model()
+
+                    if self.game_state["current_run"] > 0 and self.game_state["current_run"] % 50 == 0:
+                        self.dqn.enter_run_mode()
+                    else:
+                        self.dqn.enter_train_mode()
+
+                    self.analytics_client.track(
+                        event_key="NEW_RUN",
+                        data={
+                            "epsilon": self.dqn.epsilon_greedy_q_policy.epsilon,
+                            "game_agent": self.uuid,
+                            "run": self.game_state["current_run"],
+                            "run_type": self.dqn.mode,
+                            "run_seconds": 0
+                        }
+                    )
+
+                self.input_controller.tap_key("r", duration=1.5)
+                self._setup_maze()
+
+                return None
+
+        self.dqn.pick_action()
+        self.dqn.generate_action()
+
+        self.input_controller.handle_keys(self.dqn.get_input_values())
+
+        if self.dqn.current_action_type == "PREDICTED":
+            self.analytics_client.track(
+                event_key="DQN_FUTURE_REWARDS",
+                data={
+                    "rewards": [float(q) for q in list(self.dqn.maximum_future_rewards.reshape((self.dqn.action_count,)))],
+                    "game_agent": self.uuid,
+                    "run": self.game_state["current_run"],
+                    "run_type": self.dqn.mode,
+                    "run_seconds": (datetime.utcnow() - self.game_state["run_timestamp"]).seconds
+                }
+            )
+
+            self.game_state["run_predicted_actions"] += 1
+
+        self.analytics_client.track(
+            event_key="ACTIONS",
+            data={
+                "actions": [(self.input_controller.human_readable_key_mapping().get(input_value) or input_value).upper() for input_value in self.dqn.get_input_values()],
+                "action_type": self.dqn.current_action_type,
+                "game_agent": self.uuid,
+                "run": self.game_state["current_run"],
+                "run_type": self.dqn.mode,
+                "run_seconds": (datetime.utcnow() - self.game_state["run_timestamp"]).seconds
+            }
+        )
+
+        self.dqn.erode_epsilon(factor=1)
+
+        self.dqn.next_step()
+        self.game_state["current_run_steps"] += 1
+
     def handle_context_intro(self, game_frame):
         self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
         time.sleep(1)
@@ -587,7 +825,8 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         self.game_state = {
             "character_select_generator": itertools.cycle(self.characters),
             "seed_entered": False,
-            "health": collections.deque(np.full((8,), 6), maxlen=8),
+            "health": collections.deque(np.full((8,), 2), maxlen=8),
+            "coins": collections.deque(np.full((8,), 0), maxlen=8),
             "inventory": {
                 "pickups": {
                     "coins": 0,
@@ -606,6 +845,7 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             "current_run": 1,
             "current_run_steps": 0,
             "average_aps": 0,
+            "run_reward": 0,
             "run_reward_movement": 0,
             "run_reward_projectile": 0,
             "run_future_rewards": 0,
@@ -617,7 +857,8 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
             "random_time_alive": None,
             "random_time_alives": list(),
             "random_boss_hp": None,
-            "random_boss_hps": list()
+            "random_boss_hps": list(),
+            "is_terminal": (False, None)
         }
 
     def _update_current_room(self, game_frame):
@@ -683,6 +924,14 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
         time.sleep(0.2)
 
+    def _setup_maze(self):
+        self.input_controller.tap_key("~")
+        time.sleep(0.3)
+        self.input_controller.tap_keys([self.input_controller.keyboard.control_key, "v"])
+        self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
+        self.input_controller.tap_key(self.input_controller.keyboard.enter_key)
+        time.sleep(1.5)
+
     def _get_boss_health(self, game_frame):
         gray_boss_health_bar = lib.cv.extract_region_from_image(
             game_frame.grayscale_frame,
@@ -724,3 +973,24 @@ class BindingOfIsaacRebirthGameAgent(GameAgent):
         reward_projectile += (1 if self.game_state["boss_health"][0] < self.game_state["boss_health"][3] else -0.05)
 
         return reward_movement, reward_projectile
+
+    def _calculate_maze_train_reward(self):
+        reward = -0.001
+
+        reward += (0.201 if self.game_state["coins"][0] > self.game_state["coins"][1] else 0)
+        reward += (1.001 if self.game_state["health"][0] > self.game_state["health"][1] else 0)
+        reward += (-0.999 if self.game_state["health"][0] < self.game_state["health"][1] else 0)
+
+        return reward
+
+    def _set_is_maze_terminal(self):
+        reason = None
+
+        if self.game_state["health"][0] <= 0:
+            reason = "DEATH"
+        elif self.game_state["health"][0] > self.game_state["health"][1]:
+            reason = "WIN"
+        elif (datetime.utcnow() - self.game_state["run_timestamp"]).seconds >= 30:
+            reason = "TIME"
+
+        self.game_state["is_terminal"] = (reason is not None, reason)

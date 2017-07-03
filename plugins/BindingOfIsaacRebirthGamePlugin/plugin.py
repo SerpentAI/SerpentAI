@@ -12,7 +12,7 @@ class BindingOfIsaacRebirthGamePlugin(offshoot.Plugin):
     ]
 
     config = {
-
+        "fps": 2
     }
 
     @classmethod

@@ -60,15 +60,6 @@ class DDQN(DQN):
     def train_on_mini_batch(self):
         mini_batch = self.generate_mini_batch()
 
-        inputs = np.zeros((
-            self.batch_size,
-            self.frame_stack.shape[1],
-            self.frame_stack.shape[2],
-            self.frame_stack.shape[3]
-        ))
-
-        targets = np.zeros((self.batch_size, self.action_count))
-
         flashback_indices = random.sample(range(self.batch_size), 6)
 
         for i in range(0, len(mini_batch)):
@@ -89,23 +80,23 @@ class DDQN(DQN):
             frame_stack = mini_batch[i][1][3]
             terminal = mini_batch[i][1][4]
 
-            inputs[i:i + 1] = previous_frame_stack
-
-            targets[i] = self.model_online.predict(previous_frame_stack)
-            previous_target = targets[i, action_index]
+            target = self.model_online.predict(previous_frame_stack)
+            previous_target = target[0][action_index]
 
             if terminal:
-                targets[i, action_index] = reward
+                target[0][action_index] = reward
             else:
                 best_action = np.argmax(self.model_online.predict(frame_stack))
                 q = self.model.predict(frame_stack)[0][best_action]
 
-                targets[i, action_index] = reward + self.gamma * q
+                target[0][action_index] = reward + self.gamma * q
 
-            error = np.abs(targets[i, action_index] - previous_target)
+            error = np.abs(target[0][action_index] - previous_target)
             self.replay_memory.update(mini_batch[i][0], error)
 
-        self.model_loss = self.model_online.train_on_batch(inputs, targets)
+            self.model_online.fit(previous_frame_stack, target, epochs=1, verbose=0)
+
+        self.model_loss = 0
 
     def pick_action(self, action_type=None):
         if action_type is None:
