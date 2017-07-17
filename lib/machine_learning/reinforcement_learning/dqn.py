@@ -110,7 +110,7 @@ class DQN:
         game_frames = [game_frame.eighth_resolution_grayscale_frame for game_frame in game_frame_buffer.frames]
         frame_stack = np.stack(game_frames, axis=2)
 
-        self.frame_stack = frame_stack.reshape((1,) + frame_stack.shape)
+        self.frame_stack = frame_stack.res
 
     def append_to_replay_memory(self, game_frame_buffer, reward, terminal=False):
         previous_frame_stack = self.frame_stack

@@ -13,7 +13,7 @@ class SteamGameLauncher(GameLauncher):
 
     def launch(self, **kwargs):
         app_id = kwargs.get("app_id")
-        app_args = kwargs.get("app_args", dict())
+        app_args = kwargs.get("app_args")
 
         if app_id is None:
             raise GameLauncherException("An 'app_id' kwarg is required...")

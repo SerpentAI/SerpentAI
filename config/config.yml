@@ -9,7 +9,7 @@ elasticsearch:
 
 frame_handlers:
     COLLECT_FRAMES_FOR_CONTEXT:
-        context: character_select_screen
+        context: boat
         interval: 0.1
 
 frame_grabber:
@@ -18,9 +18,8 @@ frame_grabber:
 visual_debugger:
     redis_key_prefix: SERPENT:VISUAL_DEBUGGER
     available_buckets:
-        - flashback_1
-        - flashback_2
-        - flashback_3
-        - flashback_4
-        - flashback_5
-        - flashback_6
+        - region_0
+        - region_1
+        - region_2
+        - region_3
+        - region_4

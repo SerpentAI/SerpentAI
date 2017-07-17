@@ -11,7 +11,7 @@
             ],
             "libraries": [],
             "config": {
-                "steam_app_id": 290890
+                "fps": 2
             }
         },
         "SuperHexagonGamePlugin": {
@@ -62,6 +62,22 @@
             "files": [
                 {
                     "path": "binding_of_isaac_rebirth_game_agent.py",
+                    "pluggable": "GameAgent"
+                }
+            ],
+            "libraries": [],
+            "config": {
+                "frame_handler": "COLLECT_FRAMES",
+                "collect_frames_interval": 1,
+                "collect_character_interval": 10
+            }
+        },
+        "YouMustBuildABoatGameAgentPlugin": {
+            "name": "YouMustBuildABoatGameAgentPlugin",
+            "version": "0.1.0",
+            "files": [
+                {
+                    "path": "you_must_build_a_boat_game_agent.py",
                     "pluggable": "GameAgent"
                 }
             ],

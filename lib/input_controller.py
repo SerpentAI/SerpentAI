@@ -13,7 +13,13 @@ class InputController:
         self.game_window_id = game_window_id
 
         self.keyboard = PyKeyboard()
+
         self.mouse = PyMouse()
+        self.mouse_buttons = {
+            "LEFT": 1,
+            "MIDDLE": 3,
+            "RIGHT": 2
+        }
 
         self.previous_key_collection_set = set()
 
@@ -21,6 +27,8 @@ class InputController:
     def game_is_focused(self):
         focused_window_id = subprocess.check_output(shlex.split("xdotool getwindowfocus")).decode("utf-8").strip()
         return focused_window_id == self.game_window_id
+
+    # Keyboard Actions
 
     def handle_keys(self, key_collection):
         key_collection_set = set(key_collection)
@@ -76,6 +84,21 @@ class InputController:
         if self.game_is_focused:
             for character in string:
                 self.tap_key(character, duration=duration)
+
+    # Mouse Actions
+    def click(self, button="LEFT", y=None, x=None):
+        self.mouse.click(x=x, y=y, button=self.mouse_buttons.get(button, 1))
+
+    def click_screen_region(self, button="LEFT", screen_region=None, game=None):
+        screen_region_coordinates = game.screen_regions.get(screen_region)
+
+        x = (screen_region_coordinates[1] + screen_region_coordinates[3]) // 2
+        x += game.window_geometry["x_offset"]
+
+        y = (screen_region_coordinates[0] + screen_region_coordinates[2]) // 2
+        y += game.window_geometry["y_offset"]
+
+        self.mouse.click(x, y, self.mouse_buttons.get(button, 1))
 
     @staticmethod
     def human_readable_key_mapping():

@@ -8,6 +8,7 @@ import signal
 import shlex
 import time
 import re
+import os, os.path
 import atexit
 
 from lib.game_launchers.steam_game_launcher import SteamGameLauncher
@@ -16,6 +17,11 @@ from lib.input_controller import InputController
 
 from lib.frame_grabber import FrameGrabber
 from lib.game_frame_limiter import GameFrameLimiter
+
+import skimage.io
+import skimage.color
+
+import numpy as np
 
 from redis import StrictRedis
 
@@ -42,6 +48,8 @@ class Game(offshoot.Pluggable):
 
         self.frame_grabber_process = None
         self.game_frame_limiter = GameFrameLimiter(fps=self.config.get("fps", 4))
+
+        self.sprites = self._discover_sprites()
 
         self.redis_client = StrictRedis(**config["redis"])
 
@@ -190,6 +198,28 @@ class Game(offshoot.Pluggable):
         )
 
         return game_frame_buffer.frames[0]
+
+    def _discover_sprites(self):
+        plugin_path = offshoot.config["file_paths"]["plugins"]
+        sprites = dict()
+
+        sprite_path = f"{plugin_path}/{self.__class__.__name__}Plugin/files/data/sprites"
+
+        if os.path.isdir(sprite_path):
+            files = os.scandir(sprite_path)
+
+            for file in files:
+                if file.name.endswith(".png"):
+                    sprite_name = file.name.split("/")[-1].replace(".png", "").upper()
+                    sprite_image_data = skimage.io.imread(f"{sprite_path}/{file.name}")
+
+                    sprites[sprite_name] = sprite_image_data[:, :, :3]
+                    sprites[f"{sprite_name}_GRAYSCALE"] = np.array(
+                        skimage.color.rgb2gray(sprite_image_data[:, :, :3]) * 255,
+                        dtype="uint8"
+                    )
+
+        return sprites
 
     def _handle_signal(self, signum=15, frame=None, do_exit=True):
         if self.frame_grabber_process is not None:

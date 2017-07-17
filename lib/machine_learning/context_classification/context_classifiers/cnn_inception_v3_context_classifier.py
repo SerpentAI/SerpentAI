@@ -33,7 +33,7 @@ class CNNInceptionV3ContextClassifier(ContextClassifier):
         output = GlobalAveragePooling2D()(output)
         output = Dense(1024, activation='relu')(output)
 
-        predictions = Dense(7, activation='softmax')(output)
+        predictions = Dense(len(self.training_generator.class_indices), activation='softmax')(output)
         self.classifier = Model(inputs=base_model.input, outputs=predictions)
 
         for layer in base_model.layers:
@@ -48,7 +48,7 @@ class CNNInceptionV3ContextClassifier(ContextClassifier):
         self.classifier.fit_generator(
             self.training_generator,
             samples_per_epoch=self.training_sample_count,
-            nb_epoch=3,
+            nb_epoch=10,
             validation_data=self.validation_generator,
             nb_val_samples=self.validation_sample_count,
             class_weight="auto"
