@@ -1,6 +1,8 @@
 from pymouse import PyMouse
 from pykeyboard import PyKeyboard
 
+import pyautogui
+
 import time
 
 import subprocess
@@ -16,9 +18,9 @@ class InputController:
 
         self.mouse = PyMouse()
         self.mouse_buttons = {
-            "LEFT": 1,
-            "MIDDLE": 3,
-            "RIGHT": 2
+            "LEFT": "left",
+            "MIDDLE": "middle",
+            "RIGHT": "right"
         }
 
         self.previous_key_collection_set = set()
@@ -87,7 +89,8 @@ class InputController:
 
     # Mouse Actions
     def click(self, button="LEFT", y=None, x=None):
-        self.mouse.click(x=x, y=y, button=self.mouse_buttons.get(button, 1))
+        pyautogui.moveTo(x, y)
+        pyautogui.click(button=self.mouse_buttons.get(button, "left"))
 
     def click_screen_region(self, button="LEFT", screen_region=None, game=None):
         screen_region_coordinates = game.screen_regions.get(screen_region)
@@ -98,7 +101,30 @@ class InputController:
         y = (screen_region_coordinates[0] + screen_region_coordinates[2]) // 2
         y += game.window_geometry["y_offset"]
 
-        self.mouse.click(x, y, self.mouse_buttons.get(button, 1))
+        self.click(button=button, y=y, x=x)
+
+    def drag(self, button="LEFT", x0=None, y0=None, x1=None, y1=None):
+        pass
+
+    def drag_screen_region_to_screen_region(self, start_screen_region=None, end_screen_region=None, duration=1, offset=(0, 0), game=None):
+        start_screen_region_coordinates = self._extract_screen_region_coordinates(start_screen_region, game=game)
+        end_screen_region_coordinates = self._extract_screen_region_coordinates(end_screen_region, game=game)
+
+        pyautogui.moveTo(*start_screen_region_coordinates)
+
+        coordinates = (end_screen_region_coordinates[0] + offset[0], end_screen_region_coordinates[1] + offset[1])
+        pyautogui.dragTo(*coordinates, duration=duration)
+
+    def _extract_screen_region_coordinates(self, screen_region, game=None):
+        screen_region_coordinates = game.screen_regions.get(screen_region)
+
+        x = (screen_region_coordinates[1] + screen_region_coordinates[3]) // 2
+        x += game.window_geometry["x_offset"]
+
+        y = (screen_region_coordinates[0] + screen_region_coordinates[2]) // 2
+        y += game.window_geometry["y_offset"]
+
+        return x, y
 
     @staticmethod
     def human_readable_key_mapping():

@@ -4,6 +4,6 @@ BindingOfIsaacRebirthGameAgentPlugin: {ai_run_sound_path: /home/serpent/Inceptio
 BindingOfIsaacRebirthGamePlugin: {fps: 4}
 SuperHexagonGameAgentPlugin: {frame_handler: COLLECT_FRAMES_FOR_CONTEXT}
 SuperHexagonGamePlugin: {frame_rate: 3}
-YouMustBuildABoatGameAgentPlugin: {collect_character_interval: 10, collect_frames_interval: 1,
-  frame_handler: PLAY}
+YouMustBuildABoatGameAgentPlugin: {collect_character_interval: 5, collect_frames_interval: 1,
+  frame_handler: PLAY_BOT}
 YouMustBuildABoatGamePlugin: {steam_app_id: 290890}

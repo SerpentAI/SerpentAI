@@ -53,7 +53,7 @@ class VisualDebuggerCanvas(Widget):
         self.images = dict()
 
         self.root = FloatLayout(size=(Window.width, Window.height))
-        self.grid = GridLayout(cols=3)
+        self.grid = GridLayout(cols=8)
 
         self.add_widget(self.root)
         self.root.add_widget(self.grid)

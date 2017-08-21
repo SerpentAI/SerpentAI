@@ -9,6 +9,8 @@ import skimage.transform
 
 import numpy as np
 
+import lib.cv
+
 
 class CNNInceptionV3ContextClassifier(ContextClassifier):
 
@@ -48,7 +50,7 @@ class CNNInceptionV3ContextClassifier(ContextClassifier):
         self.classifier.fit_generator(
             self.training_generator,
             samples_per_epoch=self.training_sample_count,
-            nb_epoch=10,
+            nb_epoch=3,
             validation_data=self.validation_generator,
             nb_val_samples=self.validation_sample_count,
             class_weight="auto"
@@ -66,6 +68,8 @@ class CNNInceptionV3ContextClassifier(ContextClassifier):
             self.input_shape,
             order=0
         )
+
+        resized_input_frame = np.array(lib.cv.scale_range(resized_input_frame, -1, 1), dtype="float32")
 
         class_mapping = self.training_generator.class_indices
         class_probabilities = self.classifier.predict(resized_input_frame[None, :, :, :])[0]

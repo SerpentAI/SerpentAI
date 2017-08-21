@@ -12,6 +12,7 @@ import os.path
 import lib.ocr
 
 from lib.game_frame_buffer import GameFrameBuffer
+from lib.sprite_identifier import SpriteIdentifier
 from lib.visual_debugger.visual_debugger import VisualDebugger
 
 import skimage.io
@@ -56,6 +57,9 @@ class GameAgent(offshoot.Pluggable):
 
         self.game_frame_buffer = GameFrameBuffer(size=self.config.get("game_frame_buffer_size", 5))
         self.game_context = None
+
+        self.sprite_identifier = SpriteIdentifier()
+        self._register_sprites()
 
         self.flag = None
 
@@ -121,3 +125,7 @@ class GameAgent(offshoot.Pluggable):
             self.frame_handler_setups[self.config.get("frame_handler", "NOOP")]()
 
         self.frame_handler_setup_performed = True
+
+    def _register_sprites(self):
+        for sprite_name, sprite in self.game.sprites.items():
+            self.sprite_identifier.register(sprite)

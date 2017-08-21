@@ -26,8 +26,7 @@ class SVMContextClassifier(ContextClassifier):
     def __init__(self):
         super().__init__()
 
-
-    def train(self):
+    def train(self, preprocessing_func=None):
         data = list()
         targets = list()
 
@@ -44,18 +43,23 @@ class SVMContextClassifier(ContextClassifier):
 
                     targets.append(current_label)
 
-                    preprocessed_sample = self.preprocess_sample(sample)
+                    preprocessed_sample = preprocessing_func(sample) if preprocessing_func is not None else self.preprocess_sample(sample)
 
                     visual_debugger.store_image_data(np.array(preprocessed_sample * 255, dtype="uint8"), preprocessed_sample.shape, bucket="svm_input")
                     visual_debugger.store_image_data(sample, sample.shape, bucket="original_frame")
+
+                    if preprocessed_sample.dtype != "uint8":
+                        preprocessed_sample = np.array(preprocessed_sample * 255, dtype="uint8")
 
                     data.append(preprocessed_sample.flatten())
 
         self.classifier = sklearn.svm.SVC(gamma=0.001, C=100)
         self.classifier.fit(data, targets)
 
-    def validate(self, file_path):
-        self.load_classifier(file_path)
+    def validate(self, preprocessing_func=None, file_path=None):
+        if self.classifier is None:
+            self.load_classifier(file_path)
+
         sample_count = 0
         correct_sample_count = 0
 
@@ -72,7 +76,7 @@ class SVMContextClassifier(ContextClassifier):
                     file_path = f"{root}/{file}"
                     sample = skimage.io.imread(file_path)
 
-                    predicted_class = self.classifier.predict(self.preprocess_sample(sample))
+                    predicted_class = self.predict(sample, preprocessing_func=preprocessing_func)
 
                     if predicted_class == current_label:
                         correct_sample_count += 1
@@ -80,9 +84,12 @@ class SVMContextClassifier(ContextClassifier):
                     subprocess.call(["clear"])
                     print(f"SVM Accuracy: {correct_sample_count / sample_count}")
 
-    def predict(self, input_frame):
-        preprocessed_frame = self.preprocess_sample(input_frame)
-        visual_debugger.store_image_data(np.array(preprocessed_frame * 255, dtype="uint8"), preprocessed_frame.shape, bucket="svm_input")
+    def predict(self, input_frame, preprocessing_func=None):
+        preprocessed_frame = preprocessing_func(input_frame) if preprocessing_func is not None else self.preprocess_sample(input_frame)
+
+        if preprocessed_frame.dtype != "uint8":
+            preprocessed_frame = np.array(preprocessed_frame * 255, dtype="uint8")
+
         return self.classifier.predict([preprocessed_frame.flatten()])[0]
 
     def save_classifier(self, file_path):

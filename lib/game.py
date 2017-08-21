@@ -18,6 +18,8 @@ from lib.input_controller import InputController
 from lib.frame_grabber import FrameGrabber
 from lib.game_frame_limiter import GameFrameLimiter
 
+from lib.sprite import Sprite
+
 import skimage.io
 import skimage.color
 
@@ -118,7 +120,10 @@ class Game(offshoot.Pluggable):
         )
 
         self.start_frame_grabber()
-        time.sleep(1)
+        self.redis_client.delete(config["frame_grabber"]["redis_key"])
+
+        while self.redis_client.llen(config["frame_grabber"]["redis_key"]) == 0:
+            time.sleep(0.1)
 
         subprocess.call(shlex.split(f"xdotool windowactivate {self.window_id}"))
 
@@ -210,14 +215,16 @@ class Game(offshoot.Pluggable):
 
             for file in files:
                 if file.name.endswith(".png"):
-                    sprite_name = file.name.split("/")[-1].replace(".png", "").upper()
-                    sprite_image_data = skimage.io.imread(f"{sprite_path}/{file.name}")
+                    sprite_name = "_".join(file.name.split("/")[-1].split("_")[:-1]).replace(".png", "").upper()
 
-                    sprites[sprite_name] = sprite_image_data[:, :, :3]
-                    sprites[f"{sprite_name}_GRAYSCALE"] = np.array(
-                        skimage.color.rgb2gray(sprite_image_data[:, :, :3]) * 255,
-                        dtype="uint8"
-                    )
+                    sprite_image_data = skimage.io.imread(f"{sprite_path}/{file.name}")
+                    sprite_image_data = sprite_image_data[:, :, :3, np.newaxis]
+
+                    if sprite_name not in sprites:
+                        sprite = Sprite(sprite_name, image_data=sprite_image_data)
+                        sprites[sprite_name] = sprite
+                    else:
+                        sprites[sprite_name].append_image_data(sprite_image_data)
 
         return sprites
 

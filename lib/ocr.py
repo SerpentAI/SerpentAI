@@ -15,6 +15,10 @@ import editdistance
 import uuid
 import pickle
 
+from lib.visual_debugger.visual_debugger import VisualDebugger
+
+visual_debugger = VisualDebugger()
+
 
 WINDOWING_SHAPES = {
     "square": skimage.morphology.square,
@@ -22,8 +26,41 @@ WINDOWING_SHAPES = {
 }
 
 
-def image_contains(image, query, ocr_classifier, fuzziness=0, word_window_shape="rectangle", word_window_size=(1, 5)):
-    words = words_in_image(image, ocr_classifier, word_window_shape=word_window_shape, word_window_size=word_window_size)
+class OCRPolicyException(BaseException):
+    pass
+
+
+class OCRPolicy:
+
+    def __init__(
+        self,
+        ocr_classifier=None,
+        character_window_shape="square",
+        character_window_size=1,
+        word_window_shape="rectangle",
+        word_window_size=(1, 7),
+        preprocessing_function=None,
+        preprocessing_options=None
+    ):
+        if ocr_classifier is None:
+            raise OCRPolicyException("OCRPolicy expects an 'ocr_classifier' kwarg!")
+
+        self.ocr_classifier = ocr_classifier
+
+        self.character_window_shape = character_window_shape
+        self.character_window_size = character_window_size
+        self.word_window_shape = word_window_shape
+        self.word_window_size = word_window_size
+
+        self.preprocessing_function = preprocessing_function or self._default_preprocessing_function
+        self.preprocessing_options = preprocessing_options or dict()
+
+    def _default_preprocessing_function(self, image):
+        return preprocess_image(image)
+
+
+def image_contains(image, query, ocr_policy, fuzziness=0):
+    words = words_in_image(image, ocr_policy)
 
     if isinstance(query, str):
         query = [query]
@@ -36,57 +73,52 @@ def image_contains(image, query, ocr_classifier, fuzziness=0, word_window_shape=
     return result
 
 
-def image_region_contains(image, image_region, query, ocr_classifier, fuzziness=0, word_window_shape="rectangle", word_window_size=(1, 5)):
+def image_region_contains(image, image_region, query, ocr_policy, fuzziness=0):
     region_image = image[image_region[0]:image_region[2], image_region[1]:image_region[3]]
 
     return image_contains(
         region_image,
         query,
-        ocr_classifier,
-        fuzziness=fuzziness,
-        word_window_shape=word_window_shape,
-        word_window_size=word_window_size
+        ocr_policy,
+        fuzziness=fuzziness
     )
 
 
-def words_in_image(image, ocr_classifier, word_window_shape="rectangle", word_window_size=(1, 5), preprocess_mode="PRECISE"):
-    character_and_word_data = extract_character_and_word_data(
-        image,
-        word_window_shape=word_window_shape,
-        word_window_size=word_window_size,
-        preprocess_mode=preprocess_mode
-    )
+def words_in_image(image, ocr_policy):
+    character_and_word_data = extract_character_and_word_data(image, ocr_policy)
 
     characters = dict()
 
     for index, image_data in enumerate(character_and_word_data["character"]["image_data"]):
         character_bounding_box = character_and_word_data["character"]["bounding_boxes"][index]
-        character = ocr_classifier.predict([image_data.flatten()])[0]
+        character = ocr_policy.ocr_classifier.predict([image_data.flatten()])[0]
+
+        print(character)
 
         characters[character_bounding_box] = character
 
     return reconstruct_words(character_and_word_data["word"]["bounding_boxes"], characters)
 
 
-def words_in_image_region(image, image_region, ocr_classifier, word_window_shape="rectangle", word_window_size=(1, 5), preprocess_mode="PRECISE"):
+def words_in_image_region(image, image_region, ocr_policy):
     region_image = image[image_region[0]:image_region[2], image_region[1]:image_region[3]]
 
-    return words_in_image(
-        region_image,
-        ocr_classifier,
-        word_window_shape=word_window_shape,
-        word_window_size=word_window_size,
-        preprocess_mode=preprocess_mode
+    return words_in_image(region_image, ocr_policy)
+
+
+def extract_character_and_word_data(image, ocr_policy):
+    preprocessed_image = ocr_policy.preprocessing_function(image, **ocr_policy.preprocessing_options)
+
+    visual_debugger.store_image_data(
+        np.array(preprocessed_image * 255, dtype="uint8"),
+        preprocessed_image.shape,
+        f"char_0"
     )
 
-
-def extract_character_and_word_data(image, word_window_shape="square", word_window_size=3, preprocess_mode="FAST"):
-    preprocessed_image = preprocess_image(image, mode=preprocess_mode, contrast_stretch=False)
-
-    character_bounding_boxes = detect_image_objects_closing(preprocessed_image, window_size=1, merge=False)
+    character_bounding_boxes = detect_character_objects(preprocessed_image, ocr_policy)
     character_image_data = normalize_objects(preprocessed_image, character_bounding_boxes)
 
-    word_bounding_boxes = detect_image_objects_closing(preprocessed_image, shape=word_window_shape, window_size=word_window_size)
+    word_bounding_boxes = detect_word_objects(preprocessed_image, ocr_policy)
     clean_word_bounding_boxes = remove_nested_bounding_boxes(word_bounding_boxes, remove="outer")
 
     return {
@@ -102,7 +134,7 @@ def extract_character_and_word_data(image, word_window_shape="square", word_wind
 
 def extract_image_objects(image):
     preprocessed_image = preprocess_image(image)
-    objects = detect_image_objects_closing(preprocessed_image, shape="square", window_size=1)
+    objects = detect_image_objects_closing(preprocessed_image, window_shape="square", window_size=1)
     normalized_objects = normalize_objects(preprocessed_image, objects)
 
     return normalized_objects
@@ -110,7 +142,7 @@ def extract_image_objects(image):
 
 def prepare_dataset_tokens(image, image_uuid, mode="FAST"):
     preprocessed_image = preprocess_image(image, mode=mode)
-    objects = detect_image_objects_closing(preprocessed_image, shape="square", window_size=1)
+    objects = detect_image_objects_closing(preprocessed_image, window_shape="rectangle", window_size=(3, 1))
     normalized_objects = normalize_objects(preprocessed_image, objects)
 
     save_objects("datasets/ocr/characters", objects, normalized_objects, image_uuid)
@@ -142,51 +174,32 @@ def preprocess_image(image, mode="FAST", contrast_stretch=True, contrast_stretch
     return bw
 
 
-def detect_image_objects_closing(image, shape="square", window_size=3, minimum_area=1, merge=False, clear_border=True):
-    shape_function = WINDOWING_SHAPES.get(shape)
+def detect_character_objects(preprocessed_image, ocr_policy):
+    return detect_image_objects_closing(
+        preprocessed_image,
+        window_shape=ocr_policy.character_window_shape,
+        window_size=ocr_policy.character_window_size
+    )
+
+
+def detect_word_objects(preprocessed_image, ocr_policy):
+    return detect_image_objects_closing(
+        preprocessed_image,
+        window_shape=ocr_policy.word_window_shape,
+        window_size=ocr_policy.word_window_size
+    )
+
+
+def detect_image_objects_closing(preprocessed_image, window_shape="square", window_size=1, minimum_area=1):
+    shape_function = WINDOWING_SHAPES.get(window_shape)
     size_args = window_size if isinstance(window_size, tuple) else [window_size]
 
-    try:
-        threshold = skimage.filters.threshold_otsu(image)
-        bw = skimage.morphology.closing(image > threshold, shape_function(*size_args))
-    except ValueError:
-        bw = image
-
-    if clear_border:
-        cleared = skimage.segmentation.clear_border(bw)
-    else:
-        cleared = bw
-
-    label_image = skimage.measure.label(cleared)
+    closed_image = skimage.morphology.closing(preprocessed_image, shape_function(*size_args))
+    label_image = skimage.measure.label(closed_image)
 
     regions = [region.bbox for region in skimage.measure.regionprops(label_image) if region.area >= minimum_area]
 
-    if merge:
-        sorted_regions = sorted(regions, key=lambda r: r[1])
-
-        distance_threshold = 5
-
-        merged_regions = list()
-        blacklisted_indices = list()
-
-        for i, region in enumerate(sorted_regions):
-            if i in blacklisted_indices:
-                continue
-
-            next_region = sorted_regions[i + 1] if i < (len(sorted_regions) - 1) else None
-
-            if next_region is not None:
-                if region[1] == next_region[1] and region[3] == next_region[3]:
-                    if abs(next_region[0] - region[2]) < distance_threshold:
-                        merged_regions.append((region[0], region[1], next_region[2], region[3]))
-                        blacklisted_indices.append(i + 1)
-                        continue
-
-            merged_regions.append(region)
-
-        return merged_regions
-    else:
-        return regions
+    return regions
 
 
 def normalize_objects(image, objects, clear_border=True):
