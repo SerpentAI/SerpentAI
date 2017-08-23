@@ -13,6 +13,8 @@ import numpy as np
 import skimage.io
 import skimage.transform
 
+from lib.config import config
+
 
 @task
 def start_frame_grabber(ctx, width=640, height=480, x_offset=0, y_offset=0):
@@ -66,6 +68,18 @@ def boat_play(ctx):
     game.launch(dry_run=True)
     game.play(game_agent_class_name="YouMustBuildABoatGameAgent")
 
+@task
+def capture_context(ctx, game='', context='unnamed', interval=1):
+    game_class = offshoot.discover("Game").get(game)
+
+    if game_class is None:
+        raise Exception("The provided Game Agent class name does not map to an existing class...")
+
+    game = game_class()
+    game.launch(dry_run=True)
+    config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"] = context
+    config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["interval"] = interval
+    game.play(game_agent_class_name="GenericFrameGrabberAgent")
 
 @task
 def boat_context_train(ctx):

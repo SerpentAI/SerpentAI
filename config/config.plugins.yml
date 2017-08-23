@@ -2,6 +2,7 @@ BindingOfIsaacRebirthGameAgentPlugin: {ai_run_sound_path: /home/serpent/Inceptio
   boss: 1010, character: ISAAC, collect_character_interval: 2, collect_frames_interval: 0.1,
   difficulty: NORMAL, frame_handler: COLLECT_FRAMES, seed: xh8czefw}
 BindingOfIsaacRebirthGamePlugin: {fps: 4}
+GenericFrameGrabberAgentPlugin: {frame_handler: COLLECT_FRAMES_FOR_CONTEXT}
 SuperHexagonGameAgentPlugin: {frame_handler: COLLECT_FRAMES_FOR_CONTEXT}
 SuperHexagonGamePlugin: {frame_rate: 3}
 YouMustBuildABoatGameAgentPlugin: {collect_character_interval: 5, collect_frames_interval: 1,

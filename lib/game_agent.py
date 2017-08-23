@@ -90,6 +90,9 @@ class GameAgent(offshoot.Pluggable):
     def setup_collect_frames_for_context(self):
         context = config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
 
+        if not os.path.isdir(f"datasets/collect_frames_for_context"):
+            os.mkdir(f"datasets/collect_frames_for_context")
+
         if not os.path.isdir(f"datasets/collect_frames_for_context/{context}"):
             os.mkdir(f"datasets/collect_frames_for_context/{context}")
 
