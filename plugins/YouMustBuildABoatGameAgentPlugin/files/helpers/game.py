@@ -8,6 +8,7 @@ from lib.sprite_identifier import SpriteIdentifier
 from lib.games import YouMustBuildABoatGame
 
 import xtermcolor
+import random
 
 
 game = YouMustBuildABoatGame()
@@ -89,7 +90,7 @@ def generate_game_board_deltas(game_board):
         for ii in range(7):
             label = f"{rows[i]}1 to {rows[i]}{columns[ii + 1]}"
 
-            row_delta = np.roll(row, ii, axis=0)
+            row_delta = np.roll(row, ii + 1, axis=0)
 
             board_delta = np.copy(game_board)
             board_delta[i, :] = row_delta
@@ -102,7 +103,7 @@ def generate_game_board_deltas(game_board):
 
         for ii in range(5):
             label = f"A{columns[i]} to {rows[ii + 1]}{columns[i]}"
-            column_delta = np.roll(column, ii, axis=0)
+            column_delta = np.roll(column, ii + 1, axis=0)
 
             board_delta = np.copy(game_board)
             board_delta[:, i] = column_delta
@@ -112,7 +113,7 @@ def generate_game_board_deltas(game_board):
     return game_board_deltas
 
 
-def generate_boolean_game_board_deltas(game_board_deltas):
+def generate_boolean_game_board_deltas(game_board_deltas, obfuscate=False):
     boolean_game_boards = dict()
 
     for game_board_delta in game_board_deltas:
@@ -126,6 +127,13 @@ def generate_boolean_game_board_deltas(game_board_deltas):
 
             if game_board_delta[0] not in boolean_game_boards:
                 boolean_game_boards[game_board_delta[0]] = list()
+
+            if obfuscate:
+                try:
+                    obfuscate_coordinates = random.choice(list(np.argwhere(boolean_game_board)))
+                    boolean_game_board[obfuscate_coordinates[0], obfuscate_coordinates[1]] = False
+                except IndexError:
+                    pass
 
             boolean_game_boards[game_board_delta[0]].append(boolean_game_board)
 
