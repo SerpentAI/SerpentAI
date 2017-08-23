@@ -191,11 +191,24 @@ class YouMustBuildABoatGameAgent(GameAgent):
                         self.record_predict_matches_run = self.current_run
 
             print("\033c")
-            print(f"GENERATING TRAINING DATASETS: 0 / {len(self.game_boards)}")
 
             game_board_data = list()
+            unique_game_boards = list()
 
-            for i, game_board in enumerate(self.game_boards):
+            for game_board in self.game_boards:
+                unique = True
+
+                for unique_game_board in unique_game_boards:
+                    if np.array_equal(game_board, unique_game_board):
+                        unique = False
+                        break
+
+                if unique:
+                    unique_game_boards.append(game_board)
+
+            print(f"GENERATING TRAINING DATASETS: 0 / {len(unique_game_boards)}")
+
+            for i, game_board in enumerate(unique_game_boards):
                 game_board_deltas = generate_game_board_deltas(game_board)
 
                 game_board_inputs = list()
@@ -216,7 +229,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
                     game_board_data.append((game_board_input, score))
 
                 print("\033c")
-                print(f"GENERATING TRAINING DATASETS: {i + 1} / {len(self.game_boards)}")
+                print(f"GENERATING TRAINING DATASETS: {i + 1} / {len(unique_game_boards)}")
 
             with h5py.File(f"datasets/ymbab/ymbab_run_{self.current_run}.h5", "w") as f:
                 for index, data in enumerate(game_board_data):
@@ -275,14 +288,11 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
                 self.input_controller.click_screen_region(screen_region=tile_screen_region, game=self.game)
 
-            if not np.array_equal(self.game_board, self.previous_game_board):
-                return
-
             self.current_attempts += 1
 
             game_board_deltas = generate_game_board_deltas(self.game_board)
 
-            if self.game_board[self.game_board == 0].size < 5:
+            if self.game_board[self.game_board == 0].size < 3:
                 self.game_boards.append(self.game_board)
 
             if self.mode == "PREDICT":
@@ -292,12 +302,14 @@ class YouMustBuildABoatGameAgent(GameAgent):
                 top_game_move = None
 
                 for game_move, boolean_game_boards in boolean_game_board_deltas.items():
-                    for boolean_game_board in boolean_game_boards:
-                        score = self.model.predict([boolean_game_board.flatten()])
+                    total_score = 0
 
-                        if score > top_game_move_score:
-                            top_game_move_score = score
-                            top_game_move = game_move
+                    for boolean_game_board in boolean_game_boards:
+                        total_score += self.model.predict([boolean_game_board.flatten()])
+
+                    if total_score > top_game_move_score:
+                        top_game_move_score = total_score
+                        top_game_move = game_move
 
                 if top_game_move is None:
                     return False
