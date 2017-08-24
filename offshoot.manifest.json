@@ -87,21 +87,6 @@
                 "collect_frames_interval": 1,
                 "collect_character_interval": 10
             }
-        },
-        "GenericFrameGrabberAgentPlugin": {
-            "name": "GenericFrameGrabberAgentPlugin",
-            "version": "0.1.0",
-            "files": [
-                {
-                    "path": "generic_frame_grabber_agent.py",
-                    "pluggable": "GameAgent"
-                }
-            ],
-            "libraries": [],
-            "config": {
-                "frame_handler": "COLLECT_FRAMES_FOR_CONTEXT",
-                "collect_frames_interval": 1
-            }
         }
     }
 }
