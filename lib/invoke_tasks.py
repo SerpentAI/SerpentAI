@@ -15,6 +15,11 @@ import skimage.transform
 
 from lib.config import config
 
+import sklearn
+import os
+import h5py
+import pickle
+
 
 @task
 def start_frame_grabber(ctx, width=640, height=480, x_offset=0, y_offset=0):
@@ -113,3 +118,32 @@ def boat_context_train(ctx):
 
 def boat_context_preprocess(frame):
     return skimage.transform.resize(frame,(frame.shape[0] // 32, frame.shape[1] // 32))
+
+
+@task
+def boat_train_model(ctx):
+    model = sklearn.linear_model.SGDRegressor()
+
+    data_path = f"datasets/ymbab"
+
+    data = list()
+    scores = list()
+
+    if os.path.isdir(data_path):
+        files = os.scandir(data_path)
+
+        for file in files:
+            if file.name.endswith(".h5"):
+                with h5py.File(f"datasets/ymbab/{file.name}", "r") as f:
+                    count = len(f.items()) // 2
+
+                    for i in range(count):
+                        data.append(f[f"{i}"][:].flatten())
+                        scores.append(f[f"{i}_score"].value)
+
+    model.fit(data, scores)
+
+    serialized_model = pickle.dumps(model)
+
+    with open("datasets/ymbab_matching.model", "wb") as f:
+        f.write(serialized_model)

@@ -27,6 +27,8 @@ import time
 import uuid
 import random
 import collections
+import pickle
+import os
 
 
 class YouMustBuildABoatGameAgent(GameAgent):
@@ -83,7 +85,10 @@ class YouMustBuildABoatGameAgent(GameAgent):
             )
         )
 
-        self.mode = "RANDOM"  # "PREDICT"
+        self.game_board = np.zeros((6, 8))
+        self.previous_game_board = np.zeros((6, 8))
+
+        self.mode = "PREDICT"  # "RANDOM"
 
         self.current_run = 0
         self.current_run_started_at = None
@@ -97,16 +102,28 @@ class YouMustBuildABoatGameAgent(GameAgent):
         self.last_matches = 0
 
         self.record_random_duration = 0
-        self.record_random_match_percent = 0
+        self.record_random_duration_run = 0
+        self.record_random_matches = 0
+        self.record_random_matches_run = 0
 
         self.record_random_duration_values = collections.deque(maxlen=1000)
-        self.record_random_match_percent_values = collections.deque(maxlen=1000)
+        self.record_random_matches_values = collections.deque(maxlen=1000)
 
         self.record_predict_duration = 0
-        self.record_predict_match_percent = 0
+        self.record_predict_duration_run = 0
+        self.record_predict_matches = 0
+        self.record_predict_matches_run = 0
+
+        self.record_predict_duration_values = collections.deque(maxlen=10)
+        self.record_predict_matches_values = collections.deque(maxlen=10)
 
         self.game_boards = list()
-        self.model = sklearn.linear_model.SGDRegressor()
+
+        if os.path.isfile("datasets/ymbab_matching.model"):
+            with open("datasets/ymbab_matching.model", "rb") as f:
+                self.model = pickle.loads(f.read())
+        else:
+            self.model = sklearn.linear_model.SGDRegressor()
 
     def setup_play_bot(self):
         plugin_path = offshoot.config["file_paths"]["plugins"]
@@ -134,6 +151,9 @@ class YouMustBuildABoatGameAgent(GameAgent):
             )
         )
 
+        self.game_board = np.zeros((6, 8))
+        self.previous_game_board = np.zeros((6, 8))
+
     def handle_play(self, game_frame):
         context = self.machine_learning_models["context_classifier"].predict(game_frame.frame)
 
@@ -149,48 +169,67 @@ class YouMustBuildABoatGameAgent(GameAgent):
             if self.current_run > 0:
                 if self.mode == "RANDOM":
                     self.record_random_duration_values.appendleft(self.last_run_duration)
-                    self.record_random_match_percent_values.appendleft((self.last_matches / self.last_attempts) * 100)
+                    self.record_random_matches_values.appendleft(self.last_matches)
 
                     if self.last_run_duration > self.record_random_duration:
                         self.record_random_duration = self.last_run_duration
+                        self.record_random_duration_run = self.current_run
 
-                    if ((self.last_matches / self.last_attempts) * 100) > self.record_random_match_percent:
-                        self.record_random_match_percent = ((self.last_matches / self.last_attempts) * 100)
+                    if self.last_matches > self.record_random_matches:
+                        self.record_random_matches = self.last_matches
+                        self.record_random_matches_run = self.current_run
                 elif self.mode == "PREDICT":
+                    self.record_predict_duration_values.appendleft(self.last_run_duration)
+                    self.record_predict_matches_values.appendleft(self.last_matches)
+
                     if self.last_run_duration > self.record_predict_duration:
                         self.record_predict_duration = self.last_run_duration
+                        self.record_predict_duration_run = self.current_run
 
-                    if ((self.last_matches / self.last_attempts) * 100) > self.record_predict_match_percent:
-                        self.record_predict_match_percent = ((self.last_matches / self.last_attempts) * 100)
+                    if self.last_matches > self.record_predict_matches:
+                        self.record_predict_matches = self.last_matches
+                        self.record_predict_matches_run = self.current_run
 
             print("\033c")
-            print("GENERATING TRAINING DATASETS: 0 / 3")
 
             game_board_data = list()
+            unique_game_boards = list()
 
-            if len(self.game_boards) >= 3:
-                for i, game_board in enumerate(random.sample(self.game_boards, 3)):
-                    game_board_deltas = generate_game_board_deltas(game_board)
+            for game_board in self.game_boards:
+                unique = True
 
-                    game_board_inputs = list()
+                for unique_game_board in unique_game_boards:
+                    if np.array_equal(game_board, unique_game_board):
+                        unique = False
+                        break
 
-                    for ii, game_board_delta in enumerate(game_board_deltas):
-                        for iii in range(7):
-                            game_board_input = np.copy(game_board_delta[1])
+                if unique:
+                    unique_game_boards.append(game_board)
 
-                            game_board_input[game_board_input != (iii + 1)] = 0
-                            game_board_input[game_board_input == (iii + 1)] = 1
+            print(f"GENERATING TRAINING DATASETS: 0 / {len(unique_game_boards)}")
 
-                            game_board_input = game_board_input.astype("bool")
+            for i, game_board in enumerate(unique_game_boards):
+                game_board_deltas = generate_game_board_deltas(game_board)
 
-                            game_board_inputs.append(game_board_input)
+                game_board_inputs = list()
 
-                    for game_board_input in game_board_inputs:
-                        score = score_game_board(game_board_input)
-                        game_board_data.append((game_board_input, score))
+                for ii, game_board_delta in enumerate(game_board_deltas):
+                    for iii in range(7):
+                        game_board_input = np.copy(game_board_delta[1])
 
-                    print("\033c")
-                    print(f"GENERATING TRAINING DATASETS: {i + 1} / 3")
+                        game_board_input[game_board_input != (iii + 1)] = 0
+                        game_board_input[game_board_input == (iii + 1)] = 1
+
+                        game_board_input = game_board_input.astype("bool")
+
+                        game_board_inputs.append(game_board_input)
+
+                for game_board_input in game_board_inputs:
+                    score = score_game_board(game_board_input)
+                    game_board_data.append((game_board_input, score))
+
+                print("\033c")
+                print(f"GENERATING TRAINING DATASETS: {i + 1} / {len(unique_game_boards)}")
 
             with h5py.File(f"datasets/ymbab/ymbab_run_{self.current_run}.h5", "w") as f:
                 for index, data in enumerate(game_board_data):
@@ -200,6 +239,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
             self.game_boards = list()
             self.current_run += 1
 
+            print(f"Duration (RANDOM): {self.record_random_duration} seconds")
             if self.current_run % 10 == 0:
                 self.mode = "PREDICT"
 
@@ -218,8 +258,13 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
                 if len(data):
                     self.model.partial_fit(data, scores)
+
+                    serialized_model = pickle.dumps(self.model)
+
+                    with open("datasets/ymbab_matching.model", "wb") as f:
+                        f.write(serialized_model)
             else:
-                self.mode = "RANDOM"
+                self.mode = "PREDICT"
 
             print("\033c")
             self.input_controller.click_screen_region(screen_region="GAME_OVER_RUN_AGAIN", game=self.game)
@@ -232,35 +277,39 @@ class YouMustBuildABoatGameAgent(GameAgent):
             self.current_matches = 0
 
         elif context.startswith("level_"):
+            self.previous_game_board = self.game_board
+            self.game_board = parse_game_board(game_frame.frame)
+
+            unknown_tile_coordinates = np.argwhere(self.game_board == 0)
+
+            if 0 < unknown_tile_coordinates.size <= 10:
+                coordinates = random.choice(unknown_tile_coordinates)
+                tile_screen_region = f"GAME_BOARD_{self.rows[coordinates[0]]}{self.columns[coordinates[1]]}"
+
+                self.input_controller.click_screen_region(screen_region=tile_screen_region, game=self.game)
+
             self.current_attempts += 1
 
-            game_board = parse_game_board(game_frame.frame)
-            game_board_deltas = generate_game_board_deltas(game_board)
+            game_board_deltas = generate_game_board_deltas(self.game_board)
 
-            # Click the Unknown Tiles
-            unknown_tile_coordinates = np.argwhere(game_board == 0)
-
-            if unknown_tile_coordinates.size <= 10:
-                for coordinates in unknown_tile_coordinates:
-                    tile_screen_region = f"GAME_BOARD_{self.rows[coordinates[0]]}{self.columns[coordinates[1]]}"
-                    self.input_controller.click_screen_region(screen_region=tile_screen_region, game=self.game)
-
-            if game_board[game_board == 0].size < 5:
-                self.game_boards.append(game_board)
+            if self.game_board[self.game_board == 0].size < 3:
+                self.game_boards.append(self.game_board)
 
             if self.mode == "PREDICT":
-                boolean_game_board_deltas = generate_boolean_game_board_deltas(game_board_deltas)
+                boolean_game_board_deltas = generate_boolean_game_board_deltas(game_board_deltas, obfuscate=True)
 
                 top_game_move_score = 0
                 top_game_move = None
 
                 for game_move, boolean_game_boards in boolean_game_board_deltas.items():
-                    for boolean_game_board in boolean_game_boards:
-                        score = self.model.predict([boolean_game_board.flatten()])
+                    total_score = 0
 
-                        if score > top_game_move_score:
-                            top_game_move_score = score
-                            top_game_move = game_move
+                    for boolean_game_board in boolean_game_boards:
+                        total_score += self.model.predict([boolean_game_board.flatten()])
+
+                    if total_score > top_game_move_score:
+                        top_game_move_score = total_score
+                        top_game_move = game_move
 
                 if top_game_move is None:
                     return False
@@ -310,7 +359,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
             print("BOARD STATE:\n")
 
-            display_game_board(game_board)
+            display_game_board(self.game_board)
 
             print("")
             print(xtermcolor.colorize(f" Moving {game_board_key}... ", ansi=0, ansi_bg=39))
@@ -318,29 +367,30 @@ class YouMustBuildABoatGameAgent(GameAgent):
             print(f"\nCurrent Run Duration: {(datetime.utcnow() - self.current_run_started_at).seconds} seconds")
 
             print(f"Current Run Matches (Approximate): {self.current_matches}/{self.current_attempts}")
-            print(f"Current Run Match Percent (Approximate): {round((self.current_matches / self.current_attempts) * 100.0, 2)}%")
 
             print(f"\nLast Run Duration: {self.last_run_duration} seconds")
 
             print(f"Last Run Matches (Approximate): {self.last_matches}/{self.last_attempts}")
-            print(f"Last Run Match Percent (Approximate): {round((self.last_matches / self.last_attempts) * 100.0, 2)}%")
 
             print("")
             print(xtermcolor.colorize(" RECORDS ", ansi=29, ansi_bg=15))
             print("")
 
-            print(f"Duration (RANDOM): {self.record_random_duration} seconds")
-            print(f"Duration (PREDICT): {self.record_predict_duration} seconds")
+            # print(f"Duration (RANDOM): {self.record_random_duration} seconds  (Run #{self.record_random_duration_run})")
+            print(f"Duration (PREDICT): {self.record_predict_duration} seconds (Run #{self.record_predict_duration_run})")
 
-            print(f"Match Percent (RANDOM - Approximate): {round(self.record_random_match_percent, 2)}%")
-            print(f"Match Percent (PREDICT - Approximate): {round(self.record_predict_match_percent, 2)}%")
+            # print(f"Matches (RANDOM - Approximate): {self.record_random_matches}  (Run #{self.record_random_matches_run})")
+            print(f"Matches (PREDICT - Approximate): {self.record_predict_matches}  (Run #{self.record_predict_matches_run})")
 
             print("")
-            print(xtermcolor.colorize(" RANDOM AVERAGES ", ansi=29, ansi_bg=15))
+            print(xtermcolor.colorize(" PREDICT AVERAGES (Last 10 runs)", ansi=29, ansi_bg=15))
             print("")
 
-            print(f"Duration: {round(np.mean(self.record_random_duration_values), 2)} seconds")
-            print(f"Match Percent (Approximate): {round(np.mean(self.record_random_match_percent_values), 2)}%")
+            print(f"Duration: {round(np.mean(self.record_predict_duration_values), 2)} seconds")
+            print(f"{', '.join([str(v) for v in list(self.record_predict_duration_values)])}")
+
+            print(f"\nMatches (Approximate): {np.mean(self.record_predict_matches_values)}")
+            print(f"{', '.join([str(int(v)) for v in list(self.record_predict_matches_values)])}")
 
             game_move_direction = "ROW" if self.game.screen_regions[start_screen_region][0] == self.game.screen_regions[end_screen_region][0] else "COLUMN"
 
@@ -352,34 +402,41 @@ class YouMustBuildABoatGameAgent(GameAgent):
             self.input_controller.drag_screen_region_to_screen_region(
                 start_screen_region=start_screen_region,
                 end_screen_region=end_screen_region,
-                duration=(game_move_distance * 0.1) if (game_move_distance * 0.1) > 0.3 else 0.3,
-                game=self.game,
-                offset=(0, 0) #(-2 * game_move_distance, 0) if game_move_direction == "ROW" else (0, -2 * game_move_distance)
+                duration=(0.1 + (game_move_distance * 0.05)),
+                game=self.game
             )
 
     def handle_play_bot(self, game_frame):
         context = self.machine_learning_models["context_classifier"].predict(game_frame.frame)
 
+        if context is None:
+            return
+
         if context == "game_over":
             self.input_controller.click_screen_region(screen_region="GAME_OVER_RUN_AGAIN", game=self.game)
-            time.sleep(3)
+            time.sleep(2)
         elif context.startswith("level_"):
             print("\033c")
             print(context)
             print("BOARD STATE:\n")
 
-            game_board = parse_game_board(game_frame.frame)
-            print(game_board)
+            self.previous_game_board = self.game_board
+            self.game_board = parse_game_board(game_frame.frame)
+            print(self.game_board)
 
             # Click the Unknown Tiles
-            unknown_tile_coordinates = np.argwhere(game_board == 0)
+            unknown_tile_coordinates = np.argwhere(self.game_board == 0)
 
-            if unknown_tile_coordinates.size <= 10:
-                for coordinates in unknown_tile_coordinates:
-                    tile_screen_region = f"GAME_BOARD_{self.rows[coordinates[0]]}{self.columns[coordinates[1]]}"
-                    self.input_controller.click_screen_region(screen_region=tile_screen_region, game=self.game)
+            if 0 < unknown_tile_coordinates.size <= 10:
+                coordinates = random.choice(unknown_tile_coordinates)
+                tile_screen_region = f"GAME_BOARD_{self.rows[coordinates[0]]}{self.columns[coordinates[1]]}"
 
-            game_board_deltas = generate_game_board_deltas(game_board)
+                self.input_controller.click_screen_region(screen_region=tile_screen_region, game=self.game)
+
+            if not np.array_equal(self.game_board, self.previous_game_board):
+                return
+
+            game_board_deltas = generate_game_board_deltas(self.game_board)
             game_board_delta_matches = detect_game_board_delta_matches(game_board_deltas)
 
             game_move = None
@@ -411,13 +468,11 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
             print(game_board_delta_matches)
 
-            # skimage.io.imsave("test.png", game_frame.frame)
-
             self.input_controller.drag_screen_region_to_screen_region(
                 start_screen_region=start_screen_region,
                 end_screen_region=end_screen_region,
-                duration=(game_move_distance * 0.05) if (game_move_distance * 0.05) > 0.15 else 0.15,
-                game=self.game,
+                duration=(0.1 + (game_move_distance * 0.05)),
+                game=self.game
             )
 
     def handle_play_random(self, game_frame):
