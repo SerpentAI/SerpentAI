@@ -20,3 +20,4 @@ autobahn==17.6.1
 elasticsearch==5.4.0
 PyAutoGUI==0.9.36
 h5py==2.7.0
+mss==3.0.1

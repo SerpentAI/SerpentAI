@@ -60,6 +60,7 @@ display_mapping = {
     7: "Po"
 }
 
+
 def parse_game_board(frame):
     parsed_rows = list()
 
@@ -140,101 +141,30 @@ def generate_boolean_game_board_deltas(game_board_deltas, obfuscate=False):
     return boolean_game_boards
 
 
+def score_game_board_vector(game_board_vector):
+    score = 0
+
+    for i in range(len(game_board_vector) - 2):
+        game_board_vector_window = game_board_vector[i:i + 3]
+
+        if np.unique(game_board_vector_window).size == 1 and 0 not in game_board_vector_window:
+            score += 1
+
+    return score
+
+
 def score_game_board(game_board):
-    match_count = 0
-    
+    score = 0
+
+    for i in range(6):
+        row = game_board[i, :]
+        score += score_game_board_vector(row)
+
     for i in range(8):
-        for ii in range(6):
-            coordinates = (ii, i)
-            
-            up = list()
-            right = list()
-            down = list()
-            left = list()
+        column = game_board[:, i]
+        score += score_game_board_vector(column)
 
-            for iii in reversed(range(2)):
-                if coordinates[0] - (iii + 1) >= 0:
-                    up.append(game_board[coordinates[0] - (iii + 1), coordinates[1]])
-
-            for iii in range(2):
-                if coordinates[1] + (iii + 1) <= 7:
-                    right.append(game_board[coordinates[0], coordinates[1] + (iii + 1)])
-
-            for iii in range(2):
-                if coordinates[0] + (iii + 1) <= 5:
-                    down.append(game_board[coordinates[0] + (iii + 1), coordinates[1]])
-
-            for iii in reversed(range(2)):
-                if coordinates[1] - (iii + 1) >= 0:
-                    left.append(game_board[coordinates[0], coordinates[1] - (iii + 1)])
-            
-            tile = game_board[coordinates[0], coordinates[1]]
-            
-            horizontal_vector = left + [tile] + right
-            vertical_vector = up + [tile] + down
-            
-            for vector in [horizontal_vector, vertical_vector]:
-                for iii in range(len(vector) - 2):
-                    vector_window = vector[iii:iii + 3]
-    
-                    if np.unique(vector_window).size == 1 and 0 not in vector_window:
-                        match_count += 1
-
-    return match_count / 50
-
-
-def detect_game_board_delta_matches(game_board_deltas):
-    matches = {
-        5: list(),
-        4: list(),
-        3: list()
-    }
-
-    for label, board, axis, index in game_board_deltas:
-        vector = board[index, :] if axis == "ROW" else board[:, index]
-
-        for i, tile in enumerate(vector):
-            coordinates = (index, i) if axis == "ROW" else (i, index)
-
-            up = list()
-            right = list()
-            down = list()
-            left = list()
-
-            for ii in reversed(range(2)):
-                if coordinates[0] - (ii + 1) >= 0:
-                    up.append(board[coordinates[0] - (ii + 1), coordinates[1]])
-
-            for ii in range(2):
-                if coordinates[1] + (ii + 1) <= 7:
-                    right.append(board[coordinates[0], coordinates[1] + (ii + 1)])
-
-            for ii in range(2):
-                if coordinates[0] + (ii + 1) <= 5:
-                    down.append(board[coordinates[0] + (ii + 1), coordinates[1]])
-
-            for ii in reversed(range(2)):
-                if coordinates[1] - (ii + 1) >= 0:
-                    left.append(board[coordinates[0], coordinates[1] - (ii + 1)])
-
-            horizontal_vector = left + [tile] + right
-            vertical_vector = up + [tile] + down
-
-            for ii in [5, 4, 3]:
-                for iii in range(len(horizontal_vector) - (ii - 1)):
-                    vector_window = horizontal_vector[iii:iii + ii]
-
-                    if np.unique(vector_window).size == 1 and 0 not in vector_window:
-                        matches[ii].append(label)
-
-            for ii in [5, 4, 3]:
-                for iii in range(len(vertical_vector) - (ii - 1)):
-                    vector_window = vertical_vector[iii:iii + ii]
-
-                    if np.unique(vector_window).size == 1 and 0 not in vector_window:
-                        matches[ii].append(label)
-
-    return matches
+    return score
 
 
 def display_game_board(game_board):

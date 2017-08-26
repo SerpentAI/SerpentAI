@@ -8,7 +8,7 @@ import lib.cv
 import lib.ocr
 
 from .helpers.ocr import preprocess as ocr_preprocess
-from .helpers.game import parse_game_board, generate_game_board_deltas, detect_game_board_delta_matches, score_game_board, generate_boolean_game_board_deltas, display_game_board
+from .helpers.game import parse_game_board, generate_game_board_deltas, score_game_board, score_game_board_vector, generate_boolean_game_board_deltas, display_game_board
 
 import offshoot
 
@@ -29,6 +29,8 @@ import random
 import collections
 import pickle
 import os
+import subprocess
+import shlex
 
 
 class YouMustBuildABoatGameAgent(GameAgent):
@@ -58,6 +60,21 @@ class YouMustBuildABoatGameAgent(GameAgent):
     @property
     def columns(self):
         return [1, 2, 3, 4, 5, 6, 7, 8]
+
+    @property
+    def match_milestone_sfx_mapping(self):
+        return {
+            10: "/home/serpent/SFX/first_blood.wav",
+            20: "/home/serpent/SFX/Double_Kill.wav",
+            30: "/home/serpent/SFX/Killing_Spree.wav",
+            40: "/home/serpent/SFX/Dominating.wav",
+            50: "/home/serpent/SFX/MegaKill.wav",
+            60: "/home/serpent/SFX/Unstoppable.wav",
+            70: "/home/serpent/SFX/WhickedSick.wav",
+            80: "/home/serpent/SFX/MonsterKill.wav",
+            90: "/home/serpent/SFX/GodLike.wav",
+            100: "/home/serpent/SFX/Combowhore.wav"
+        }
 
     def setup_play(self):
         plugin_path = offshoot.config["file_paths"]["plugins"]
@@ -182,87 +199,94 @@ class YouMustBuildABoatGameAgent(GameAgent):
                     self.record_predict_duration_values.appendleft(self.last_run_duration)
                     self.record_predict_matches_values.appendleft(self.last_matches)
 
+                    record = False
+
                     if self.last_run_duration > self.record_predict_duration:
+                        record = True
+
                         self.record_predict_duration = self.last_run_duration
                         self.record_predict_duration_run = self.current_run
 
                     if self.last_matches > self.record_predict_matches:
+                        record = True
+
                         self.record_predict_matches = self.last_matches
                         self.record_predict_matches_run = self.current_run
 
+                    if record:
+                        subprocess.Popen(shlex.split(f"play -v 0.45 /home/serpent/SFX/HolyShit_F.wav"))
+
+            if self.last_matches < 10:
+                subprocess.Popen(shlex.split(f"play -v 0.45 /home/serpent/SFX/Humiliating_defeat.wav"))
+
             print("\033c")
 
-            game_board_data = list()
-            unique_game_boards = list()
+            game_board_vector_data = list()
+            scores = list()
 
-            for game_board in self.game_boards:
-                unique = True
+            if len(self.game_boards):
+                print(f"GENERATING TRAINING DATASETS: 0 / 1")
+                print(f"NEXT RUN: {self.current_run + 1}")
 
-                for unique_game_board in unique_game_boards:
-                    if np.array_equal(game_board, unique_game_board):
-                        unique = False
-                        break
+                game_board_deltas = generate_game_board_deltas(self.game_boards[-1])
+                boolean_game_board_deltas = generate_boolean_game_board_deltas(game_board_deltas)
 
-                if unique:
-                    unique_game_boards.append(game_board)
+                for game_move, boolean_game_boards in boolean_game_board_deltas.items():
+                    for boolean_game_board in boolean_game_boards:
+                        for i in range(6):
+                            row = boolean_game_board[i, :]
 
-            print(f"GENERATING TRAINING DATASETS: 0 / {len(unique_game_boards)}")
+                            game_board_vector_data.append(row)
+                            scores.append(score_game_board_vector(row))
 
-            for i, game_board in enumerate(unique_game_boards):
-                game_board_deltas = generate_game_board_deltas(game_board)
+                        for i in range(8):
+                            column = boolean_game_board[:, i]
+                            column = np.append(column, [0, 0])
 
-                game_board_inputs = list()
-
-                for ii, game_board_delta in enumerate(game_board_deltas):
-                    for iii in range(7):
-                        game_board_input = np.copy(game_board_delta[1])
-
-                        game_board_input[game_board_input != (iii + 1)] = 0
-                        game_board_input[game_board_input == (iii + 1)] = 1
-
-                        game_board_input = game_board_input.astype("bool")
-
-                        game_board_inputs.append(game_board_input)
-
-                for game_board_input in game_board_inputs:
-                    score = score_game_board(game_board_input)
-                    game_board_data.append((game_board_input, score))
+                            game_board_vector_data.append(column)
+                            scores.append(score_game_board_vector(column))
 
                 print("\033c")
-                print(f"GENERATING TRAINING DATASETS: {i + 1} / {len(unique_game_boards)}")
+                print(f"GENERATING TRAINING DATASETS: 1 / 1")
+                print(f"NEXT RUN: {self.current_run + 1}")
 
             with h5py.File(f"datasets/ymbab/ymbab_run_{self.current_run}.h5", "w") as f:
-                for index, data in enumerate(game_board_data):
-                    f.create_dataset(f"{index}", data=data[0])
-                    f.create_dataset(f"{index}_score", data=data[1])
+                for index, data in enumerate(game_board_vector_data):
+                    f.create_dataset(f"{index}", data=data)
+
+                for index, data in enumerate(scores):
+                    f.create_dataset(f"{index}_score", data=data)
 
             self.game_boards = list()
             self.current_run += 1
 
-            print(f"Duration (RANDOM): {self.record_random_duration} seconds")
             if self.current_run % 10 == 0:
                 self.mode = "PREDICT"
 
-                data = list()
-                scores = list()
+                print("\033c")
+                print("UPDATING MODEL WITH LATEST COLLECTED DATA...")
+                print(f"NEXT RUN: {self.current_run}")
 
                 for i in range(9 if self.current_run <= 10 else 10):
                     data_file_path = f"datasets/ymbab/ymbab_run_{self.current_run - (i + 1)}.h5"
+
+                    data = list()
+                    scores = list()
 
                     with h5py.File(data_file_path, "r") as f:
                         count = len(f.items()) // 2
 
                         for ii in range(count):
-                            data.append(f[f"{ii}"][:].flatten())
+                            data.append(f[f"{ii}"][:])
                             scores.append(f[f"{ii}_score"].value)
 
-                if len(data):
-                    self.model.partial_fit(data, scores)
+                    if len(data):
+                        self.model.partial_fit(data, scores)
 
-                    serialized_model = pickle.dumps(self.model)
+                serialized_model = pickle.dumps(self.model)
 
-                    with open("datasets/ymbab_matching.model", "wb") as f:
-                        f.write(serialized_model)
+                with open("datasets/ymbab_matching.model", "wb") as f:
+                    f.write(serialized_model)
             else:
                 self.mode = "PREDICT"
 
@@ -296,16 +320,48 @@ class YouMustBuildABoatGameAgent(GameAgent):
                 self.game_boards.append(self.game_board)
 
             if self.mode == "PREDICT":
-                boolean_game_board_deltas = generate_boolean_game_board_deltas(game_board_deltas, obfuscate=True)
+                boolean_game_board_deltas = generate_boolean_game_board_deltas(game_board_deltas, obfuscate=False)
 
-                top_game_move_score = 0
+                top_game_move_score = -10
                 top_game_move = None
 
+                game_move_scores = dict()
+
                 for game_move, boolean_game_boards in boolean_game_board_deltas.items():
+                    split_game_move = game_move.split(" to ")
+                    axis = "ROW" if split_game_move[0][0] == split_game_move[1][0] else "COLUMN"
+
                     total_score = 0
 
                     for boolean_game_board in boolean_game_boards:
-                        total_score += self.model.predict([boolean_game_board.flatten()])
+                        input_vectors = list()
+
+                        if axis == "ROW":
+                            row_index = self.rows.index(split_game_move[0][0])
+                            row = boolean_game_board[row_index, :]
+
+                            input_vectors.append(row)
+
+                            for ii in range(8):
+                                column = boolean_game_board[:, ii]
+                                column = np.append(column, [False, False])
+
+                                input_vectors.append(column)
+                        elif axis == "COLUMN":
+                            for ii in range(6):
+                                row = boolean_game_board[ii, :]
+                                input_vectors.append(row)
+
+                            column_index = self.columns.index(int(split_game_move[0][1]))
+                            column = boolean_game_board[:, column_index]
+                            column = np.append(column, [False, False])
+
+                            input_vectors.append(column)
+
+                        prediction = self.model.predict(input_vectors)
+                        total_score += max(prediction)
+
+                    game_move_scores[game_move] = total_score
 
                     if total_score > top_game_move_score:
                         top_game_move_score = total_score
@@ -351,6 +407,9 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
             if score_game_board(game_board_delta) > 0:
                 self.current_matches += 1
+
+                if self.current_matches in self.match_milestone_sfx_mapping:
+                    subprocess.Popen(shlex.split(f"play -v 0.45 {self.match_milestone_sfx_mapping[self.current_matches]}"))
 
             print("\033c")
 
@@ -412,68 +471,68 @@ class YouMustBuildABoatGameAgent(GameAgent):
         if context is None:
             return
 
-        if context == "game_over":
-            self.input_controller.click_screen_region(screen_region="GAME_OVER_RUN_AGAIN", game=self.game)
-            time.sleep(2)
-        elif context.startswith("level_"):
-            print("\033c")
-            print(context)
-            print("BOARD STATE:\n")
-
-            self.previous_game_board = self.game_board
-            self.game_board = parse_game_board(game_frame.frame)
-            print(self.game_board)
-
-            # Click the Unknown Tiles
-            unknown_tile_coordinates = np.argwhere(self.game_board == 0)
-
-            if 0 < unknown_tile_coordinates.size <= 10:
-                coordinates = random.choice(unknown_tile_coordinates)
-                tile_screen_region = f"GAME_BOARD_{self.rows[coordinates[0]]}{self.columns[coordinates[1]]}"
-
-                self.input_controller.click_screen_region(screen_region=tile_screen_region, game=self.game)
-
-            if not np.array_equal(self.game_board, self.previous_game_board):
-                return
-
-            game_board_deltas = generate_game_board_deltas(self.game_board)
-            game_board_delta_matches = detect_game_board_delta_matches(game_board_deltas)
-
-            game_move = None
-
-            for i in [5, 4, 3]:
-                if not len(game_board_delta_matches[i]):
-                    continue
-
-                game_move = random.choice(game_board_delta_matches[i])
-                break
-
-            if game_move is None:
-                time.sleep(0.1)
-                return
-
-            game_move_start_cell, game_move_end_cell = game_move.split(" to ")
-
-            start_screen_region = f"GAME_BOARD_{game_move_start_cell}"
-            end_screen_region = f"GAME_BOARD_{game_move_end_cell}"
-
-            game_move_direction = "ROW" if self.game.screen_regions[start_screen_region][0] == self.game.screen_regions[end_screen_region][0] else "COLUMN"
-
-            if game_move_direction == "ROW":
-                game_move_distance = int(game_move_end_cell[1]) - int(game_move_start_cell[1])
-            else:
-                game_move_distance = self.rows.index(game_move_end_cell[0]) - self.rows.index(game_move_start_cell[0])
-
-            print(f"\nMoving {game_move_start_cell} to {game_move_end_cell}...")
-
-            print(game_board_delta_matches)
-
-            self.input_controller.drag_screen_region_to_screen_region(
-                start_screen_region=start_screen_region,
-                end_screen_region=end_screen_region,
-                duration=(0.1 + (game_move_distance * 0.05)),
-                game=self.game
-            )
+        # if context == "game_over":
+        #     self.input_controller.click_screen_region(screen_region="GAME_OVER_RUN_AGAIN", game=self.game)
+        #     time.sleep(2)
+        # elif context.startswith("level_"):
+        #     print("\033c")
+        #     print(context)
+        #     print("BOARD STATE:\n")
+        #
+        #     self.previous_game_board = self.game_board
+        #     self.game_board = parse_game_board(game_frame.frame)
+        #     print(self.game_board)
+        #
+        #     # Click the Unknown Tiles
+        #     unknown_tile_coordinates = np.argwhere(self.game_board == 0)
+        #
+        #     if 0 < unknown_tile_coordinates.size <= 10:
+        #         coordinates = random.choice(unknown_tile_coordinates)
+        #         tile_screen_region = f"GAME_BOARD_{self.rows[coordinates[0]]}{self.columns[coordinates[1]]}"
+        #
+        #         self.input_controller.click_screen_region(screen_region=tile_screen_region, game=self.game)
+        #
+        #     if not np.array_equal(self.game_board, self.previous_game_board):
+        #         return
+        #
+        #     game_board_deltas = generate_game_board_deltas(self.game_board)
+        #     game_board_delta_matches = detect_game_board_delta_matches(game_board_deltas)
+        #
+        #     game_move = None
+        #
+        #     for i in [5, 4, 3]:
+        #         if not len(game_board_delta_matches[i]):
+        #             continue
+        #
+        #         game_move = random.choice(game_board_delta_matches[i])
+        #         break
+        #
+        #     if game_move is None:
+        #         time.sleep(0.1)
+        #         return
+        #
+        #     game_move_start_cell, game_move_end_cell = game_move.split(" to ")
+        #
+        #     start_screen_region = f"GAME_BOARD_{game_move_start_cell}"
+        #     end_screen_region = f"GAME_BOARD_{game_move_end_cell}"
+        #
+        #     game_move_direction = "ROW" if self.game.screen_regions[start_screen_region][0] == self.game.screen_regions[end_screen_region][0] else "COLUMN"
+        #
+        #     if game_move_direction == "ROW":
+        #         game_move_distance = int(game_move_end_cell[1]) - int(game_move_start_cell[1])
+        #     else:
+        #         game_move_distance = self.rows.index(game_move_end_cell[0]) - self.rows.index(game_move_start_cell[0])
+        #
+        #     print(f"\nMoving {game_move_start_cell} to {game_move_end_cell}...")
+        #
+        #     print(game_board_delta_matches)
+        #
+        #     self.input_controller.drag_screen_region_to_screen_region(
+        #         start_screen_region=start_screen_region,
+        #         end_screen_region=end_screen_region,
+        #         duration=(0.1 + (game_move_distance * 0.05)),
+        #         game=self.game
+        #     )
 
     def handle_play_random(self, game_frame):
         rows = ["A", "B", "C", "D", "E", "F"]

@@ -198,8 +198,7 @@ class Game(offshoot.Pluggable):
                 self.window_geometry.get("height"),
                 self.window_geometry.get("width"),
                 3
-            ),
-            mode="BOTH"
+            )
         )
 
         return game_frame_buffer.frames[0]
