@@ -13,6 +13,8 @@ import numpy as np
 import skimage.io
 import skimage.transform
 
+from lib.config import config
+
 import sklearn
 import os
 import h5py
@@ -65,12 +67,41 @@ def boat_launch(ctx):
     game.launch()
 
 
+# TODO: move these to somewhere better? and separate into two?
+def offshoot_find_partial(pluggable, partial_name):
+    pluggables = offshoot.discover(pluggable)
+    return next((k for k, v in pluggables.items() if partial_name.lower() in k.lower()), None)
+
+def find_game_and_agent_names(partial_name):
+    game_class = offshoot_find_partial("Game", partial_name)
+
+    if game_class is None:
+        raise Exception("The provided Game class name does not map to an existing class...")
+
+    game_agent_class = offshoot_find_partial("GameAgent", partial_name)
+    if game_agent_class is None:
+        raise Exception("The provided Game Agent class name does not map to an existing class...")
+
+    return (game_class, game_agent_class)
+
 @task
 def boat_play(ctx):
     game = YouMustBuildABoatGame()
     game.launch(dry_run=True)
     game.play(game_agent_class_name="YouMustBuildABoatGameAgent")
 
+@task
+def capture_context(ctx, game='', context='unnamed', interval=1):
+    game, agent = find_game_and_agent_names(game)
+    game = offshoot.discover("Game").get(game)
+    game = game()
+    game.launch(dry_run=True)
+    # maybe remove these and integrate it to agent class?
+    config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"] = context
+    config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["interval"] = interval
+    def change_context(agent):
+        agent.config["frame_handler"] = "COLLECT_FRAMES_FOR_CONTEXT"
+    game.play(game_agent_class_name=agent, on_game_agent_ready=change_context)
 
 @task
 def boat_context_train(ctx):

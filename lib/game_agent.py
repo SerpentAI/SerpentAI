@@ -32,6 +32,7 @@ class GameAgent(offshoot.Pluggable):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        self.collected_frame_count = 0
         self.game = kwargs["game"]
         self.config = config.get(f"{self.__class__.__name__}Plugin")
 
@@ -90,6 +91,9 @@ class GameAgent(offshoot.Pluggable):
     def setup_collect_frames_for_context(self):
         context = config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
 
+        if not os.path.isdir(f"datasets/collect_frames_for_context"):
+            os.mkdir(f"datasets/collect_frames_for_context")
+
         if not os.path.isdir(f"datasets/collect_frames_for_context/{context}"):
             os.mkdir(f"datasets/collect_frames_for_context/{context}")
 
@@ -108,6 +112,11 @@ class GameAgent(offshoot.Pluggable):
 
         file_name = f"datasets/collect_frames_for_context/{context}/frame_{str(uuid.uuid4())}.png"
         skimage.io.imsave(file_name, resized_frame)
+
+        self.collected_frame_count += 1
+
+        print("\033c")
+        print(f"CAPTURED FRAME: {self.collected_frame_count} for '{context}'")
 
         time.sleep(interval)
 

@@ -105,7 +105,7 @@ class Game(offshoot.Pluggable):
         self.window_geometry = self.extract_window_geometry()
         print(self.window_geometry)
 
-    def play(self, game_agent_class_name=None):
+    def play(self, game_agent_class_name=None, *, on_game_agent_ready=None):
         if not self.is_launched:
             raise GameError(f"Game '{self.__class__.__name__}' is not running...")
 
@@ -118,6 +118,10 @@ class Game(offshoot.Pluggable):
             game=self,
             input_controller=InputController(game_window_id=self.window_id)
         )
+
+        # allows modification on agent
+        if not on_game_agent_ready is None:
+            on_game_agent_ready(game_agent)
 
         self.start_frame_grabber()
         self.redis_client.delete(config["frame_grabber"]["redis_key"])
