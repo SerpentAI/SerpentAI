@@ -2,7 +2,7 @@ import numpy as np
 
 
 class SpriteIdentifier:
-    def __init__ (self, pixel_quantity=10, iterations=1, match_threshold=0.8):
+    def __init__(self, pixel_quantity=10, iterations=1, match_threshold=0.8):
         self.pixel_quantity = pixel_quantity
         self.iterations = iterations
 

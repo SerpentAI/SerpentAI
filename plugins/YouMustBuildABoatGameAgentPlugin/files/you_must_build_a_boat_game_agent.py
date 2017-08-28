@@ -8,7 +8,7 @@ import lib.cv
 import lib.ocr
 
 from .helpers.ocr import preprocess as ocr_preprocess
-from .helpers.game import parse_game_board, generate_game_board_deltas, score_game_board, score_game_board_vector, generate_boolean_game_board_deltas, display_game_board
+from .helpers.game import *
 
 import offshoot
 
@@ -44,6 +44,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
         self.frame_handler_setups["PLAY"] = self.setup_play
         self.frame_handler_setups["PLAY_BOT"] = self.setup_play_bot
+        self.frame_handler_setups["PLAY_RANDOM"] = self.setup_play_bot
 
         self.analytics_client = None
 
@@ -136,11 +137,47 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
         self.game_boards = list()
 
-        if os.path.isfile("datasets/ymbab_matching.model"):
-            with open("datasets/ymbab_matching.model", "rb") as f:
+        matching_model_path = f"{plugin_path}/YouMustBuildABoatGameAgentPlugin/files/ml_models/you_must_build_a_boat_matching.model"
+
+        if os.path.isfile(matching_model_path):
+            with open(matching_model_path, "rb") as f:
                 self.model = pickle.loads(f.read())
         else:
-            self.model = sklearn.linear_model.SGDRegressor()
+            self.model = sklearn.linear_model.SGDRegressor(
+                loss="squared_loss",
+                penalty="elasticnet",
+                alpha=1e-7,
+                l1_ratio=0.45,
+                learning_rate="invscaling",
+                eta0=0.0065
+            )
+
+        self.validation_game_boards = list()
+        self.validation_optimal_score = 0
+
+        self.model_validation_score = 0
+
+        for root, dirs, files in os.walk("datasets/ymbab-good"):
+            for file in files:
+                if not file.endswith(".png"):
+                    continue
+
+                frame = skimage.io.imread(f"datasets/ymbab-good/{file}")
+
+                game_board = parse_game_board(frame)
+                self.validation_game_boards.append(game_board)
+
+                game_board_deltas = generate_game_board_deltas(game_board)
+
+                top_score = 0
+
+                for game_board_delta in game_board_deltas:
+                    score = score_game_board(game_board_delta[1])
+
+                    if score > top_score:
+                        top_score = score
+
+                self.validation_optimal_score += top_score
 
     def setup_play_bot(self):
         plugin_path = offshoot.config["file_paths"]["plugins"]
@@ -260,33 +297,93 @@ class YouMustBuildABoatGameAgent(GameAgent):
             self.game_boards = list()
             self.current_run += 1
 
-            if self.current_run % 10 == 0:
+            if self.current_run > 2:
                 self.mode = "PREDICT"
 
                 print("\033c")
                 print("UPDATING MODEL WITH LATEST COLLECTED DATA...")
                 print(f"NEXT RUN: {self.current_run}")
 
-                for i in range(9 if self.current_run <= 10 else 10):
-                    data_file_path = f"datasets/ymbab/ymbab_run_{self.current_run - (i + 1)}.h5"
+                data_file_path = f"datasets/ymbab/ymbab_run_{self.current_run - 1}.h5"
 
-                    data = list()
-                    scores = list()
+                data = list()
+                scores = list()
 
-                    with h5py.File(data_file_path, "r") as f:
-                        count = len(f.items()) // 2
+                with h5py.File(data_file_path, "r") as f:
+                    count = len(f.items()) // 2
 
-                        for ii in range(count):
-                            data.append(f[f"{ii}"][:])
-                            scores.append(f[f"{ii}_score"].value)
+                    for ii in range(count):
+                        data.append(f[f"{ii}"][:])
+                        scores.append(f[f"{ii}_score"].value)
 
-                    if len(data):
-                        self.model.partial_fit(data, scores)
+                if len(data):
+                    self.model.partial_fit(data, scores)
 
                 serialized_model = pickle.dumps(self.model)
 
-                with open("datasets/ymbab_matching.model", "wb") as f:
+                matching_model_path = f"{offshoot.config['file_paths']['plugins']}/YouMustBuildABoatGameAgentPlugin/files/ml_models/you_must_build_a_boat_matching.model"
+
+                with open(matching_model_path, "wb") as f:
                     f.write(serialized_model)
+
+                model_score = 0
+
+                for game_board in self.validation_game_boards:
+                    game_board_deltas = generate_game_board_deltas(game_board)
+
+                    boolean_game_board_deltas = generate_boolean_game_board_deltas(game_board_deltas)
+
+                    top_game_move_score = -10
+                    top_game_move = None
+
+                    for game_move, boolean_game_boards in boolean_game_board_deltas.items():
+                        split_game_move = game_move.split(" to ")
+                        axis = "ROW" if split_game_move[0][0] == split_game_move[1][0] else "COLUMN"
+
+                        total_score = 0
+
+                        for boolean_game_board in boolean_game_boards:
+                            input_vectors = list()
+
+                            if axis == "ROW":
+                                row_index = self.rows.index(split_game_move[0][0])
+                                row = boolean_game_board[row_index, :]
+
+                                input_vectors.append(row)
+
+                                for ii in range(8):
+                                    column = boolean_game_board[:, ii]
+                                    column = np.append(column, [False, False])
+
+                                    input_vectors.append(column)
+                            elif axis == "COLUMN":
+                                for ii in range(6):
+                                    row = boolean_game_board[ii, :]
+                                    input_vectors.append(row)
+
+                                column_index = self.columns.index(int(split_game_move[0][1]))
+                                column = boolean_game_board[:, column_index]
+                                column = np.append(column, [False, False])
+
+                                input_vectors.append(column)
+
+                            prediction = self.model.predict(input_vectors)
+                            total_score += max(prediction)
+
+                        if total_score > top_game_move_score:
+                            top_game_move_score = total_score
+                            top_game_move = game_move
+
+                    top_game_move_game_board_delta = None
+
+                    for game_board_delta in game_board_deltas:
+                        if game_board_delta[0] == top_game_move:
+                            top_game_move_game_board_delta = game_board_delta[1]
+                            break
+
+                    model_score += score_game_board(top_game_move_game_board_delta)
+
+                self.model_validation_score = model_score
             else:
                 self.mode = "PREDICT"
 
@@ -306,7 +403,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
             unknown_tile_coordinates = np.argwhere(self.game_board == 0)
 
-            if 0 < unknown_tile_coordinates.size <= 10:
+            if 0 < len(unknown_tile_coordinates) <= 10:
                 coordinates = random.choice(unknown_tile_coordinates)
                 tile_screen_region = f"GAME_BOARD_{self.rows[coordinates[0]]}{self.columns[coordinates[1]]}"
 
@@ -320,10 +417,7 @@ class YouMustBuildABoatGameAgent(GameAgent):
                 self.game_boards.append(self.game_board)
 
             if self.mode == "PREDICT":
-                boolean_game_board_deltas = generate_boolean_game_board_deltas(game_board_deltas, obfuscate=False)
-
-                top_game_move_score = -10
-                top_game_move = None
+                boolean_game_board_deltas = generate_boolean_game_board_deltas(game_board_deltas)
 
                 game_move_scores = dict()
 
@@ -363,14 +457,12 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
                     game_move_scores[game_move] = total_score
 
-                    if total_score > top_game_move_score:
-                        top_game_move_score = total_score
-                        top_game_move = game_move
+                sorted_game_moves = sorted(game_move_scores.items(), key=lambda x: x[1], reverse=True)
 
-                if top_game_move is None:
-                    return False
+                game_move_index_distribution = [0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7, 8, 9]
+                game_move_index = random.choice(game_move_index_distribution)
 
-                start_coordinate, end_coordinate = top_game_move.split(" to ")
+                start_coordinate, end_coordinate = sorted_game_moves[game_move_index][0].split(" to ")
 
                 start_screen_region = f"GAME_BOARD_{start_coordinate}"
                 end_screen_region = f"GAME_BOARD_{end_coordinate}"
@@ -415,6 +507,8 @@ class YouMustBuildABoatGameAgent(GameAgent):
 
             print(f"CURRENT RUN: {self.current_run}")
             print(f"CURRENT MODE: {self.mode}\n")
+
+            print(f"CURRENT MODEL VALIDATION SCORE: {self.model_validation_score}\n")
 
             print("BOARD STATE:\n")
 
@@ -535,41 +629,53 @@ class YouMustBuildABoatGameAgent(GameAgent):
         #     )
 
     def handle_play_random(self, game_frame):
-        rows = ["A", "B", "C", "D", "E", "F"]
-        columns = [1, 2, 3, 4, 5, 6, 7, 8]
+        context = self.machine_learning_models["context_classifier"].predict(game_frame.frame)
 
-        row = random.choice(rows)
-        column = random.choice(columns)
+        if context is None:
+            return
 
-        start_screen_region = f"GAME_BOARD_{row}{column}"
+        if context == "game_over":
+            self.input_controller.click_screen_region(screen_region="GAME_OVER_RUN_AGAIN", game=self.game)
+            time.sleep(2)
+        elif context.startswith("level_"):
+            game_above_board = lib.cv.extract_region_from_image(game_frame.frame, self.game.screen_regions["GAME_ABOVE_BOARD"])
+            player_location = locate_player(game_above_board)
 
-        axis = "row" if random.randint(0, 1) else "column"
+            print(f"Player Distance from Edge: {player_location[1] if player_location else 'N/A'}")
 
-        if axis == "row":
-            end_column = random.choice(columns)
+            if player_location is None:
+                skimage.io.imsave(f"datasets/collect_frames/frame_{uuid.uuid4()}.png", game_above_board)
 
-            while end_column == column:
-                end_column = random.choice(columns)
+            row = random.choice(self.rows)
+            column = random.choice(self.columns)
 
-            end_screen_region = f"GAME_BOARD_{row}{end_column}"
-        else:
-            end_row = random.choice(rows)
+            start_screen_region = f"GAME_BOARD_{row}{column}"
 
-            while end_row == row:
-                end_row = random.choice(rows)
+            axis = "row" if random.randint(0, 1) else "column"
 
-            end_screen_region = f"GAME_BOARD_{end_row}{column}"
+            if axis == "row":
+                end_column = random.choice(self.columns)
 
-        print(f"\nMoving {start_screen_region.split('_')[-1]} to {end_screen_region.split('_')[-1]}...")
+                while end_column == column:
+                    end_column = random.choice(self.columns)
 
-        self.input_controller.drag_screen_region_to_screen_region(
-            start_screen_region=start_screen_region,
-            end_screen_region=end_screen_region,
-            duration=0.3,
-            game=self.game
-        )
+                end_screen_region = f"GAME_BOARD_{row}{end_column}"
+            else:
+                end_row = random.choice(self.rows)
 
-        time.sleep(1)
+                while end_row == row:
+                    end_row = random.choice(self.rows)
+
+                end_screen_region = f"GAME_BOARD_{end_row}{column}"
+
+            print(f"\nMoving {start_screen_region.split('_')[-1]} to {end_screen_region.split('_')[-1]}...")
+
+            self.input_controller.drag_screen_region_to_screen_region(
+                start_screen_region=start_screen_region,
+                end_screen_region=end_screen_region,
+                duration=0.3,
+                game=self.game
+            )
 
     def handle_collect_characters(self, game_frame):
         frame_uuid = str(uuid.uuid4())

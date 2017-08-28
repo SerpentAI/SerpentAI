@@ -1,3 +1,13 @@
+__all__ = [
+    "parse_game_board",
+    "generate_game_board_deltas",
+    "generate_boolean_game_board_deltas",
+    "score_game_board_vector",
+    "score_game_board",
+    "display_game_board",
+    "locate_player"
+]
+
 import numpy as np
 
 import lib.cv
@@ -9,6 +19,11 @@ from lib.games import YouMustBuildABoatGame
 
 import xtermcolor
 import random
+
+import skimage.color
+import skimage.filters
+import skimage.morphology
+import skimage.measure
 
 
 game = YouMustBuildABoatGame()
@@ -181,3 +196,28 @@ def display_game_board(game_board):
 
         print("  ".join(row))
         print("")
+
+
+def locate_player(above_game_board):
+    gray_above_board_frame = np.array(skimage.color.rgb2gray(above_game_board) * 255, dtype="uint8")
+    bw_above_board_frame = gray_above_board_frame > 180
+
+    closed_bw_above_board_frame = skimage.morphology.closing(
+        bw_above_board_frame,
+        skimage.morphology.rectangle(4, 8)
+    )
+
+    max_height = 0
+    player_bounding_box = None
+
+    for region in skimage.measure.regionprops(skimage.measure.label(closed_bw_above_board_frame)):
+        if region.area < 150:
+            continue
+
+        y0, x0, y1, x1 = region.bbox
+
+        if y1 - y0 > max_height:
+            max_height = y1 - y0
+            player_bounding_box = region.bbox
+
+    return player_bounding_box
