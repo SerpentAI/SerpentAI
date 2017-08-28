@@ -24,6 +24,7 @@ class YouMustBuildABoatGame(Game):
             "MENU_LOAD_GAME": (394, 376, 429, 595),
             "MENU_SETTINGS": (438, 376, 473, 595),
             "MENU_QUIT": (482, 376, 517, 595),
+            "GAME_ABOVE_BOARD": (69, 342, 193, 1023),
             "GAME_OVER_RUN_AGAIN": (600, 250, 673, 509)
         }
 
