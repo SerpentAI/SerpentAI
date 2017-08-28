@@ -90,7 +90,7 @@ def boat_context_train(ctx):
             "datasets/collect_frames_for_context/level_ruins",
             "datasets/collect_frames_for_context/level_sewers",
             "datasets/collect_frames_for_context/level_thicket",
-            "datasets/collect_np.exp(np.linspace(0.0, math.log(1e-1 / 1e-10), 100)) * 1e-10frames_for_context/level_tower",
+            "datasets/collect_frames_for_context/level_tower",
             "datasets/collect_frames_for_context/level_vault",
         ]
     )
