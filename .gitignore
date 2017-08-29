@@ -13,3 +13,5 @@ __pycache__/
 *.ipynb
 
 config/config.private.yml
+
+plugins/

@@ -7,18 +7,21 @@ import subprocess
 import signal
 import shlex
 import time
-import re
+import sys
 import os, os.path
 import atexit
 
 from lib.game_launchers.steam_game_launcher import SteamGameLauncher
 
+from lib.window_controller import WindowController
 from lib.input_controller import InputController
 
 from lib.frame_grabber import FrameGrabber
 from lib.game_frame_limiter import GameFrameLimiter
 
 from lib.sprite import Sprite
+
+import lib.utilities
 
 import skimage.io
 import skimage.color
@@ -45,6 +48,8 @@ class Game(offshoot.Pluggable):
         self.window_id = None
         self.window_name = kwargs.get("window_name")
         self.window_geometry = None
+
+        self.window_controller = WindowController()
 
         self.is_launched = False
 
@@ -77,8 +82,7 @@ class Game(offshoot.Pluggable):
     @property
     @offshoot.forbidden
     def is_focused(self):
-        focused_window_id = subprocess.check_output(shlex.split("xdotool getwindowfocus")).decode("utf-8").strip()
-        return focused_window_id == self.window_id
+        return self.window_controller.is_window_focused(self.window_id)
 
     @offshoot.forbidden
     def launch(self, dry_run=False):
@@ -97,10 +101,10 @@ class Game(offshoot.Pluggable):
 
         time.sleep(5)
 
-        self.window_id = subprocess.check_output(shlex.split(f"xdotool search --name \"{self.window_name}\"")).decode("utf-8").strip()
+        self.window_id = self.window_controller.locate_window(self.window_name)
 
-        subprocess.call(shlex.split(f"xdotool windowmove {self.window_id} 0 0"))
-        subprocess.call(shlex.split(f"xdotool windowactivate {self.window_id}"))
+        self.window_controller.move_window(self.window_id, 0, 0)
+        self.window_controller.focus_window(self.window_id)
 
         self.window_geometry = self.extract_window_geometry()
         print(self.window_geometry)
@@ -125,7 +129,7 @@ class Game(offshoot.Pluggable):
         while self.redis_client.llen(config["frame_grabber"]["redis_key"]) == 0:
             time.sleep(0.1)
 
-        subprocess.call(shlex.split(f"xdotool windowactivate {self.window_id}"))
+        self.window_controller.focus_window(self.window_id)
 
         while True:
             self.game_frame_limiter.start()
@@ -135,7 +139,7 @@ class Game(offshoot.Pluggable):
                 if self.is_focused:
                     game_agent.on_game_frame(game_frame)
                 else:
-                    subprocess.call(["clear"])
+                    lib.utilities.clear_terminal()
                     print("PAUSED")
 
                     time.sleep(1)
@@ -149,19 +153,8 @@ class Game(offshoot.Pluggable):
     @offshoot.forbidden
     def extract_window_geometry(self):
         if self.is_launched:
-            geometry = dict()
+            return self.window_controller.get_window_geometry(self.window_id)
 
-            window_geometry = subprocess.check_output(shlex.split(f"xdotool getwindowgeometry {self.window_id}")).decode("utf-8").strip()
-            size = re.match(r"\s+Geometry: ([0-9]+x[0-9]+)", window_geometry.split("\n")[2]).group(1).split("x")
-
-            geometry["width"] = int(size[0])
-            geometry["height"] = int(size[1])
-
-            window_information = subprocess.check_output(shlex.split(f"xwininfo -id {self.window_id}")).decode("utf-8").strip()
-            geometry["x_offset"] = int(re.match(r"\s+Absolute upper-left X:\s+([0-9]+)", window_information.split("\n")[2]).group(1))
-            geometry["y_offset"] = int(re.match(r"\s+Absolute upper-left Y:\s+([0-9]+)", window_information.split("\n")[3]).group(1))
-
-            return geometry
         return None
 
     @offshoot.forbidden
@@ -172,7 +165,9 @@ class Game(offshoot.Pluggable):
         if self.frame_grabber_process is not None:
             self.stop_frame_grabber()
 
-        frame_grabber_command = f"invoke start_frame_grabber -w {self.window_geometry['width']} -h {self.window_geometry['height']} -x {self.window_geometry['x_offset']} -y {self.window_geometry['y_offset']}"
+        invoke_command = "invoke start-frame-grabber" if sys.platform == "win32" else "invoke start_frame_grabber"
+
+        frame_grabber_command = f"{invoke_command} -w {self.window_geometry['width']} -h {self.window_geometry['height']} -x {self.window_geometry['x_offset']} -y {self.window_geometry['y_offset']}"
         self.frame_grabber_process = subprocess.Popen(shlex.split(frame_grabber_command))
 
         signal.signal(signal.SIGINT, self._handle_signal)
