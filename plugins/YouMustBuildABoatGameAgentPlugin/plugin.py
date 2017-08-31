@@ -12,9 +12,8 @@ class YouMustBuildABoatGameAgentPlugin(offshoot.Plugin):
     ]
 
     config = {
-        "frame_handler": "COLLECT_FRAMES",
-        "collect_frames_interval": 1,
-        "collect_character_interval": 10
+        "frame_handler": "PLAY",
+        "sfx_path": "/home/serpent/SFX"
     }
 
     @classmethod

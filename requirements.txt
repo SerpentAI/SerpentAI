@@ -1,6 +1,5 @@
 offshoot==0.1.1
-numpy==1.12.1
-scikit-image==0.13.0
+
 redis==2.10.5
 aioredis==1.0.0b1
 scikit-learn==0.18.1
