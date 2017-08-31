@@ -21,7 +21,7 @@ class Sprite:
         self.image_data = image_data
         self.image_shape = image_data.shape[:2]
 
-        self.signature_colors = signature_colors
+        self.signature_colors = signature_colors or self._generate_signature_colors()
 
     def sample_pixels(self, quantity=5, iterations=1, seed=None):
         if seed is None:
@@ -54,7 +54,7 @@ class Sprite:
 
         return samples
 
-    def append_image_data(self, image_data):
+    def append_image_data(self, image_data, signature_colors=None):
         images = list()
 
         for i in range(self.image_data.shape[3]):
@@ -64,8 +64,27 @@ class Sprite:
 
         self.image_data = np.squeeze(np.stack(images, axis=3))
 
+        if signature_colors is not None:
+            self.signature_colors.append(signature_colors)
+        else:
+            self.signature_colors = self._generate_signature_colors()
+
     def _generate_seed(self):
         return str(uuid.uuid4())
+
+    def _generate_signature_colors(self):
+        # TODO: Exclude RGB 0, 0, 0, from signature
+
+        signature_colors = list()
+        height, width, pixels, animation_states = self.image_data.shape
+
+        for i in range(animation_states):
+            values, counts = np.unique(self.image_data[..., i].reshape(width * height, 3), axis=0, return_counts=True)
+            maximum_indices = np.argsort(counts)[::-1][:5]
+
+            signature_colors.append([tuple(map(int, values[index])) for index in maximum_indices])
+
+        return signature_colors
 
     @classmethod
     def locate_color(cls, color, image):
