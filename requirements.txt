@@ -1,4 +1,4 @@
-offshoot==0.1.1
+offshoot==0.1.4
 
 redis==2.10.5
 aioredis==1.0.0b1

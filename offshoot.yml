@@ -1,4 +1,5 @@
 allow:
+    plugins: true
     callbacks: true
     config: true
     files: true

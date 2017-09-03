@@ -1,7 +1,7 @@
 {
     "plugins": {
-        "YouMustBuildABoatGamePlugin": {
-            "name": "YouMustBuildABoatGamePlugin",
+        "SerpentYouMustBuildABoatGamePlugin": {
+            "name": "SerpentYouMustBuildABoatGamePlugin",
             "version": "0.1.0",
             "files": [
                 {
@@ -9,71 +9,14 @@
                     "pluggable": "Game"
                 }
             ],
+            "plugins": [],
             "libraries": [],
             "config": {
                 "fps": 2
             }
         },
-        "SuperHexagonGamePlugin": {
-            "name": "SuperHexagonGamePlugin",
-            "version": "0.1.0",
-            "files": [
-                {
-                    "path": "super_hexagon_game.py",
-                    "pluggable": "Game"
-                }
-            ],
-            "libraries": [],
-            "config": {
-                "frame_rate": 10
-            }
-        },
-        "SuperHexagonGameAgentPlugin": {
-            "name": "SuperHexagonGameAgentPlugin",
-            "version": "0.1.0",
-            "files": [
-                {
-                    "path": "super_hexagon_game_agent.py",
-                    "pluggable": "GameAgent"
-                }
-            ],
-            "libraries": [],
-            "config": {
-                "frame_handler": "collect_frames"
-            }
-        },
-        "BindingOfIsaacRebirthGamePlugin": {
-            "name": "BindingOfIsaacRebirthGamePlugin",
-            "version": "0.1.0",
-            "files": [
-                {
-                    "path": "binding_of_isaac_rebirth_game.py",
-                    "pluggable": "Game"
-                }
-            ],
-            "libraries": [],
-            "config": {
-                "fps": 2
-            }
-        },
-        "BindingOfIsaacRebirthGameAgentPlugin": {
-            "name": "BindingOfIsaacRebirthGameAgentPlugin",
-            "version": "0.1.0",
-            "files": [
-                {
-                    "path": "binding_of_isaac_rebirth_game_agent.py",
-                    "pluggable": "GameAgent"
-                }
-            ],
-            "libraries": [],
-            "config": {
-                "frame_handler": "COLLECT_FRAMES",
-                "collect_frames_interval": 1,
-                "collect_character_interval": 10
-            }
-        },
-        "YouMustBuildABoatGameAgentPlugin": {
-            "name": "YouMustBuildABoatGameAgentPlugin",
+        "SerpentYouMustBuildABoatGameAgentPlugin": {
+            "name": "SerpentYouMustBuildABoatGameAgentPlugin",
             "version": "0.1.0",
             "files": [
                 {
@@ -81,11 +24,13 @@
                     "pluggable": "GameAgent"
                 }
             ],
+            "plugins": [
+                "SerpentYouMustBuildABoatGamePlugin"
+            ],
             "libraries": [],
             "config": {
-                "frame_handler": "COLLECT_FRAMES",
-                "collect_frames_interval": 1,
-                "collect_character_interval": 10
+                "frame_handler": "PLAY",
+                "sfx_path": "/home/serpent/SFX"
             }
         }
     }
