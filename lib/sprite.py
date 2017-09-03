@@ -10,7 +10,7 @@ class SpriteError(BaseException):
 
 class Sprite:
 
-    def __init__(self, name, image_data=None, signature_colors=None, constellation_of_pixels=None, seed=None):
+    def __init__(self, name, image_data=None, signature_colors=None, constellation_of_pixels=None):
         if not isinstance(image_data, np.ndarray):
             raise SpriteError("'image_data' needs to be a 4D instance of ndarray...")
 
@@ -21,10 +21,8 @@ class Sprite:
         self.image_data = image_data
         self.image_shape = image_data.shape[:2]
 
-        self.seed = seed
-
         self.signature_colors = signature_colors or self._generate_signature_colors()
-        self.constellation_of_pixels = constellation_of_pixels or self._generate_constellation_of_pixels(seed=self.seed)
+        self.constellation_of_pixels = constellation_of_pixels or self._generate_constellation_of_pixels()
 
     def append_image_data(self, image_data, signature_colors=None, constellation_of_pixels=None):
         images = list()
@@ -44,29 +42,24 @@ class Sprite:
         if constellation_of_pixels is not None:
             self.constellation_of_pixels.append(constellation_of_pixels)
         else:
-            self.constellation_of_pixels = self._generate_constellation_of_pixels(seed=self.seed)
+            self.constellation_of_pixels = self._generate_constellation_of_pixels()
 
     def _generate_seed(self):
         return str(uuid.uuid4())
 
-    def _generate_signature_colors(self):
+    def _generate_signature_colors(self, quantity=8):
         signature_colors = list()
         height, width, pixels, animation_states = self.image_data.shape
 
         for i in range(animation_states):
             values, counts = np.unique(self.image_data[..., i].reshape(width * height, 3), axis=0, return_counts=True)
-            maximum_indices = np.argsort(counts)[::-1][:8]
+            maximum_indices = np.argsort(counts)[::-1][:quantity]
 
             signature_colors.append(set(tuple(map(int, values[index])) for index in maximum_indices))
 
         return signature_colors
 
-    def _generate_constellation_of_pixels(self, quantity=8, seed=None):
-        if seed is None:
-            seed = self._generate_seed()
-
-        random.seed(seed)
-
+    def _generate_constellation_of_pixels(self, quantity=8):
         constellation_of_pixels = list()
         height, width, pixels, animation_states = self.image_data.shape
 

@@ -20,6 +20,3 @@ visual_debugger:
     available_buckets:
         - original_frame
         - svm_input
-
-sprites:
-    seed: LULSUPCHAT

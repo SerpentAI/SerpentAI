@@ -33,6 +33,7 @@ class GameAgent(offshoot.Pluggable):
         super().__init__(**kwargs)
 
         self.game = kwargs["game"]
+
         self.config = config.get(f"{self.__class__.__name__}Plugin")
 
         self.redis_client = StrictRedis(**config["redis"])

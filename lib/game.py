@@ -215,7 +215,7 @@ class Game(offshoot.Pluggable):
                     sprite_image_data = sprite_image_data[:, :, :3, np.newaxis]
 
                     if sprite_name not in sprites:
-                        sprite = Sprite(sprite_name, image_data=sprite_image_data, seed=config["sprites"].get("seed"))
+                        sprite = Sprite(sprite_name, image_data=sprite_image_data)
                         sprites[sprite_name] = sprite
                     else:
                         sprites[sprite_name].append_image_data(sprite_image_data)

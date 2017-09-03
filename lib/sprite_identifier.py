@@ -30,13 +30,14 @@ class SpriteIdentifier:
 
         for sprite_name, sprite in self.sprites.items():
             for constellation_of_pixels in sprite.constellation_of_pixels:
-                for query_constellation_of_pixels in query_sprite.constellation_of_pixels:
+                for i in range(query_sprite.image_data.shape[3]):
+                    query_sprite_image = query_sprite.image_data[..., i]
+
                     constellation_of_pixels_score = 0
 
                     for pixel_coordinates, pixel_color in constellation_of_pixels.items():
-                        if pixel_coordinates in query_constellation_of_pixels:
-                            if query_constellation_of_pixels[pixel_coordinates] == pixel_color:
-                                constellation_of_pixels_score += 1
+                        if tuple(query_sprite_image[pixel_coordinates[0], pixel_coordinates[1], :]) == pixel_color:
+                            constellation_of_pixels_score += 1
 
                     if constellation_of_pixels_score > top_sprite_score and round((constellation_of_pixels_score / len(constellation_of_pixels)) * 100.0, 2) > score_threshold:
                         top_sprite_score = constellation_of_pixels_score
