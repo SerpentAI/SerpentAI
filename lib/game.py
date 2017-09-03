@@ -56,6 +56,8 @@ class Game(offshoot.Pluggable):
         self.frame_grabber_process = None
         self.game_frame_limiter = GameFrameLimiter(fps=self.config.get("fps", 4))
 
+        self.api = None
+
         self.sprites = self._discover_sprites()
 
         self.redis_client = StrictRedis(**config["redis"])
