@@ -26,12 +26,11 @@ class WindowController:
         return self.adapter.get_window_geometry(window_id)
 
     def _load_adapter(self):
-        from lib.window_controllers.linux_window_controller import LinuxWindowController
-        from lib.window_controllers.win32_window_controller import Win32WindowController
-
         if sys.platform in ["linux", "linux2"]:
+            from lib.window_controllers.linux_window_controller import LinuxWindowController
             return LinuxWindowController
         elif sys.platform == "darwin":
             raise WindowControllerError("Mac OS is not supported... :(")
         elif sys.platform == "win32":
+            from lib.window_controllers.win32_window_controller import Win32WindowController
             return Win32WindowController
