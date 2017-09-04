@@ -12,6 +12,7 @@ import os, os.path
 import atexit
 
 from lib.game_launchers.steam_game_launcher import SteamGameLauncher
+from lib.game_launchers.executable_game_launcher import ExecutableGameLauncher
 
 from lib.window_controller import WindowController
 from lib.input_controller import InputController
@@ -73,7 +74,8 @@ class Game(offshoot.Pluggable):
     @offshoot.forbidden
     def game_launchers(self):
         return {
-            "steam": SteamGameLauncher
+            "steam": SteamGameLauncher,
+            "executable": ExecutableGameLauncher
         }
 
     @property

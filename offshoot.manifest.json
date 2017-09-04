@@ -5,7 +5,7 @@
             "version": "0.1.0",
             "files": [
                 {
-                    "path": "you_must_build_a_boat_game.py",
+                    "path": "serpent_you_must_build_a_boat_game.py",
                     "pluggable": "Game"
                 }
             ],
@@ -20,7 +20,7 @@
             "version": "0.1.0",
             "files": [
                 {
-                    "path": "you_must_build_a_boat_game_agent.py",
+                    "path": "serpent_you_must_build_a_boat_game_agent.py",
                     "pluggable": "GameAgent"
                 }
             ],
@@ -31,6 +31,51 @@
             "config": {
                 "frame_handler": "PLAY",
                 "sfx_path": "/home/serpent/SFX"
+            }
+        },
+        "SerpentOpenRCT2GamePlugin": {
+            "name": "SerpentOpenRCT2GamePlugin",
+            "version": "0.1.0",
+            "files": [
+                {
+                    "path": "serpent_OpenRCT2_game.py",
+                    "pluggable": "Game"
+                }
+            ],
+            "plugins": [],
+            "libraries": [],
+            "config": {
+                "fps": 2
+            }
+        },
+        "SerpentWorldOfGooGamePlugin": {
+            "name": "SerpentWorldOfGooGamePlugin",
+            "version": "0.1.0",
+            "files": [
+                {
+                    "path": "serpent_WorldOfGoo_game.py",
+                    "pluggable": "Game"
+                }
+            ],
+            "plugins": [],
+            "libraries": [],
+            "config": {
+                "fps": 2
+            }
+        },
+        "SerpentOpenRCT2GameAgentPlugin": {
+            "name": "SerpentOpenRCT2GameAgentPlugin",
+            "version": "0.1.0",
+            "files": [
+                {
+                    "path": "serpent_OpenRCT2_game_agent.py",
+                    "pluggable": "GameAgent"
+                }
+            ],
+            "plugins": [],
+            "libraries": [],
+            "config": {
+                "frame_handler": "PLAY"
             }
         }
     }
