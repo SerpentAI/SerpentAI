@@ -23,10 +23,11 @@ visual_debugger = VisualDebugger()
 
 class SVMContextClassifier(ContextClassifier):
 
-    def __init__(self):
+    def __init__(self, input_shape=None):
         super().__init__()
+        self.input_shape = input_shape
 
-    def train(self, preprocessing_func=None):
+    def train(self, epochs=3, preprocessing_func=None):
         data = list()
         targets = list()
 

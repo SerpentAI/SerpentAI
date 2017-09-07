@@ -12,7 +12,7 @@ class LinuxWindowController(WindowController):
         pass
 
     def locate_window(self, name):
-        return subprocess.check_output(shlex.split(f"xdotool search --name \"{name}\"")).decode("utf-8").strip()
+        return subprocess.check_output(shlex.split(f"xdotool search --name \"^{name}$\"")).decode("utf-8").strip()
 
     def move_window(self, window_id, x, y):
         subprocess.call(shlex.split(f"xdotool windowmove {window_id} {x} {y}"))

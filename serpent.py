@@ -6,10 +6,12 @@ import offshoot
 
 from lib.utilities import clear_terminal
 
+from lib.machine_learning.context_classification.context_classifier import ContextClassifier
+
 game_class_mapping = offshoot.discover("Game")
 game_agent_class_mapping = offshoot.discover("GameAgent")
 
-valid_commands = ["launch", "play", "generate", "activate", "deactivate"]
+valid_commands = ["launch", "play", "generate", "activate", "deactivate", "train", "capture"]
 
 
 def execute():
@@ -58,6 +60,30 @@ def generate(plugin_type):
         generate_game_agent_plugin()
     else:
         raise Exception(f"'{plugin_type}' is not a valid plugin type...")
+
+
+def train(training_type, *args):
+    if training_type == "context":
+        train_context(*args)
+
+
+def capture(game_name, interval=1, context=None):
+    game_class_name = f"Serpent{game_name}Game"
+
+    game_class = game_class_mapping.get(game_class_name)
+
+    if game_class is None:
+        raise Exception(f"Game '{game_name}' wasn't found. Make sure the plugin is installed.")
+
+    game = game_class()
+
+    game.launch(dry_run=True)
+
+    game.play(
+        frame_handler="COLLECT_FRAMES_FOR_CONTEXT" if context else "COLLECT_FRAMES",
+        interval=float(interval),
+        context=context
+    )
 
 
 def generate_game_plugin():
@@ -144,10 +170,15 @@ def prepare_game_agent_plugin(game_agent_name):
         f.write(contents)
 
 
+def train_context(epochs=3):
+    ContextClassifier.executable_train(epochs=int(epochs))
+
 command_function_mapping = {
     "launch": launch,
     "play": play,
-    "generate": generate
+    "generate": generate,
+    "train": train,
+    "capture": capture
 }
 
 if __name__ == "__main__":

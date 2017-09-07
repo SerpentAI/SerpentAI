@@ -21,7 +21,7 @@ class CNNInceptionV3ContextClassifier(ContextClassifier):
         self.training_generator = None
         self.validation_generator = None
 
-    def train(self):
+    def train(self, epochs=3):
         if self.training_generator is None or self.validation_generator is None:
             self.prepare_generators()
 
@@ -50,7 +50,7 @@ class CNNInceptionV3ContextClassifier(ContextClassifier):
         self.classifier.fit_generator(
             self.training_generator,
             samples_per_epoch=self.training_sample_count,
-            nb_epoch=3,
+            nb_epoch=epochs,
             validation_data=self.validation_generator,
             nb_val_samples=self.validation_sample_count,
             class_weight="auto"

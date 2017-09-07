@@ -11,6 +11,8 @@ import sys
 import os, os.path
 import atexit
 
+from lib.game_agent import GameAgent
+
 from lib.game_launchers.steam_game_launcher import SteamGameLauncher
 from lib.game_launchers.executable_game_launcher import ExecutableGameLauncher
 
@@ -113,11 +115,11 @@ class Game(offshoot.Pluggable):
         self.window_geometry = self.extract_window_geometry()
         print(self.window_geometry)
 
-    def play(self, game_agent_class_name=None):
+    def play(self, game_agent_class_name=None, frame_handler=None, **kwargs):
         if not self.is_launched:
             raise GameError(f"Game '{self.__class__.__name__}' is not running...")
 
-        game_agent_class = offshoot.discover("GameAgent").get(game_agent_class_name)
+        game_agent_class = offshoot.discover("GameAgent").get(game_agent_class_name, GameAgent)
 
         if game_agent_class is None:
             raise GameError("The provided Game Agent class name does not map to an existing class...")
@@ -141,7 +143,7 @@ class Game(offshoot.Pluggable):
             game_frame = self.grab_latest_frame()
             try:
                 if self.is_focused:
-                    game_agent.on_game_frame(game_frame)
+                    game_agent.on_game_frame(game_frame, frame_handler=frame_handler, **kwargs)
                 else:
                     lib.utilities.clear_terminal()
                     print("PAUSED")

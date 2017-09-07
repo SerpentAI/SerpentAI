@@ -10,6 +10,7 @@ import os
 import os.path
 
 import lib.ocr
+import lib.utilities
 
 from lib.game_frame_buffer import GameFrameBuffer
 from lib.sprite_identifier import SpriteIdentifier
@@ -34,7 +35,7 @@ class GameAgent(offshoot.Pluggable):
 
         self.game = kwargs["game"]
 
-        self.config = config.get(f"{self.__class__.__name__}Plugin")
+        self.config = config.get(f"{self.__class__.__name__}Plugin") or dict()
 
         self.redis_client = StrictRedis(**config["redis"])
 
@@ -44,8 +45,7 @@ class GameAgent(offshoot.Pluggable):
         self.frame_handlers = dict(
             NOOP=self.handle_noop,
             COLLECT_FRAMES=self.handle_collect_frames,
-            COLLECT_FRAMES_FOR_CONTEXT=self.handle_collect_frames_for_context,
-            COLLECT_CHARACTERS=self.handle_collect_characters
+            COLLECT_FRAMES_FOR_CONTEXT=self.handle_collect_frames_for_context
         )
 
         self.frame_handler_setups = dict(
@@ -68,13 +68,13 @@ class GameAgent(offshoot.Pluggable):
         self.started_at = datetime.now()
 
     @offshoot.forbidden
-    def on_game_frame(self, game_frame):
+    def on_game_frame(self, game_frame, frame_handler=None, **kwargs):
         if not self.frame_handler_setup_performed:
-            self._setup_frame_handler()
+            self._setup_frame_handler(frame_handler=frame_handler, **kwargs)
 
-        frame_handler = self.frame_handlers.get(self.config.get("frame_handler", "NOOP"))
+        frame_handler = self.frame_handlers.get(frame_handler or self.config.get("frame_handler", "NOOP"))
 
-        frame_handler(game_frame)
+        frame_handler(game_frame, **kwargs)
 
         self.game_frame_buffer.add_game_frame(game_frame)
 
@@ -85,22 +85,24 @@ class GameAgent(offshoot.Pluggable):
 
         return pickle.loads(serialized_classifier)
 
-    def handle_noop(self, frame):
+    def handle_noop(self, game_frame, **kwargs):
         time.sleep(1)
 
-    def setup_collect_frames_for_context(self):
-        context = config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
+    def setup_collect_frames_for_context(self, **kwargs):
+        context = kwargs.get("context") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
 
         if not os.path.isdir(f"datasets/collect_frames_for_context/{context}"):
             os.mkdir(f"datasets/collect_frames_for_context/{context}")
 
-    def handle_collect_frames(self, game_frame):
+        self.collected_frame_count = 0
+
+    def handle_collect_frames(self, game_frame, **kwargs):
         skimage.io.imsave(f"datasets/collect_frames/frame_{str(uuid.uuid4())}.png", game_frame.frame)
         time.sleep(self.config.get("collect_frames_interval") or 1)
 
-    def handle_collect_frames_for_context(self, game_frame):
-        context = config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
-        interval = config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["interval"]
+    def handle_collect_frames_for_context(self, game_frame, **kwargs):
+        context = kwargs.get("context") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
+        interval = kwargs.get("interval") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["interval"]
 
         resized_frame = skimage.transform.resize(
             game_frame.frame,
@@ -110,20 +112,18 @@ class GameAgent(offshoot.Pluggable):
         file_name = f"datasets/collect_frames_for_context/{context}/frame_{str(uuid.uuid4())}.png"
         skimage.io.imsave(file_name, resized_frame)
 
+        self.collected_frame_count += 1
+
+        lib.utilities.clear_terminal()
+        print(f"Collected Frame #{self.collected_frame_count} for Context: {context}")
+
         time.sleep(interval)
 
-    def handle_collect_characters(self, game_frame):
-        frame_uuid = str(uuid.uuid4())
+    def _setup_frame_handler(self, frame_handler=None, **kwargs):
+        frame_handler = frame_handler or self.config.get("frame_handler", "NOOP")
 
-        skimage.io.imsave(f"datasets/ocr/frames/frame_{frame_uuid}.png", game_frame.frame)
-
-        lib.ocr.prepare_dataset_tokens(game_frame.frame, frame_uuid)
-
-        time.sleep(self.config.get("collect_character_interval") or 1)
-
-    def _setup_frame_handler(self):
-        if self.config.get("frame_handler", "NOOP") in self.frame_handler_setups:
-            self.frame_handler_setups[self.config.get("frame_handler", "NOOP")]()
+        if frame_handler in self.frame_handler_setups:
+            self.frame_handler_setups[frame_handler](**kwargs)
 
         self.frame_handler_setup_performed = True
 
