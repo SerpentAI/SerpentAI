@@ -22,6 +22,7 @@ class Sprite:
         self.image_shape = image_data.shape[:2]
 
         self.signature_colors = signature_colors or self._generate_signature_colors()
+
         self.constellation_of_pixels = constellation_of_pixels or self._generate_constellation_of_pixels()
 
     def append_image_data(self, image_data, signature_colors=None, constellation_of_pixels=None):
@@ -44,6 +45,16 @@ class Sprite:
         else:
             self.constellation_of_pixels = self._generate_constellation_of_pixels()
 
+    def generate_constellation_of_pixels_image(self):
+        # TODO: Consider animation state
+
+        constellation_of_pixel_image = np.zeros(self.image_data[..., :3, 0].shape, dtype="uint8")
+
+        for yx, rgb in self.constellation_of_pixels[0].items():
+            constellation_of_pixel_image[yx[0], yx[1], :] = rgb
+
+        return constellation_of_pixel_image
+
     def _generate_seed(self):
         return str(uuid.uuid4())
 
@@ -52,10 +63,24 @@ class Sprite:
         height, width, pixels, animation_states = self.image_data.shape
 
         for i in range(animation_states):
-            values, counts = np.unique(self.image_data[..., i].reshape(width * height, 3), axis=0, return_counts=True)
-            maximum_indices = np.argsort(counts)[::-1][:quantity]
+            values, counts = np.unique(self.image_data[..., i].reshape(width * height, pixels), axis=0, return_counts=True)
 
-            signature_colors.append(set(tuple(map(int, values[index])) for index in maximum_indices))
+            if len(values[0]) == 3:
+                maximum_indices = np.argsort(counts)[::-1][:quantity]
+            elif len(values[0]) == 4:
+                maximum_indices = list()
+
+                for index in np.argsort(counts)[::-1]:
+                    value = values[index]
+
+                    if value[3] > 0:
+                        maximum_indices.append(index)
+
+                        if len(maximum_indices) == quantity:
+                            break
+
+            colors = [tuple(map(int, values[index][:3])) for index in maximum_indices]
+            signature_colors.append(set(colors))
 
         return signature_colors
 
@@ -77,6 +102,11 @@ class Sprite:
 
     @classmethod
     def locate_color(cls, color, image):
-        color_indices = np.where(np.all(image[:, :, :3] == color, axis=-1))
+        # TODO: Optimize for ms gain
+
+        if image.shape[2] == 3:
+            color_indices = np.where(np.all(image[:, :, :3] == color, axis=-1))
+        elif image.shape[2] == 4:
+            color_indices = np.where(np.all(image[:, :, :3] == (list(color) + [255]), axis=-1))
 
         return list(zip(*color_indices)) if len(color_indices[0]) else None

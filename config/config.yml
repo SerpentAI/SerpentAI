@@ -9,7 +9,7 @@ elasticsearch:
 
 frame_handlers:
     COLLECT_FRAMES_FOR_CONTEXT:
-        context: level_gallery
+        context: game
         interval: 1
 
 frame_grabber:
@@ -18,5 +18,7 @@ frame_grabber:
 visual_debugger:
     redis_key_prefix: SERPENT:VISUAL_DEBUGGER
     available_buckets:
-        - original_frame
-        - svm_input
+        - "0"
+        - "1"
+        - "2"
+        - "3"

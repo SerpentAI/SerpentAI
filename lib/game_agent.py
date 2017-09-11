@@ -9,6 +9,7 @@ import pickle
 import os
 import os.path
 
+import lib.cv
 import lib.ocr
 import lib.utilities
 
@@ -45,6 +46,7 @@ class GameAgent(offshoot.Pluggable):
         self.frame_handlers = dict(
             NOOP=self.handle_noop,
             COLLECT_FRAMES=self.handle_collect_frames,
+            COLLECT_FRAME_REGIONS=self.handle_collect_frame_regions,
             COLLECT_FRAMES_FOR_CONTEXT=self.handle_collect_frames_for_context
         )
 
@@ -98,7 +100,19 @@ class GameAgent(offshoot.Pluggable):
 
     def handle_collect_frames(self, game_frame, **kwargs):
         skimage.io.imsave(f"datasets/collect_frames/frame_{str(uuid.uuid4())}.png", game_frame.frame)
-        time.sleep(self.config.get("collect_frames_interval") or 1)
+        time.sleep(kwargs.get("interval") or self.config.get("collect_frames_interval") or 1)
+
+    def handle_collect_frame_regions(self, game_frame, **kwargs):
+        region = kwargs["region"]
+        region_path = f"datasets/collect_frames/{region}"
+
+        frame_region = lib.cv.extract_region_from_image(game_frame.frame, self.game.screen_regions.get(region))
+
+        if not os.path.isdir(region_path):
+            os.mkdir(region_path)
+
+        skimage.io.imsave(f"{region_path}/region_{str(uuid.uuid4())}.png", frame_region)
+        time.sleep(kwargs.get("interval") or self.config.get("collect_frames_interval") or 1)
 
     def handle_collect_frames_for_context(self, game_frame, **kwargs):
         context = kwargs.get("context") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]

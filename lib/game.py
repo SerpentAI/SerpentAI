@@ -218,7 +218,7 @@ class Game(offshoot.Pluggable):
                     sprite_name = "_".join(file.name.split("/")[-1].split("_")[:-1]).replace(".png", "").upper()
 
                     sprite_image_data = skimage.io.imread(f"{sprite_path}/{file.name}")
-                    sprite_image_data = sprite_image_data[:, :, :3, np.newaxis]
+                    sprite_image_data = sprite_image_data[..., np.newaxis]
 
                     if sprite_name not in sprites:
                         sprite = Sprite(sprite_name, image_data=sprite_image_data)

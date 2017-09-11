@@ -13,9 +13,11 @@ class GameFrameError(BaseException):
 
 class GameFrame:
 
-    def __init__(self, frame_array, frame_variants=None):
+    def __init__(self, frame_array, frame_variants=None, **kwargs):
         self.frame_array = frame_array
         self.frame_variants = frame_variants or dict()
+
+        self.resize_order = kwargs.get("resize_order") or 1
 
     @property
     def frame(self):
@@ -91,7 +93,7 @@ class GameFrame:
             self.frame_array.shape[1] // 2
         )
 
-        return np.array(skimage.transform.resize(self.frame_array, shape, mode="reflect", order=1) * 255, dtype="uint8")
+        return np.array(skimage.transform.resize(self.frame_array, shape, mode="reflect", order=self.resize_order) * 255, dtype="uint8")
 
     def _to_quarter_resolution(self):
         shape = (
@@ -99,7 +101,7 @@ class GameFrame:
             self.frame_array.shape[1] // 4
         )
 
-        return np.array(skimage.transform.resize(self.frame_array, shape, mode="reflect", order=1) * 255, dtype="uint8")
+        return np.array(skimage.transform.resize(self.frame_array, shape, mode="reflect", order=self.resize_order) * 255, dtype="uint8")
 
     def _to_eighth_resolution(self):
         shape = (
@@ -107,7 +109,7 @@ class GameFrame:
             self.frame_array.shape[1] // 8
         )
 
-        return np.array(skimage.transform.resize(self.frame_array, shape, mode="reflect", order=1) * 255, dtype="uint8")
+        return np.array(skimage.transform.resize(self.frame_array, shape, mode="reflect", order=self.resize_order) * 255, dtype="uint8")
 
     def _to_eighth_grayscale_resolution(self):
         shape = (
@@ -115,7 +117,7 @@ class GameFrame:
             self.frame_array.shape[1] // 8
         )
 
-        return np.array(skimage.transform.resize(self.grayscale_frame, shape, mode="reflect", order=1) * 255, dtype="uint8")
+        return np.array(skimage.transform.resize(self.grayscale_frame, shape, mode="reflect", order=self.resize_order) * 255, dtype="uint8")
 
     def _to_grayscale(self):
         return np.array(skimage.color.rgb2gray(self.frame_array) * 255, dtype="uint8")

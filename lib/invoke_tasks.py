@@ -79,14 +79,7 @@ def boat_context_train(ctx):
             "datasets/collect_frames_for_context/game_over",
             "datasets/collect_frames_for_context/level_gallery",
             "datasets/collect_frames_for_context/level_hell",
-            "datasets/collect_frames_for_context/level_jail",
-            "datasets/collect_frames_for_context/level_pagoda",
-            "datasets/collect_frames_for_context/level_pyramid",
-            "datasets/collect_frames_for_context/level_ruins",
-            "datasets/collect_frames_for_context/level_sewers",
-            "datasets/collect_frames_for_context/level_thicket",
-            "datasets/collect_frames_for_context/level_tower",
-            "datasets/collect_frames_for_context/level_vault",
+            "datasets/collect_frames_for_context/level_jail"
         ]
     )
 

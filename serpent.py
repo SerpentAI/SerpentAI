@@ -67,7 +67,7 @@ def train(training_type, *args):
         train_context(*args)
 
 
-def capture(game_name, interval=1, context=None):
+def capture(capture_type, game_name, interval=1, extra=None):
     game_class_name = f"Serpent{game_name}Game"
 
     game_class = game_class_mapping.get(game_class_name)
@@ -79,11 +79,15 @@ def capture(game_name, interval=1, context=None):
 
     game.launch(dry_run=True)
 
-    game.play(
-        frame_handler="COLLECT_FRAMES_FOR_CONTEXT" if context else "COLLECT_FRAMES",
-        interval=float(interval),
-        context=context
-    )
+    if capture_type not in ["frame", "context", "region"]:
+        raise Exception("Invalid capture command.")
+
+    if capture_type == "frame":
+        game.play(frame_handler="COLLECT_FRAMES", interval=int(interval))
+    elif capture_type == "context":
+        game.play(frame_handler="COLLECT_FRAMES_FOR_CONTEXT", interval=int(interval), context=extra)
+    elif capture_type == "region":
+        game.play(frame_handler="COLLECT_FRAME_REGIONS", interval=int(interval), region=extra)
 
 
 def generate_game_plugin():
