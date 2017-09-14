@@ -1,9 +1,11 @@
 from lib.game import Game
 
-from .api import api
+from .api.api import MyGameAPI
+
+from lib.utilities import Singleton
 
 
-class SerpentGame(Game):
+class SerpentGame(Game, metaclass=Singleton):
 
     def __init__(self, **kwargs):
         kwargs["platform"] = "PLATFORM"
@@ -16,7 +18,8 @@ class SerpentGame(Game):
 
         super().__init__(**kwargs)
 
-        self.api = api
+        self.api_class = MyGameAPI
+        self.api_instance = None
 
     @property
     def screen_regions(self):

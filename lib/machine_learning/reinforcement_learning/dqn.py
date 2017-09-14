@@ -207,9 +207,7 @@ class DQN:
         self.current_action = self.action_space.combinations[self.current_action_index]
 
     def get_action_for_index(self, action_index):
-        special_key_mapping = InputController.human_readable_key_mapping()
-
-        return [(special_key_mapping.get(action_input) or action_input).upper() for action_input in self.action_input_mapping[self.action_space.combinations[action_index]]]
+        return [action_input.upper() for action_input in self.action_input_mapping[self.action_space.combinations[action_index]]]
 
     def get_input_values(self):
         return self.action_input_mapping[self.current_action]

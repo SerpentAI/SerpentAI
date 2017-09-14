@@ -121,6 +121,7 @@ def prepare_game_plugin(game_name, game_platform):
 
     shutil.copytree("templates/SerpentGamePlugin", plugin_destination_path)
 
+    # Plugin Definition
     with open(f"{plugin_destination_path}/plugin.py", "r") as f:
         contents = f.read()
 
@@ -132,10 +133,12 @@ def prepare_game_plugin(game_name, game_platform):
 
     shutil.move(f"{plugin_destination_path}/files/serpent_game.py", f"{plugin_destination_path}/files/serpent_{game_name}_game.py")
 
+    # Game
     with open(f"{plugin_destination_path}/files/serpent_{game_name}_game.py", "r") as f:
         contents = f.read()
 
     contents = contents.replace("SerpentGame", f"Serpent{game_name}Game")
+    contents = contents.replace("MyGameAPI", f"{game_name}API")
 
     if game_platform == "steam":
         contents = contents.replace("PLATFORM", "steam")
@@ -146,6 +149,15 @@ def prepare_game_plugin(game_name, game_platform):
         contents = contents.replace('kwargs["app_args"] = "APP_ARGS"', "")
 
     with open(f"{plugin_destination_path}/files/serpent_{game_name}_game.py", "w") as f:
+        f.write(contents)
+
+    # Game API
+    with open(f"{plugin_destination_path}/files/api/api.py", "r") as f:
+        contents = f.read()
+
+    contents = contents.replace("MyGameAPI", f"{game_name}API")
+
+    with open(f"{plugin_destination_path}/files/api/api.py", "w") as f:
         f.write(contents)
 
 

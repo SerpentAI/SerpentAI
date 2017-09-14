@@ -45,15 +45,18 @@ class Sprite:
         else:
             self.constellation_of_pixels = self._generate_constellation_of_pixels()
 
-    def generate_constellation_of_pixels_image(self):
-        # TODO: Consider animation state
+    def generate_constellation_of_pixels_images(self):
+        constellation_of_pixel_images = list()
 
-        constellation_of_pixel_image = np.zeros(self.image_data[..., :3, 0].shape, dtype="uint8")
+        for i in range(self.image_data.shape[3]):
+            constellation_of_pixel_image = np.zeros(self.image_data[..., :3, 0].shape, dtype="uint8")
 
-        for yx, rgb in self.constellation_of_pixels[0].items():
-            constellation_of_pixel_image[yx[0], yx[1], :] = rgb
+            for yx, rgb in self.constellation_of_pixels[0].items():
+                constellation_of_pixel_image[yx[0], yx[1], :] = rgb
 
-        return constellation_of_pixel_image
+            constellation_of_pixel_images.append(constellation_of_pixel_image)
+
+        return constellation_of_pixel_images
 
     def _generate_seed(self):
         return str(uuid.uuid4())

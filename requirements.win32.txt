@@ -16,7 +16,6 @@ mss
 # Input
 PyAutoGUI
 pyperclip
-PyUserInput==0.1.11
 win32gui
 
 # TF & Keras

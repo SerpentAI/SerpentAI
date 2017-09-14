@@ -59,7 +59,8 @@ class Game(offshoot.Pluggable):
         self.frame_grabber_process = None
         self.game_frame_limiter = GameFrameLimiter(fps=self.config.get("fps", 4))
 
-        self.api = None
+        self.api_class = None
+        self.api_instance = None
 
         self.sprites = self._discover_sprites()
 
@@ -84,6 +85,14 @@ class Game(offshoot.Pluggable):
     @offshoot.expected
     def screen_regions(self):
         raise NotImplementedError()
+
+    @property
+    @offshoot.forbidden
+    def api(self):
+        if self.api_instance is None:
+            self.api_instance = self.api_class(game=self)
+        else:
+            return self.api_instance
 
     @property
     @offshoot.forbidden
@@ -126,7 +135,7 @@ class Game(offshoot.Pluggable):
 
         game_agent = game_agent_class(
             game=self,
-            input_controller=InputController(game_window_id=self.window_id)
+            input_controller=InputController(game=self)
         )
 
         self.start_frame_grabber()

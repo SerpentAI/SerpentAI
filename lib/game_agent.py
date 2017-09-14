@@ -35,6 +35,7 @@ class GameAgent(offshoot.Pluggable):
         super().__init__(**kwargs)
 
         self.game = kwargs["game"]
+        self.game.api
 
         self.config = config.get(f"{self.__class__.__name__}Plugin") or dict()
 
