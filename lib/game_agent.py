@@ -13,6 +13,7 @@ import lib.cv
 import lib.ocr
 import lib.utilities
 
+from lib.frame_grabber import FrameGrabber
 from lib.game_frame_buffer import GameFrameBuffer
 from lib.sprite_identifier import SpriteIdentifier
 from lib.visual_debugger.visual_debugger import VisualDebugger
@@ -87,6 +88,11 @@ class GameAgent(offshoot.Pluggable):
             serialized_classifier = f.read()
 
         return pickle.loads(serialized_classifier)
+
+    @offshoot.forbidden
+    def update_game_frame(self, game_frame):
+        game_frame_buffer = FrameGrabber.get_frames([0], frame_shape=game_frame.frame.shape)
+        return game_frame_buffer.frames[0]
 
     def handle_noop(self, game_frame, **kwargs):
         time.sleep(1)

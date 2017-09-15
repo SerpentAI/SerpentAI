@@ -1,5 +1,7 @@
 from lib.sprite_locator import SpriteLocator
 
+import lib.ocr
+
 import pyautogui
 
 import enum
@@ -118,6 +120,29 @@ class InputController:
         self.click(button=button, y=y, x=x, **kwargs)
 
         return True
+
+    def click_string(self, query_string, game_frame, button=MouseButton.LEFT, fuzziness=2, ocr_preset=None, **kwargs):
+        string_location = lib.ocr.locate_string(
+            query_string,
+            game_frame.frame,
+            fuzziness=fuzziness,
+            ocr_preset=ocr_preset,
+            offset_x=game_frame.offset_x,
+            offset_y=game_frame.offset_y
+        )
+
+        if string_location is not None:
+            x = (string_location[1] + string_location[3]) // 2
+            x += self.game.window_geometry["x_offset"]
+
+            y = (string_location[0] + string_location[2]) // 2
+            y += self.game.window_geometry["y_offset"]
+
+            self.click(button=button, y=y, x=x, **kwargs)
+
+            return True
+
+        return False
 
     def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None):
         pass

@@ -17,6 +17,9 @@ class GameFrame:
         self.frame_array = frame_array
         self.frame_variants = frame_variants or dict()
 
+        self.offset_x = kwargs.get("offset_x") or 0
+        self.offset_y = kwargs.get("offset_y") or 0
+
         self.resize_order = kwargs.get("resize_order") or 1
 
     @property

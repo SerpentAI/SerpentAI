@@ -1,5 +1,4 @@
 import time
-import timeit
 
 from datetime import datetime
 
