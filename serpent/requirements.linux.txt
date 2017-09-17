@@ -1,0 +1,39 @@
+offshoot
+
+# Redis
+redis
+aioredis
+
+# Frame Capture
+mss
+
+# Input
+python-xlib
+PyAutoGUI
+pyperclip
+
+# TF & Keras
+tensorflow-gpu
+Keras
+
+# Kivy
+kivy
+
+# SciPy
+numpy
+scikit-learn
+scikit-image
+h5py
+
+# UI
+termcolor
+xtermcolor
+
+# OCR
+tesserocr
+
+# Network
+autobahn
+
+# Misc
+editdistance
