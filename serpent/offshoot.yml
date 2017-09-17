@@ -1,0 +1,12 @@
+allow:
+    plugins: true
+    callbacks: true
+    config: true
+    files: true
+    libraries: true
+file_paths:
+    config: config/config.plugins.yml
+    libraries: requirements.plugins.txt
+    plugins: plugins
+modules: ["serpent.game", "serpent.game_agent"]
+sandbox_configuration_keys: true
