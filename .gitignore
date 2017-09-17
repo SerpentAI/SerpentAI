@@ -1,6 +1,3 @@
-datasets/
-ml_models/
-
 .idea
 
 __pycache__/
@@ -11,8 +8,6 @@ __pycache__/
 .python-version
 
 *.ipynb
-
-config/config.private.yml
 
 plugins/
 
