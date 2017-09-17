@@ -115,12 +115,20 @@ def setup():
 
     # Install the dependencies
     print("Installing dependencies...")
+
+    if sys.platform in ["linux", "linux2"]:
+        subprocess.call(shlex.split("pip install python-xlib"))
+    elif sys.platform == "darwin":
+        pass
+    elif sys.platform == "win32":
+        pass
+
     subprocess.call(shlex.split("pip install -r requirements.txt"))
 
     # Create Dataset Directories
-    os.makedirs(os.path.join(os.getcwd(), "datasets/collect_frames"))
-    os.makedirs(os.path.join(os.getcwd(), "datasets/collect_frames_for_context"))
-    os.makedirs(os.path.join(os.getcwd(), "datasets/current"))
+    os.makedirs(os.path.join(os.getcwd(), "datasets/collect_frames"), exist_ok=True)
+    os.makedirs(os.path.join(os.getcwd(), "datasets/collect_frames_for_context"), exist_ok=True)
+    os.makedirs(os.path.join(os.getcwd(), "datasets/current"), exist_ok=True)
 
 
 def grab_frames(width, height, x_offset, y_offset):
