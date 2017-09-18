@@ -19,8 +19,8 @@ def create_training_and_validation_sets(file_paths, validation_set_probability=0
         file_names = os.listdir(file_path)
         random.shuffle(file_names)
 
-        os.makedirs(f"datasets/current/training/{file_path.split('/')[-1]}")
-        os.makedirs(f"datasets/current/validation/{file_path.split('/')[-1]}")
+        os.makedirs(f"datasets/current/training/{file_path.split(os.sep)[-1]}".replace("/", os.sep))
+        os.makedirs(f"datasets/current/validation/{file_path.split(os.sep)[-1]}".replace("/", os.sep))
     
         for file_name in file_names:
             set_label = "training"
@@ -29,8 +29,8 @@ def create_training_and_validation_sets(file_paths, validation_set_probability=0
                 set_label = "validation"
     
             shutil.copyfile(
-                f"{file_path}/{file_name}",
-                f"datasets/current/{set_label}/{file_path.split('/')[-1]}/{file_name}"
+                f"{file_path}/{file_name}".replace("/", os.sep),
+                f"datasets/current/{set_label}/{file_path.split(os.sep)[-1]}/{file_name}".replace("/", os.sep)
             )
 
     return seed
@@ -42,8 +42,8 @@ def generate_seed():
 
 def clear_current_dataset():
     try:
-        shutil.rmtree("datasets/current")
+        shutil.rmtree("datasets/current".replace("/", os.sep))
     except FileNotFoundError:
         pass
 
-    os.mkdir("datasets/current")
+    os.mkdir("datasets/current".replace("/", os.sep))

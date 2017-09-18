@@ -15,6 +15,8 @@ sys.path.insert(0, os.getcwd())
 game_class_mapping = offshoot.discover("Game")
 game_agent_class_mapping = offshoot.discover("GameAgent")
 
+VERSION = "0.0.1a2"
+
 valid_commands = [
     "setup",
     "grab_frames",
@@ -23,19 +25,34 @@ valid_commands = [
     "generate",
     "activate",
     "deactivate",
-    "list",
+    "plugins",
     "train",
-    "capture"
+    "capture",
+    "visual_debugger"
 ]
 
 
 def execute():
-    command = sys.argv[1]
+    if len(sys.argv) == 1:
+        executable_help()
+    elif len(sys.argv) > 1:
+        if sys.argv[1] == "-h" or sys.argv[1] == "--help":
+            executable_help()
+        else:
+            command = sys.argv[1]
 
-    if command not in valid_commands:
-        raise Exception("'%s' is not a valid Serpent command." % command)
+            if command not in valid_commands:
+                raise Exception("'%s' is not a valid Serpent command." % command)
 
-    command_function_mapping[command](*sys.argv[2:])
+            command_function_mapping[command](*sys.argv[2:])
+
+
+def executable_help():
+    print(f"\nSerpent.AI v{VERSION}")
+    print("Available Commands:\n")
+
+    for command, description in command_description_mapping.items():
+        print(f"{command.rjust(16)}: {description}")
 
 
 def setup():
@@ -121,7 +138,11 @@ def setup():
     elif sys.platform == "darwin":
         pass
     elif sys.platform == "win32":
-        pass
+        # Anaconda Packages
+        subprocess.call(shlex.split("conda install numpy scipy scikit-image scikit-learn h5py -y"))
+
+        # Kivy Dependencies
+        subprocess.call(shlex.split("pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew"))
 
     subprocess.call(shlex.split("pip install -r requirements.txt"))
 
@@ -152,7 +173,7 @@ def deactivate(plugin_name):
     subprocess.call(shlex.split(f"offshoot uninstall {plugin_name}"))
 
 
-def list():
+def plugins():
     plugin_names = set()
 
     for root, directories, files in os.walk(offshoot.config['file_paths']['plugins']):
@@ -170,9 +191,7 @@ def list():
     active_plugins = plugin_names & manifest_plugin_names
     inactive_plugins = plugin_names - manifest_plugin_names
 
-    clear_terminal()
-
-    print("ACTIVE Plugins:\n")
+    print("\nACTIVE Plugins:\n")
     print("\n".join(active_plugins or ["No active plugins..."]))
 
     print("\nINACTIVE Plugins:\n")
@@ -239,11 +258,16 @@ def capture(capture_type, game_name, interval=1, extra=None):
         raise Exception("Invalid capture command.")
 
     if capture_type == "frame":
-        game.play(frame_handler="COLLECT_FRAMES", interval=int(interval))
+        game.play(frame_handler="COLLECT_FRAMES", interval=float(interval))
     elif capture_type == "context":
-        game.play(frame_handler="COLLECT_FRAMES_FOR_CONTEXT", interval=int(interval), context=extra)
+        game.play(frame_handler="COLLECT_FRAMES_FOR_CONTEXT", interval=float(interval), context=extra)
     elif capture_type == "region":
-        game.play(frame_handler="COLLECT_FRAME_REGIONS", interval=int(interval), region=extra)
+        game.play(frame_handler="COLLECT_FRAME_REGIONS", interval=float(interval), region=extra)
+
+
+def visual_debugger():
+    from serpent.visual_debugger.visual_debugger_app import VisualDebuggerApp
+    VisualDebuggerApp().run()
 
 
 def generate_game_plugin():
@@ -262,6 +286,8 @@ def generate_game_plugin():
 
     prepare_game_plugin(game_name, game_platform)
 
+    subprocess.call(shlex.split(f"serpent activate Serpent{game_name}GamePlugin"))
+
 
 def generate_game_agent_plugin():
     clear_terminal()
@@ -275,29 +301,31 @@ def generate_game_agent_plugin():
 
     prepare_game_agent_plugin(game_agent_name)
 
+    subprocess.call(shlex.split(f"serpent activate Serpent{game_agent_name}GameAgentPlugin"))
+
 
 def prepare_game_plugin(game_name, game_platform):
-    plugin_destination_path = f"{offshoot.config['file_paths']['plugins']}/Serpent{game_name}GamePlugin"
+    plugin_destination_path = f"{offshoot.config['file_paths']['plugins']}/Serpent{game_name}GamePlugin".replace("/", os.sep)
 
     shutil.copytree(
-        os.path.join(os.path.dirname(__file__), "templates/SerpentGamePlugin"),
+        os.path.join(os.path.dirname(__file__), "templates/SerpentGamePlugin".replace("/", os.sep)),
         plugin_destination_path
     )
 
     # Plugin Definition
-    with open(f"{plugin_destination_path}/plugin.py", "r") as f:
+    with open(f"{plugin_destination_path}/plugin.py".replace("/", os.sep), "r") as f:
         contents = f.read()
 
     contents = contents.replace("SerpentGamePlugin", f"Serpent{game_name}GamePlugin")
     contents = contents.replace("serpent_game.py", f"serpent_{game_name}_game.py")
 
-    with open(f"{plugin_destination_path}/plugin.py", "w") as f:
+    with open(f"{plugin_destination_path}/plugin.py".replace("/", os.sep), "w") as f:
         f.write(contents)
 
-    shutil.move(f"{plugin_destination_path}/files/serpent_game.py", f"{plugin_destination_path}/files/serpent_{game_name}_game.py")
+    shutil.move(f"{plugin_destination_path}/files/serpent_game.py".replace("/", os.sep), f"{plugin_destination_path}/files/serpent_{game_name}_game.py".replace("/", os.sep))
 
     # Game
-    with open(f"{plugin_destination_path}/files/serpent_{game_name}_game.py", "r") as f:
+    with open(f"{plugin_destination_path}/files/serpent_{game_name}_game.py".replace("/", os.sep), "r") as f:
         contents = f.read()
 
     contents = contents.replace("SerpentGame", f"Serpent{game_name}Game")
@@ -311,24 +339,24 @@ def prepare_game_plugin(game_name, game_platform):
         contents = contents.replace('kwargs["app_id"] = "APP_ID"', "")
         contents = contents.replace('kwargs["app_args"] = "APP_ARGS"', "")
 
-    with open(f"{plugin_destination_path}/files/serpent_{game_name}_game.py", "w") as f:
+    with open(f"{plugin_destination_path}/files/serpent_{game_name}_game.py".replace("/", os.sep), "w") as f:
         f.write(contents)
 
     # Game API
-    with open(f"{plugin_destination_path}/files/api/api.py", "r") as f:
+    with open(f"{plugin_destination_path}/files/api/api.py".replace("/", os.sep), "r") as f:
         contents = f.read()
 
     contents = contents.replace("MyGameAPI", f"{game_name}API")
 
-    with open(f"{plugin_destination_path}/files/api/api.py", "w") as f:
+    with open(f"{plugin_destination_path}/files/api/api.py".replace("/", os.sep), "w") as f:
         f.write(contents)
 
 
 def prepare_game_agent_plugin(game_agent_name):
-    plugin_destination_path = f"{offshoot.config['file_paths']['plugins']}/Serpent{game_agent_name}GameAgentPlugin"
+    plugin_destination_path = f"{offshoot.config['file_paths']['plugins']}/Serpent{game_agent_name}GameAgentPlugin".replace("/", os.sep)
 
     shutil.copytree(
-        os.path.join(os.path.dirname(__file__), "templates/SerpentGameAgentPlugin"),
+        os.path.join(os.path.dirname(__file__), "templates/SerpentGameAgentPlugin".replace("/", os.sep)),
         plugin_destination_path
     )
 
@@ -361,12 +389,27 @@ command_function_mapping = {
     "grab_frames": grab_frames,
     "activate": activate,
     "deactivate": deactivate,
-    "list": list,
+    "plugins": plugins,
     "launch": launch,
     "play": play,
     "generate": generate,
     "train": train,
-    "capture": capture
+    "capture": capture,
+    "visual_debugger": visual_debugger
+}
+
+command_description_mapping = {
+    "setup": "Perform first time setup for the framework",
+    "grab_frames": "Start the frame grabber",
+    "activate": "Activate a plugin",
+    "deactivate": "Deactivate a plugin",
+    "plugins": "List all locally-available plugins",
+    "launch": "Launch a game through a plugin",
+    "play": "Play a game with a game agent through plugins",
+    "generate": "Generate code for game and game agent plugins",
+    "train": "Train a context classifier with collected context frames",
+    "capture": "Capture frames, screen regions and contexts from a game",
+    "visual_debugger": "Launch the visual debugger"
 }
 
 if __name__ == "__main__":

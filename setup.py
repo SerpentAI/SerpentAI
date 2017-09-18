@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from setuptools import setup
 
+import os
+
 try:
     import pypandoc
     long_description = pypandoc.convert('README.md', 'rst')
@@ -22,29 +24,43 @@ packages = [
 ]
 
 data_files = [
-    ("templates", [
+    ("serpent/templates/SerpentGameAgentPlugin", [
         "serpent/templates/SerpentGameAgentPlugin/plugin.py",
         "serpent/templates/SerpentGameAgentPlugin/__init__.py",
         "serpent/templates/SerpentGameAgentPlugin/.gitignore",
-        "serpent/templates/SerpentGameAgentPlugin/.gitattributes",
+        "serpent/templates/SerpentGameAgentPlugin/.gitattributes"
+    ]),
+    ("serpent/templates/SerpentGameAgentPlugin/files", [
         "serpent/templates/SerpentGameAgentPlugin/files/serpent_game_agent.py",
-        "serpent/templates/SerpentGameAgentPlugin/files/__init__.py",
-        "serpent/templates/SerpentGameAgentPlugin/files/ml_models/.gitkeep",
-        "serpent/templates/SerpentGameAgentPlugin/files/helpers/.gitkeep",
+        "serpent/templates/SerpentGameAgentPlugin/files/__init__.py"
+    ]),
+    ("serpent/templates/SerpentGameAgentPlugin/files/ml_models", [
+        "serpent/templates/SerpentGameAgentPlugin/files/ml_models/.gitkeep"
+    ]),
+    ("serpent/templates/SerpentGameAgentPlugin/files/helpers", [
+        "serpent/templates/SerpentGameAgentPlugin/files/helpers/.gitkeep"
+    ]),
+    ("serpent/templates/SerpentGamePlugin", [
         "serpent/templates/SerpentGamePlugin/plugin.py",
         "serpent/templates/SerpentGamePlugin/__init__.py",
-        "serpent/templates/SerpentGamePlugin/.gitignore",
-        "serpent/templates/SerpentGamePlugin/files/serpent_game.py",
-        "serpent/templates/SerpentGamePlugin/files/__init__.py",
-        "serpent/templates/SerpentGamePlugin/files/data/sprites/.gitkeep",
-        "serpent/templates/SerpentGamePlugin/files/api/api.py",
-        "serpent/templates/SerpentGamePlugin/files/api/__init__.py",
+        "serpent/templates/SerpentGamePlugin/.gitignore"
     ]),
-    ("config", [
+    ("serpent/templates/SerpentGamePlugin/files", [
+        "serpent/templates/SerpentGamePlugin/files/serpent_game.py",
+        "serpent/templates/SerpentGamePlugin/files/__init__.py"
+    ]),
+    ("serpent/templates/SerpentGamePlugin/files/data/sprites", [
+        "serpent/templates/SerpentGamePlugin/files/data/sprites/.gitkeep"
+    ]),
+    ("serpent/templates/SerpentGamePlugin/files/api", [
+        "serpent/templates/SerpentGamePlugin/files/api/api.py",
+        "serpent/templates/SerpentGamePlugin/files/api/__init__.py"
+    ]),
+    ("serpent/config", [
         "serpent/config/config.yml",
         "serpent/config/config.plugins.yml"
     ]),
-    ("", [
+    ("serpent", [
         "serpent/offshoot.manifest.json",
         "serpent/offshoot.yml",
         "serpent/requirements.linux.txt",
@@ -60,7 +76,7 @@ requires = [
 
 setup(
     name='SerpentAI',
-    version="0.0.1alpha001",
+    version="0.0.1a2",
     description='Game Agent Development Kit. Helping you create AIs / Bots to play any game you own!',
     long_description=long_description,
     author="Nicholas Brochu",

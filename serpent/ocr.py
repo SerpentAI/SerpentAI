@@ -1,3 +1,5 @@
+import sys
+
 import skimage.color
 import skimage.segmentation
 import skimage.filters
@@ -7,7 +9,13 @@ import skimage.transform
 import skimage.measure
 import skimage.io
 
-import tesserocr
+if sys.platform in ["linux", "linux2"]:
+    import tesserocr
+elif sys.platform == "darwin":
+    raise Exception("Mac OS is not supported. :(")
+elif sys.platform == "win32":
+    import pytesseract
+
 import editdistance
 
 from PIL import Image
@@ -112,8 +120,13 @@ def perform_ocr(image, scale=10, order=5, horizontal_closing=10, vertical_closin
 
     image = skimage.util.img_as_ubyte(image)
 
-    return tesserocr.image_to_text(
-        Image.fromarray(image),
-        psm=tesserocr.PSM.SINGLE_LINE,
-        oem=tesserocr.OEM.TESSERACT_ONLY
-    ).strip()
+    if sys.platform in ["linux", "linux2"]:
+        return tesserocr.image_to_text(
+            Image.fromarray(image),
+            psm=tesserocr.PSM.SINGLE_LINE,
+            oem=tesserocr.OEM.TESSERACT_ONLY
+        ).strip()
+    elif sys.platform == "darwin":
+        pass
+    elif sys.platform == "win32":
+        return pytesseract.image_to_string(Image.fromarray(image))
