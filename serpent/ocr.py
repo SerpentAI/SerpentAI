@@ -12,7 +12,7 @@ import skimage.io
 if sys.platform in ["linux", "linux2"]:
     import tesserocr
 elif sys.platform == "darwin":
-    raise Exception("Mac OS is not supported. :(")
+    import tesserocr
 elif sys.platform == "win32":
     import pytesseract
 
@@ -127,6 +127,10 @@ def perform_ocr(image, scale=10, order=5, horizontal_closing=10, vertical_closin
             oem=tesserocr.OEM.TESSERACT_ONLY
         ).strip()
     elif sys.platform == "darwin":
-        pass
+        return tesserocr.image_to_text(
+            Image.fromarray(image),
+            psm=tesserocr.PSM.SINGLE_LINE,
+            oem=tesserocr.OEM.TESSERACT_ONLY
+        ).strip()
     elif sys.platform == "win32":
         return pytesseract.image_to_string(Image.fromarray(image))

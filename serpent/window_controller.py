@@ -30,7 +30,8 @@ class WindowController:
             from serpent.window_controllers.linux_window_controller import LinuxWindowController
             return LinuxWindowController
         elif sys.platform == "darwin":
-            raise WindowControllerError("Mac OS is not supported... :(")
+            from serpent.window_controllers.darwin_window_controller import DarwinWindowController
+            return DarwinWindowController
         elif sys.platform == "win32":
             from serpent.window_controllers.win32_window_controller import Win32WindowController
             return Win32WindowController

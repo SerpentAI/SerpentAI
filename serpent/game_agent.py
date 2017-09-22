@@ -53,7 +53,15 @@ class GameAgent(offshoot.Pluggable):
         )
 
         self.frame_handler_setups = dict(
+            COLLECT_FRAMES=self.setup_collect_frames,
+            COLLECT_FRAME_REGIONS=self.setup_collect_frame_regions,
             COLLECT_FRAMES_FOR_CONTEXT=self.setup_collect_frames_for_context
+        )
+
+        self.frame_handler_pause_callbacks = dict(
+            COLLECT_FRAMES=self.on_collect_frames_pause,
+            COLLECT_FRAME_REGIONS=self.on_collect_frame_regions_pause,
+            COLLECT_FRAMES_FOR_CONTEXT=self.on_collect_frames_for_context_pause
         )
 
         self.frame_handler_setup_performed = False
@@ -83,6 +91,13 @@ class GameAgent(offshoot.Pluggable):
         self.game_frame_buffer.add_game_frame(game_frame)
 
     @offshoot.forbidden
+    def on_pause(self, frame_handler=None, **kwargs):
+        on_frame_handler_pause = self.frame_handler_pause_callbacks.get(frame_handler or self.config.get("frame_handler"))
+
+        if on_frame_handler_pause is not None:
+            on_frame_handler_pause(**kwargs)
+
+    @offshoot.forbidden
     def load_machine_learning_model(self, file_path):
         with open(file_path, "rb") as f:
             serialized_classifier = f.read()
@@ -97,41 +112,50 @@ class GameAgent(offshoot.Pluggable):
     def handle_noop(self, game_frame, **kwargs):
         time.sleep(1)
 
+    def setup_collect_frames(self, **kwargs):
+        self.game_frames = list()
+        self.collected_frame_count = 0
+
+    def setup_collect_frame_regions(self, **kwargs):
+        self.game_frames = list()
+        self.collected_frame_count = 0
+
     def setup_collect_frames_for_context(self, **kwargs):
         context = kwargs.get("context") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
 
         if not os.path.isdir(f"datasets/collect_frames_for_context/{context}"):
             os.mkdir(f"datasets/collect_frames_for_context/{context}")
 
+        self.game_frames = list()
         self.collected_frame_count = 0
 
     def handle_collect_frames(self, game_frame, **kwargs):
-        skimage.io.imsave(f"datasets/collect_frames/frame_{str(uuid.uuid4())}.png", game_frame.frame)
+        self.game_frames.append(game_frame)
+
+        self.collected_frame_count += 1
+
+        serpent.utilities.clear_terminal()
+        print(f"Collected Frame #{self.collected_frame_count}")
+
         time.sleep(kwargs.get("interval") or self.config.get("collect_frames_interval") or 1)
 
     def handle_collect_frame_regions(self, game_frame, **kwargs):
-        region = kwargs["region"]
-        region_path = f"datasets/collect_frames/{region}"
+        region = kwargs.get("region")
 
-        frame_region = serpent.cv.extract_region_from_image(game_frame.frame, self.game.screen_regions.get(region))
+        self.game_frames.append(game_frame)
 
-        if not os.path.isdir(region_path):
-            os.mkdir(region_path)
+        self.collected_frame_count += 1
 
-        skimage.io.imsave(f"{region_path}/region_{str(uuid.uuid4())}.png", frame_region)
+        serpent.utilities.clear_terminal()
+        print(f"Collected Frame #{self.collected_frame_count} for Region: {region}")
+
         time.sleep(kwargs.get("interval") or self.config.get("collect_frames_interval") or 1)
 
     def handle_collect_frames_for_context(self, game_frame, **kwargs):
         context = kwargs.get("context") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
         interval = kwargs.get("interval") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["interval"]
 
-        resized_frame = skimage.transform.resize(
-            game_frame.frame,
-            (game_frame.frame.shape[0] // 2, game_frame.frame.shape[1] // 2)
-        )
-
-        file_name = f"datasets/collect_frames_for_context/{context}/frame_{str(uuid.uuid4())}.png"
-        skimage.io.imsave(file_name, resized_frame)
+        self.game_frames.append(game_frame)
 
         self.collected_frame_count += 1
 
@@ -139,6 +163,44 @@ class GameAgent(offshoot.Pluggable):
         print(f"Collected Frame #{self.collected_frame_count} for Context: {context}")
 
         time.sleep(interval)
+
+    def on_collect_frames_pause(self, **kwargs):
+        for i, game_frame in enumerate(self.game_frames):
+            print(f"Saving image {i + 1}/{len(self.game_frames)} to disk...")
+            skimage.io.imsave(f"datasets/collect_frames/frame_{str(uuid.uuid4())}.png", game_frame.frame)
+
+        self.game_frames = list()
+
+    def on_collect_frame_regions_pause(self, **kwargs):
+        region = kwargs["region"]
+        region_path = f"datasets/collect_frames/{region}"
+
+        for i, game_frame in enumerate(self.game_frames):
+            frame_region = serpent.cv.extract_region_from_image(game_frame.frame, self.game.screen_regions.get(region))
+
+            if not os.path.isdir(region_path):
+                os.mkdir(region_path)
+
+            print(f"Saving image {i + 1}/{len(self.game_frames)} to disk...")
+            skimage.io.imsave(f"{region_path}/region_{str(uuid.uuid4())}.png", frame_region)
+
+        self.game_frames = list()
+
+    def on_collect_frames_for_context_pause(self, **kwargs):
+        context = kwargs.get("context") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
+
+        for i, game_frame in enumerate(self.game_frames):
+            resized_frame = skimage.transform.resize(
+                game_frame.frame,
+                (game_frame.frame.shape[0] // 2, game_frame.frame.shape[1] // 2)
+            )
+
+            file_name = f"datasets/collect_frames_for_context/{context}/frame_{str(uuid.uuid4())}.png"
+
+            print(f"Saving image {i + 1}/{len(self.game_frames)} to disk...")
+            skimage.io.imsave(file_name, resized_frame)
+
+        self.game_frames = list()
 
     def _setup_frame_handler(self, frame_handler=None, **kwargs):
         frame_handler = frame_handler or self.config.get("frame_handler", "NOOP")

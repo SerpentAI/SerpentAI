@@ -23,14 +23,14 @@ import io
 
 
 class VisualDebuggerApp(App):
-    def __init__(self):
+    def __init__(self, buckets=None):
         super().__init__()
 
-        self.visual_debugger = VisualDebugger()
+        self.visual_debugger = VisualDebugger(buckets=buckets)
         self.canvas = None
 
     def build(self):
-        self.canvas = VisualDebuggerCanvas()
+        self.canvas = VisualDebuggerCanvas(buckets=self.visual_debugger.available_buckets)
 
         Clock.schedule_interval(self.update_image_data, 0.01)
 
@@ -46,7 +46,7 @@ class VisualDebuggerApp(App):
 
 class VisualDebuggerCanvas(Widget):
 
-    def __init__(self):
+    def __init__(self, buckets=None):
         super().__init__()
 
         self.images = dict()
@@ -57,7 +57,7 @@ class VisualDebuggerCanvas(Widget):
         self.add_widget(self.root)
         self.root.add_widget(self.grid)
 
-        for i, bucket in enumerate(config["visual_debugger"]["available_buckets"]):
+        for i, bucket in enumerate(buckets):
             layout = BoxLayout(orientation="vertical")
 
             image = VisualDebuggerImage(
