@@ -64,19 +64,19 @@ data_files = [
         "serpent/offshoot.manifest.json",
         "serpent/offshoot.yml",
         "serpent/requirements.linux.txt",
-        "serpent/requirements.win32.txt"
+        "serpent/requirements.win32.txt",
+        "serpent/requirements.darwin.txt"
     ])
 ]
 
 requires = [
-    "PyYaml",
-    "Cython",
-    "offshoot"
+    "offshoot",
+    "Cython"
 ]
 
 setup(
     name='SerpentAI',
-    version="0.0.1a2",
+    version="0.1.0b1",
     description='Game Agent Development Kit. Helping you create AIs / Bots to play any game you own!',
     long_description=long_description,
     author="Nicholas Brochu",
@@ -92,7 +92,7 @@ setup(
     url='https://github.com/SerpentAI/Serpent',
     zip_safe=False,
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'Natural Language :: English',

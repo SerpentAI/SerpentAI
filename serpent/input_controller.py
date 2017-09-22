@@ -90,71 +90,87 @@ class InputController:
             pyautogui.typewrite(message=string, interval=duration)
 
     # Mouse Actions
-    def click(self, button=MouseButton.LEFT, y=None, x=None, duration=0.25, **kwargs):
-        pyautogui.moveTo(x, y, duration=duration)
-        pyautogui.click(button=self.mouse_buttons.get(button.name, "left"))
+    def click(self, button=MouseButton.LEFT, y=None, x=None, duration=0.25):
+        if self.game_is_focused:
+            pyautogui.moveTo(x, y, duration=duration)
+            pyautogui.click(button=self.mouse_buttons.get(button.name, "left"))
 
-    def click_screen_region(self, button=MouseButton.LEFT, screen_region=None, **kwargs):
-        screen_region_coordinates = self.game.screen_regions.get(screen_region)
+    def click_screen_region(self, button=MouseButton.LEFT, screen_region=None):
+        if self.game_is_focused:
+            screen_region_coordinates = self.game.screen_regions.get(screen_region)
 
-        x = (screen_region_coordinates[1] + screen_region_coordinates[3]) // 2
-        x += self.game.window_geometry["x_offset"]
-
-        y = (screen_region_coordinates[0] + screen_region_coordinates[2]) // 2
-        y += self.game.window_geometry["y_offset"]
-
-        self.click(button=button, y=y, x=x, **kwargs)
-
-    def click_sprite(self, button=MouseButton.LEFT, sprite=None, game_frame=None, **kwargs):
-        sprite_location = self.sprite_locator.locate(sprite=sprite, game_frame=game_frame)
-
-        if sprite_location is None:
-            return False
-
-        x = (sprite_location[1] + sprite_location[3]) // 2
-        x += self.game.window_geometry["x_offset"]
-
-        y = (sprite_location[0] + sprite_location[2]) // 2
-        y += self.game.window_geometry["y_offset"]
-
-        self.click(button=button, y=y, x=x, **kwargs)
-
-        return True
-
-    def click_string(self, query_string, game_frame, button=MouseButton.LEFT, fuzziness=2, ocr_preset=None, **kwargs):
-        string_location = serpent.ocr.locate_string(
-            query_string,
-            game_frame.frame,
-            fuzziness=fuzziness,
-            ocr_preset=ocr_preset,
-            offset_x=game_frame.offset_x,
-            offset_y=game_frame.offset_y
-        )
-
-        if string_location is not None:
-            x = (string_location[1] + string_location[3]) // 2
+            x = (screen_region_coordinates[1] + screen_region_coordinates[3]) // 2
             x += self.game.window_geometry["x_offset"]
 
-            y = (string_location[0] + string_location[2]) // 2
+            y = (screen_region_coordinates[0] + screen_region_coordinates[2]) // 2
             y += self.game.window_geometry["y_offset"]
 
-            self.click(button=button, y=y, x=x, **kwargs)
+            self.click(button=button, y=y, x=x)
+
+    def click_sprite(self, button=MouseButton.LEFT, sprite=None, game_frame=None):
+        if self.game_is_focused:
+            sprite_location = self.sprite_locator.locate(sprite=sprite, game_frame=game_frame)
+
+            if sprite_location is None:
+                return False
+
+            x = (sprite_location[1] + sprite_location[3]) // 2
+            x += self.game.window_geometry["x_offset"]
+
+            y = (sprite_location[0] + sprite_location[2]) // 2
+            y += self.game.window_geometry["y_offset"]
+
+            self.click(button=button, y=y, x=x)
 
             return True
 
-        return False
+    def click_string(self, query_string, button=MouseButton.LEFT, game_frame=None, fuzziness=2, ocr_preset=None):
+        if self.game_is_focused:
+            string_location = serpent.ocr.locate_string(
+                query_string,
+                game_frame.frame,
+                fuzziness=fuzziness,
+                ocr_preset=ocr_preset,
+                offset_x=game_frame.offset_x,
+                offset_y=game_frame.offset_y
+            )
 
-    def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None):
-        pass
+            if string_location is not None:
+                x = (string_location[1] + string_location[3]) // 2
+                x += self.game.window_geometry["x_offset"]
 
-    def drag_screen_region_to_screen_region(self, start_screen_region=None, end_screen_region=None, duration=1, offset=(0, 0)):
-        start_screen_region_coordinates = self._extract_screen_region_coordinates(start_screen_region)
-        end_screen_region_coordinates = self._extract_screen_region_coordinates(end_screen_region)
+                y = (string_location[0] + string_location[2]) // 2
+                y += self.game.window_geometry["y_offset"]
 
-        pyautogui.moveTo(*start_screen_region_coordinates)
+                self.click(button=button, y=y, x=x)
 
-        coordinates = (end_screen_region_coordinates[0] + offset[0], end_screen_region_coordinates[1] + offset[1])
-        pyautogui.dragTo(*coordinates, duration=duration)
+                return True
+
+            return False
+
+    def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None, duration=1):
+        if self.game_is_focused:
+            pyautogui.moveTo(x0, y0, duration=0.2)
+            pyautogui.dragTo(x1, y1, button=button, duration=duration)
+
+    def drag_screen_region_to_screen_region(self, button=MouseButton.LEFT, start_screen_region=None, end_screen_region=None, duration=1):
+        if self.game_is_focused:
+            start_screen_region_coordinates = self._extract_screen_region_coordinates(start_screen_region)
+            end_screen_region_coordinates = self._extract_screen_region_coordinates(end_screen_region)
+
+            self.drag(
+                button=button,
+                x0=start_screen_region_coordinates[0],
+                y0=start_screen_region_coordinates[1],
+                x1=end_screen_region_coordinates[0],
+                y1=end_screen_region_coordinates[1],
+                duration=duration
+            )
+
+    def scroll(self, y=None, x=None, clicks=1, direction="DOWN"):
+        if self.game_is_focused:
+            clicks = clicks * (1 if direction == "DOWN" else -1)
+            pyautogui.scroll(clicks, x=x, y=y)
 
     def _extract_screen_region_coordinates(self, screen_region):
         screen_region_coordinates = self.game.screen_regions.get(screen_region)
