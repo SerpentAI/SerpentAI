@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import sys
 import shutil
@@ -139,17 +139,17 @@ def setup():
     print("Installing dependencies...")
 
     if sys.platform in ["linux", "linux2"]:
-        subprocess.call(shlex.split("pip install python-xlib"))
+        subprocess.call(shlex.split("python3 -m pip install python-xlib"))
     elif sys.platform == "darwin":
-        subprocess.call(shlex.split("pip install python-xlib pyobjc-framework-Quartz py-applescript"))
+        subprocess.call(shlex.split("python3 -m pip install python-xlib pyobjc-framework-Quartz py-applescript"))
     elif sys.platform == "win32":
         # Anaconda Packages
         subprocess.call(shlex.split("conda install numpy scipy scikit-image scikit-learn h5py -y"))
 
         # Kivy Dependencies
-        subprocess.call(shlex.split("pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew"))
+        subprocess.call(shlex.split("python3 -m pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew"))
 
-    subprocess.call(shlex.split("pip install -r requirements.txt"))
+    subprocess.call(shlex.split("python3 -m pip install -r requirements.txt"))
 
     # Create Dataset Directories
     os.makedirs(os.path.join(os.getcwd(), "datasets/collect_frames"), exist_ok=True)
