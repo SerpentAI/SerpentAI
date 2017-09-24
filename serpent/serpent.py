@@ -144,7 +144,7 @@ def setup():
         subprocess.call(shlex.split("pip install python-xlib pyobjc-framework-Quartz py-applescript"))
     elif sys.platform == "win32":
         # Anaconda Packages
-        subprocess.call(shlex.split("conda install numpy scipy scikit-image scikit-learn h5py -y"))
+        subprocess.call(shlex.split("conda install numpy scipy scikit-image scikit-learn h5py -y"), shell=True)
 
         # Kivy Dependencies
         subprocess.call(shlex.split("pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew"))
