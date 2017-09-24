@@ -24,6 +24,10 @@ The project was born out of admiration for / frustration with [OpenAI Universe](
 
 Guides, tutorials and videos are being produced and added to the [GitHub Wiki](https://github.com/SerpentAI/SerpentAI/wiki). It currently is the official source of documentation.
 
+## Getting Help
+
+You can ask your questions and get help from the community on [Discord](https://discord.gg/9D5SuxH) in the *#project-serpent-help* public channel.
+
 ![](https://s3.ca-central-1.amazonaws.com/serpent-ai-assets/demo_ymbab.gif)
 
 _Experiment: Game agent learning to match tiles (You Must Build a Boat)_
