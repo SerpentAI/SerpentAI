@@ -144,6 +144,11 @@ class InputController:
 
     def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None, duration=1):
         if self.game_is_focused:
+            x0 += self.game.window_geometry["x_offset"]
+            x1 += self.game.window_geometry["x_offset"]
+            y0 += self.game.window_geometry["y_offset"]
+            y1 += self.game.window_geometry["y_offset"]
+
             pyautogui.moveTo(x0, y0, duration=0.2)
             pyautogui.dragTo(x1, y1, button=button, duration=duration)
 
@@ -164,6 +169,10 @@ class InputController:
     def scroll(self, y=None, x=None, clicks=1, direction="DOWN"):
         if self.game_is_focused:
             clicks = clicks * (1 if direction == "DOWN" else -1)
+
+            x += self.game.window_geometry["x_offset"]
+            y += self.game.window_geometry["y_offset"]
+
             pyautogui.scroll(clicks, x=x, y=y)
 
     def _extract_screen_region_coordinates(self, screen_region):
