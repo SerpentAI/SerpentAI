@@ -144,6 +144,7 @@ class InputController:
 
     def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None, duration=1):
         if self.game_is_focused:
+            
             x0 += self.game.window_geometry["x_offset"]
             x1 += self.game.window_geometry["x_offset"]
             y0 += self.game.window_geometry["y_offset"]
