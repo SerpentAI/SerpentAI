@@ -92,6 +92,9 @@ class InputController:
     # Mouse Actions
     def click(self, button=MouseButton.LEFT, y=None, x=None, duration=0.25):
         if self.game_is_focused:
+            x += self.game.window_geometry["x_offset"]
+            y += self.game.window_geometry["y_offset"]
+
             pyautogui.moveTo(x, y, duration=duration)
             pyautogui.click(button=self.mouse_buttons.get(button.name, "left"))
 
@@ -100,10 +103,7 @@ class InputController:
             screen_region_coordinates = self.game.screen_regions.get(screen_region)
 
             x = (screen_region_coordinates[1] + screen_region_coordinates[3]) // 2
-            x += self.game.window_geometry["x_offset"]
-
             y = (screen_region_coordinates[0] + screen_region_coordinates[2]) // 2
-            y += self.game.window_geometry["y_offset"]
 
             self.click(button=button, y=y, x=x)
 
@@ -115,10 +115,7 @@ class InputController:
                 return False
 
             x = (sprite_location[1] + sprite_location[3]) // 2
-            x += self.game.window_geometry["x_offset"]
-
             y = (sprite_location[0] + sprite_location[2]) // 2
-            y += self.game.window_geometry["y_offset"]
 
             self.click(button=button, y=y, x=x)
 
@@ -137,10 +134,7 @@ class InputController:
 
             if string_location is not None:
                 x = (string_location[1] + string_location[3]) // 2
-                x += self.game.window_geometry["x_offset"]
-
                 y = (string_location[0] + string_location[2]) // 2
-                y += self.game.window_geometry["y_offset"]
 
                 self.click(button=button, y=y, x=x)
 
@@ -170,15 +164,14 @@ class InputController:
     def scroll(self, y=None, x=None, clicks=1, direction="DOWN"):
         if self.game_is_focused:
             clicks = clicks * (1 if direction == "DOWN" else -1)
+
             pyautogui.scroll(clicks, x=x, y=y)
 
     def _extract_screen_region_coordinates(self, screen_region):
         screen_region_coordinates = self.game.screen_regions.get(screen_region)
 
         x = (screen_region_coordinates[1] + screen_region_coordinates[3]) // 2
-        x += self.game.window_geometry["x_offset"]
 
         y = (screen_region_coordinates[0] + screen_region_coordinates[2]) // 2
-        y += self.game.window_geometry["y_offset"]
 
         return x, y
