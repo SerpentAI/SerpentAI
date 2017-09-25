@@ -4,9 +4,14 @@ import mss
 
 from redis import StrictRedis
 
+import skimage.transform
+import skimage.util
+
 from serpent.config import config
 
+import sys
 import time
+
 from datetime import datetime
 
 from serpent.game_frame import GameFrame
@@ -30,6 +35,9 @@ class FrameGrabber:
 
         self.redis_client = redis_client
         self.screen_grabber = mss.mss()
+
+        self.is_retina_display = False
+        self.is_retina_display = self._perform_retina_display_check()
 
         # Clear any previously stored frames
         self.redis_client.delete(config["frame_grabber"]["redis_key"])
@@ -63,7 +71,22 @@ class FrameGrabber:
 
         frame = frame[..., [2, 1, 0, 3]]
 
+        if self.is_retina_display:
+            frame = skimage.util.img_as_ubyte(skimage.transform.resize(frame, (frame.shape[0] // 2, frame.shape[1] // 2)))
+
         return frame[..., :3]
+
+    def _perform_retina_display_check(self):
+        retina_display = False
+
+        if sys.platform == "darwin":
+            frame = self.grab_frame()
+
+            if frame.shape[0] > self.height:
+                retina_display = True
+
+        return retina_display
+
 
     @classmethod
     def get_frames(cls, frame_buffer_indices, frame_shape=None):
