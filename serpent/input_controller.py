@@ -92,6 +92,9 @@ class InputController:
     # Mouse Actions
     def click(self, button=MouseButton.LEFT, y=None, x=None, duration=0.25):
         if self.game_is_focused:
+            x += self.game.window_geometry["x_offset"]
+            y += self.game.window_geometry["y_offset"]
+
             pyautogui.moveTo(x, y, duration=duration)
             pyautogui.click(button=self.mouse_buttons.get(button.name, "left"))
 
@@ -100,10 +103,7 @@ class InputController:
             screen_region_coordinates = self.game.screen_regions.get(screen_region)
 
             x = (screen_region_coordinates[1] + screen_region_coordinates[3]) // 2
-            x += self.game.window_geometry["x_offset"]
-
             y = (screen_region_coordinates[0] + screen_region_coordinates[2]) // 2
-            y += self.game.window_geometry["y_offset"]
 
             self.click(button=button, y=y, x=x)
 
@@ -115,10 +115,7 @@ class InputController:
                 return False
 
             x = (sprite_location[1] + sprite_location[3]) // 2
-            x += self.game.window_geometry["x_offset"]
-
             y = (sprite_location[0] + sprite_location[2]) // 2
-            y += self.game.window_geometry["y_offset"]
 
             self.click(button=button, y=y, x=x)
 
@@ -137,10 +134,7 @@ class InputController:
 
             if string_location is not None:
                 x = (string_location[1] + string_location[3]) // 2
-                x += self.game.window_geometry["x_offset"]
-
                 y = (string_location[0] + string_location[2]) // 2
-                y += self.game.window_geometry["y_offset"]
 
                 self.click(button=button, y=y, x=x)
 
@@ -150,6 +144,12 @@ class InputController:
 
     def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None, duration=1):
         if self.game_is_focused:
+            
+            x0 += self.game.window_geometry["x_offset"]
+            x1 += self.game.window_geometry["x_offset"]
+            y0 += self.game.window_geometry["y_offset"]
+            y1 += self.game.window_geometry["y_offset"]
+
             pyautogui.moveTo(x0, y0, duration=0.2)
             pyautogui.dragTo(x1, y1, button=button, duration=duration)
 
@@ -170,6 +170,10 @@ class InputController:
     def scroll(self, y=None, x=None, clicks=1, direction="DOWN"):
         if self.game_is_focused:
             clicks = clicks * (1 if direction == "DOWN" else -1)
+
+            x += self.game.window_geometry["x_offset"]
+            y += self.game.window_geometry["y_offset"]
+
             pyautogui.scroll(clicks, x=x, y=y)
 
     def _extract_screen_region_coordinates(self, screen_region):
