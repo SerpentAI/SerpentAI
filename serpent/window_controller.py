@@ -16,6 +16,9 @@ class WindowController:
     def move_window(self, window_id, x, y):
         self.adapter.move_window(window_id, x, y)
 
+    def resize_window(self, window_id, width, height):
+        self.adapter.resize_window(window_id, width, height)
+
     def focus_window(self, window_id):
         self.adapter.focus_window(window_id)
 

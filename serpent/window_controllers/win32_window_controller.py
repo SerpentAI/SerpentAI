@@ -15,6 +15,10 @@ class Win32WindowController(WindowController):
         x0, y0, x1, y1 = win32gui.GetWindowRect(window_id)
         win32gui.MoveWindow(window_id, x, y, x1 - x0, y1 - y0, True)
 
+    def resize_window(self, window_id, width, height):
+        x0, y0, x1, y1 = win32gui.GetWindowRect(window_id)
+        win32gui.MoveWindow(window_id, x0, y0, width, height, True)
+
     def focus_window(self, window_id):
         win32gui.SetForegroundWindow(window_id)
 

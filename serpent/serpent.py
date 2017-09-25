@@ -15,7 +15,7 @@ sys.path.insert(0, os.getcwd())
 game_class_mapping = offshoot.discover("Game")
 game_agent_class_mapping = offshoot.discover("GameAgent")
 
-VERSION = "0.1.2b1"
+VERSION = "0.1.3b1"
 
 valid_commands = [
     "setup",
