@@ -18,6 +18,13 @@ class DarwinWindowController(WindowController):
             end tell
         ''').run()
 
+    def resize_window(self, window_id, width, height):
+        applescript.AppleScript(f'''
+            tell application "System Events" to tell window 1 of process "{window_id}"
+                set size to { {width}, {height} }
+            end tell
+        ''').run()
+
     def focus_window(self, window_id):
         applescript.AppleScript(f'''
             tell application "System Events" to tell process "{window_id}"

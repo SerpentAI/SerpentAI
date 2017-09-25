@@ -17,6 +17,9 @@ class LinuxWindowController(WindowController):
     def move_window(self, window_id, x, y):
         subprocess.call(shlex.split(f"xdotool windowmove {window_id} {x} {y}"))
 
+    def resize_window(self, window_id, width, height):
+        subprocess.call(shlex.split(f"xdotool windowsize {window_id} {width} {height}"))
+
     def focus_window(self, window_id):
         subprocess.call(shlex.split(f"xdotool windowactivate {window_id}"))
 
