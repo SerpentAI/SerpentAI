@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 from setuptools import setup
 
-import os
-
 try:
     import pypandoc
     long_description = pypandoc.convert('README.md', 'rst')
@@ -64,19 +62,19 @@ data_files = [
         "serpent/offshoot.manifest.json",
         "serpent/offshoot.yml",
         "serpent/requirements.linux.txt",
-        "serpent/requirements.win32.txt"
+        "serpent/requirements.win32.txt",
+        "serpent/requirements.darwin.txt"
     ])
 ]
 
 requires = [
-    "PyYaml",
-    "Cython",
-    "offshoot"
+    "offshoot",
+    "Cython==0.26.1"
 ]
 
 setup(
     name='SerpentAI',
-    version="0.0.1a2",
+    version="0.1.1b1",
     description='Game Agent Development Kit. Helping you create AIs / Bots to play any game you own!',
     long_description=long_description,
     author="Nicholas Brochu",
@@ -92,7 +90,7 @@ setup(
     url='https://github.com/SerpentAI/Serpent',
     zip_safe=False,
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'Natural Language :: English',

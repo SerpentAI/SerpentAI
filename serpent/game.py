@@ -160,7 +160,9 @@ class Game(offshoot.Pluggable):
                     game_agent.on_game_frame(game_frame, frame_handler=frame_handler, **kwargs)
                 else:
                     serpent.utilities.clear_terminal()
-                    print("PAUSED")
+                    print("PAUSED\n")
+
+                    game_agent.on_pause(frame_handler=frame_handler, **kwargs)
 
                     time.sleep(1)
             except Exception as e:

@@ -15,7 +15,7 @@ sys.path.insert(0, os.getcwd())
 game_class_mapping = offshoot.discover("Game")
 game_agent_class_mapping = offshoot.discover("GameAgent")
 
-VERSION = "0.0.1a2"
+VERSION = "0.1.0b1"
 
 valid_commands = [
     "setup",
@@ -53,6 +53,8 @@ def executable_help():
 
     for command, description in command_description_mapping.items():
         print(f"{command.rjust(16)}: {description}")
+
+    print("")
 
 
 def setup():
@@ -114,7 +116,10 @@ def setup():
             os.path.join(os.getcwd(), "requirements.txt")
         )
     elif sys.platform == "darwin":
-        raise Exception("Mac OS is not supported at the moment... :(")
+        shutil.copy(
+            os.path.join(os.path.dirname(__file__), "requirements.darwin.txt"),
+            os.path.join(os.getcwd(), "requirements.txt")
+        )
     elif sys.platform == "win32":
         shutil.copy(
             os.path.join(os.path.dirname(__file__), "requirements.win32.txt"),
@@ -136,10 +141,10 @@ def setup():
     if sys.platform in ["linux", "linux2"]:
         subprocess.call(shlex.split("pip install python-xlib"))
     elif sys.platform == "darwin":
-        pass
+        subprocess.call(shlex.split("pip install python-xlib pyobjc-framework-Quartz py-applescript"))
     elif sys.platform == "win32":
         # Anaconda Packages
-        subprocess.call(shlex.split("conda install numpy scipy scikit-image scikit-learn h5py -y"))
+        subprocess.call(shlex.split("conda install numpy scipy scikit-image scikit-learn h5py -y"), shell=True)
 
         # Kivy Dependencies
         subprocess.call(shlex.split("pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew"))
@@ -209,7 +214,7 @@ def launch(game_name):
     game().launch()
 
 
-def play(game_name, game_agent_name):
+def play(game_name, game_agent_name, frame_handler=None):
     game_class_name = f"Serpent{game_name}Game"
 
     game_class = game_class_mapping.get(game_class_name)
@@ -225,7 +230,7 @@ def play(game_name, game_agent_name):
     if game_agent_class is None:
         raise Exception(f"Game Agent '{game_agent_name}' wasn't found. Make sure the plugin is installed.")
 
-    game.play(game_agent_class_name=game_agent_name)
+    game.play(game_agent_class_name=game_agent_name, frame_handler=frame_handler)
 
 
 def generate(plugin_type):
@@ -265,9 +270,9 @@ def capture(capture_type, game_name, interval=1, extra=None):
         game.play(frame_handler="COLLECT_FRAME_REGIONS", interval=float(interval), region=extra)
 
 
-def visual_debugger():
+def visual_debugger(*buckets):
     from serpent.visual_debugger.visual_debugger_app import VisualDebuggerApp
-    VisualDebuggerApp().run()
+    VisualDebuggerApp(buckets=buckets or None).run()
 
 
 def generate_game_plugin():

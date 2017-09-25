@@ -11,8 +11,8 @@ from serpent.config import config
 
 class VisualDebugger:
 
-    def __init__(self):
-        self.available_buckets = config["visual_debugger"]["available_buckets"]
+    def __init__(self, buckets=None):
+        self.available_buckets = buckets or config["visual_debugger"]["available_buckets"]
         self.bucket_generator = itertools.cycle(self.available_buckets)
 
         self.redis_client = StrictRedis(**config["redis"])
