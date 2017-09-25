@@ -1,3 +1,8 @@
+## 0.1.3b1
+
+* FEATURE - added resize_window to all WindowController classes
+* TWEAK - Base Game Agent GameFrameLimiter FPS to 30
+
 ## 0.1.2b1
 
 * FEATURE - retina display detection and handling on macOS
