@@ -35,7 +35,7 @@ class DarwinWindowController(WindowController):
     def is_window_focused(self, window_id):
         focused_window_id = applescript.AppleScript('''
             tell application "System Events"
-                return name of first application process whose frontmost is true
+                return title of first application process whose frontmost is true
             end tell
         ''').run()
 
