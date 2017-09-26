@@ -26,7 +26,11 @@ Guides, tutorials and videos are being produced and added to the [GitHub Wiki](h
 
 ## Getting Help
 
-You can ask your questions and get help from the community on [Discord](https://discord.gg/9D5SuxH) in the *#project-serpent-help* public channel.
+You can ask your questions and get help from the community on [Discord](https://discord.gg/9D5SuxH) in the *#serpent-ai-help* public channel.
+
+## Showcasing your Work
+
+Have you built something cool using Serpent.AI? Want to give the community progress updates? Share your repositories and videos in *#serpent-ai-showcase* on [Discord](https://discord.gg/9D5SuxH).
 
 ![](https://s3.ca-central-1.amazonaws.com/serpent-ai-assets/demo_ymbab.gif)
 
