@@ -1,3 +1,11 @@
+## 0.1.5b1
+
+* FIX - DarwinWindowController is_window_focused should use process title and not name
+
+## 0.1.4b1
+
+* FIX - initial applescript to find focused windows was fine but macOS users need to use process name and not the window name
+
 ## 0.1.3b1
 
 * FEATURE - added resize_window to all WindowController classes
