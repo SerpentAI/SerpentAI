@@ -32,7 +32,7 @@ You can ask your questions and get help from the community on [Discord](https://
 
 _Experiment: Game agent learning to match tiles (You Must Build a Boat)_
 
-Serpent.AI is currently in BETA. It it the love child of [@nbrochu](https://github.com/nbrochu)'s passion for science & experimentation, programming and video games. All of development and experiments can be seen live on the [Twitch Channel](https://www.twitch.tv/serpent_ai).
+Serpent.AI is currently in BETA. It is the love child of [@nbrochu](https://github.com/nbrochu)'s passion for science & experimentation, programming and video games. All of development and experiments can be seen live on the [Twitch Channel](https://www.twitch.tv/serpent_ai).
 
 _Business Contact: info@serpent.ai_
 
