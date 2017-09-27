@@ -12,9 +12,6 @@ from serpent.utilities import clear_terminal, display_serpent_logo
 # Add the current working directory to sys.path to discover user plugins!
 sys.path.insert(0, os.getcwd())
 
-game_class_mapping = offshoot.discover("Game")
-game_agent_class_mapping = offshoot.discover("GameAgent")
-
 VERSION = "0.1.5b1"
 
 valid_commands = [
@@ -206,6 +203,7 @@ def plugins():
 def launch(game_name):
     game_class_name = f"Serpent{game_name}Game"
 
+    game_class_mapping = offshoot.discover("Game")
     game = game_class_mapping.get(game_class_name)
 
     if game is None:
@@ -217,6 +215,7 @@ def launch(game_name):
 def play(game_name, game_agent_name, frame_handler=None):
     game_class_name = f"Serpent{game_name}Game"
 
+    game_class_mapping = offshoot.discover("Game")
     game_class = game_class_mapping.get(game_class_name)
 
     if game_class is None:
@@ -225,6 +224,7 @@ def play(game_name, game_agent_name, frame_handler=None):
     game = game_class()
     game.launch(dry_run=True)
 
+    game_agent_class_mapping = offshoot.discover("GameAgent")
     game_agent_class = game_agent_class_mapping.get(game_agent_name)
 
     if game_agent_class is None:
@@ -250,6 +250,7 @@ def train(training_type, *args):
 def capture(capture_type, game_name, interval=1, extra=None):
     game_class_name = f"Serpent{game_name}Game"
 
+    game_class_mapping = offshoot.discover("Game")
     game_class = game_class_mapping.get(game_class_name)
 
     if game_class is None:
