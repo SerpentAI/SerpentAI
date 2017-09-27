@@ -1,3 +1,10 @@
+## 0.1.6b1
+
+* REFACTOR - InputController now pivots on a backend to allow extension; PyAutoGUI extracted to a backend (default)
+* FIX - no CUDA initialization unless it's actually needed
+* FEATURE - new `serpent window_name` command to assist in finding the proper kwargs["window_name"] for Game plugins
+* FIX - stopped initializing a VisualDebugger instance on every new GameFrameBuffer. Huge performance gain in frame consumption rate.
+
 ## 0.1.5b1
 
 * FIX - DarwinWindowController is_window_focused should use process title and not name

@@ -15,7 +15,7 @@ from serpent.window_controller import WindowController
 # Add the current working directory to sys.path to discover user plugins!
 sys.path.insert(0, os.getcwd())
 
-VERSION = "0.1.5b1"
+VERSION = "0.1.6b1"
 
 valid_commands = [
     "setup",
