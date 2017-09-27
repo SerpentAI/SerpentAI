@@ -12,6 +12,7 @@ packages = [
     "serpent.game_agents",
     "serpent.game_launchers",
     "serpent.games",
+    "serpent.input_controllers",
     "serpent.machine_learning",
     "serpent.machine_learning.context_classification",
     "serpent.machine_learning.context_classification.context_classifiers",
