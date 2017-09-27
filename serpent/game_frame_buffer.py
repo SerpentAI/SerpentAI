@@ -13,8 +13,6 @@ class GameFrameBuffer:
         self.size = size
         self.frames = list()
 
-        self.visual_debugger = VisualDebugger()
-
     @property
     def full(self):
         return len(self.frames) >= self.size
@@ -30,8 +28,10 @@ class GameFrameBuffer:
             self.frames = [game_frame] + self.frames
 
     def to_visual_debugger(self):
+        visual_debugger = VisualDebugger()
+
         for i, game_frame in enumerate(self.frames):
-            self.visual_debugger.store_image_data(
+            visual_debugger.store_image_data(
                 np.array(game_frame.frame * 255, dtype="uint8"),
                 game_frame.frame.shape,
                 f"frame_{i + 1}"
