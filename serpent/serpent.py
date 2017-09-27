@@ -4,10 +4,13 @@ import sys
 import shutil
 import subprocess
 import shlex
+import time
 
 import offshoot
 
 from serpent.utilities import clear_terminal, display_serpent_logo
+
+from serpent.window_controller import WindowController
 
 # Add the current working directory to sys.path to discover user plugins!
 sys.path.insert(0, os.getcwd())
@@ -25,7 +28,8 @@ valid_commands = [
     "plugins",
     "train",
     "capture",
-    "visual_debugger"
+    "visual_debugger",
+    "window_name"
 ]
 
 
@@ -276,6 +280,22 @@ def visual_debugger(*buckets):
     VisualDebuggerApp(buckets=buckets or None).run()
 
 
+def window_name():
+    clear_terminal()
+    print("Open the Game manually.")
+
+    input("\nPress ANY key and then focus the game window...")
+
+    window_controller = WindowController()
+
+    time.sleep(5)
+
+    focused_window_name = window_controller.get_focused_window_name()
+
+    print(f"\nGame Window Detected! Please set the kwargs['window_name'] value in the Game plugin to:")
+    print("\n" + focused_window_name + "\n")
+
+
 def generate_game_plugin():
     clear_terminal()
     display_serpent_logo()
@@ -401,7 +421,8 @@ command_function_mapping = {
     "generate": generate,
     "train": train,
     "capture": capture,
-    "visual_debugger": visual_debugger
+    "visual_debugger": visual_debugger,
+    "window_name": window_name
 }
 
 command_description_mapping = {
@@ -415,7 +436,8 @@ command_description_mapping = {
     "generate": "Generate code for game and game agent plugins",
     "train": "Train a context classifier with collected context frames",
     "capture": "Capture frames, screen regions and contexts from a game",
-    "visual_debugger": "Launch the visual debugger"
+    "visual_debugger": "Launch the visual debugger",
+    "window_name": "Launch a utility to find a game's window name"
 }
 
 if __name__ == "__main__":

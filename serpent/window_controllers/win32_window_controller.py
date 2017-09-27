@@ -26,6 +26,9 @@ class Win32WindowController(WindowController):
         focused_window_id = win32gui.GetForegroundWindow()
         return focused_window_id == window_id
 
+    def get_focused_window_name(self):
+        return win32gui.GetWindowText(win32gui.GetForegroundWindow())
+
     def get_window_geometry(self, window_id):
         geometry = dict()
 

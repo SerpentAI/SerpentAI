@@ -33,13 +33,16 @@ class DarwinWindowController(WindowController):
         ''').run()
 
     def is_window_focused(self, window_id):
+        return self.get_focused_window_name() == window_id
+
+    def get_focused_window_name(self):
         focused_window_id = applescript.AppleScript('''
             tell application "System Events"
                 return title of first application process whose frontmost is true
             end tell
         ''').run()
 
-        return focused_window_id == window_id
+        return focused_window_id
 
     def get_window_geometry(self, window_id):
         geometry = dict()

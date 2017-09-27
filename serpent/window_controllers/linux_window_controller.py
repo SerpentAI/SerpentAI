@@ -27,6 +27,10 @@ class LinuxWindowController(WindowController):
         focused_window_id = subprocess.check_output(shlex.split("xdotool getwindowfocus")).decode("utf-8").strip()
         return focused_window_id == window_id
 
+    def get_focused_window_name(self):
+        focused_window_id = subprocess.check_output(shlex.split("xdotool getwindowfocus")).decode("utf-8").strip()
+        return subprocess.check_output(shlex.split(f"xdotool getwindowname {focused_window_id}")).decode("utf-8").strip()
+
     def get_window_geometry(self, window_id):
         geometry = dict()
 

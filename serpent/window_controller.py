@@ -25,6 +25,9 @@ class WindowController:
     def is_window_focused(self, window_id):
         return self.adapter.is_window_focused(window_id)
 
+    def get_focused_window_name(self):
+        return self.adapter.get_focused_window_name()
+
     def get_window_geometry(self, window_id):
         return self.adapter.get_window_geometry(window_id)
 
