@@ -30,7 +30,7 @@ You can ask your questions and get help from the community on [Discord](https://
 
 ## Showcasing your Work
 
-Have you built something cool using Serpent.AI? Want to give the community progress updates? Share your repositories and videos in *#serpent-ai-showcase* on [Discord](https://discord.gg/9D5SuxH).
+Have you built something cool using Serpent.AI? Want to give the community progress updates? Share your repositories and videos in *#serpent-ai-showcase* on [Discord](https://discord.gg/9D5SuxH). There is also a [wiki page](https://github.com/SerpentAI/SerpentAI/wiki/Community-Plugin-Showcase) reserved for showcasing your plugins!
 
 ![](https://s3.ca-central-1.amazonaws.com/serpent-ai-assets/demo_ymbab.gif)
 
