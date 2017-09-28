@@ -127,6 +127,10 @@ class Game(offshoot.Pluggable):
         self.window_controller.focus_window(self.window_id)
 
         self.window_geometry = self.extract_window_geometry()
+
+        # macOS - Retina display shenanigans require even-valued width and height
+        self._adjust_retina_display_game_resolution()
+
         print(self.window_geometry)
 
     def play(self, game_agent_class_name=None, frame_handler=None, **kwargs):
@@ -241,6 +245,26 @@ class Game(offshoot.Pluggable):
                         sprites[sprite_name].append_image_data(sprite_image_data)
 
         return sprites
+
+    def _adjust_retina_display_game_resolution(self):
+        resize = False
+
+        width = self.window_geometry["width"]
+        height = self.window_geometry["height"] + 20  # 20 gets subtracted from the height in extract_window_geometry
+
+        if width % 2 == 1:
+            resize = True
+            width -= 1
+
+        if height % 2 == 1:
+            resize = True
+            height -= 1
+
+        if resize:
+            print("Resizing window to even-valued width and height for retina display...")
+            self.window_controller.resize_window(self.window_id, width, height)
+
+            self.window_geometry = self.extract_window_geometry()
 
     def _handle_signal(self, signum=15, frame=None, do_exit=True):
         if self.frame_grabber_process is not None:
