@@ -7,8 +7,28 @@ class MouseButton(enum.Enum):
     RIGHT = 2
 
 
+class KeyboardKey(enum.Enum):
+    W = 0
+    A = 1
+    S = 2
+    D = 3
+    ESC = 4,
+    LSHIFT = 5
+
+character_keyboard_key_mapping = {
+    "a": [KeyboardKey.A],
+    "d": [KeyboardKey.D],
+    "s": [KeyboardKey.S],
+    "w": [KeyboardKey.W],
+    "A": [KeyboardKey.LSHIFT, KeyboardKey.A],
+    "D": [KeyboardKey.LSHIFT, KeyboardKey.D],
+    "S": [KeyboardKey.LSHIFT, KeyboardKey.S],
+    "W": [KeyboardKey.LSHIFT, KeyboardKey.W],
+}
+
 class InputControllers(enum.Enum):
     PYAUTOGUI = 0
+    NATIVE_WIN32 = 1
 
 
 class InputControllerError(BaseException):
@@ -91,6 +111,9 @@ class InputController:
         if backend == InputControllers.PYAUTOGUI:
             from serpent.input_controllers.pyautogui_input_controller import PyAutoGUIInputController
             return PyAutoGUIInputController(game=self.game, **kwargs)
+        elif backend == InputControllers.NATIVE_WIN32:
+            from serpent.input_controllers.native_win32_input_controller import NativeWin32InputController
+            return NativeWin32InputController(game=self.game, **kwargs)
         else:
             raise InputControllerError("The specified backend is invalid!")
 

@@ -16,7 +16,8 @@ from serpent.game_agent import GameAgent
 from serpent.game_launchers import *
 
 from serpent.window_controller import WindowController
-from serpent.input_controller import InputController
+
+from serpent.input_controller import InputController, InputControllers
 
 from serpent.frame_grabber import FrameGrabber
 from serpent.game_frame_limiter import GameFrameLimiter
@@ -46,6 +47,8 @@ class Game(offshoot.Pluggable):
         self.config = config.get(f"{self.__class__.__name__}Plugin")
 
         self.platform = kwargs.get("platform")
+
+        self.input_controller = kwargs.get("input_controller") or InputControllers.PYAUTOGUI
 
         self.window_id = None
         self.window_name = kwargs.get("window_name")
@@ -141,7 +144,7 @@ class Game(offshoot.Pluggable):
 
         game_agent = game_agent_class(
             game=self,
-            input_controller=InputController(game=self)
+            input_controller=InputController(game=self, backend=self.input_controller)
         )
 
         self.start_frame_grabber()
