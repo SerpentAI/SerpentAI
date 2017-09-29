@@ -13,8 +13,7 @@ import atexit
 
 from serpent.game_agent import GameAgent
 
-from serpent.game_launchers.steam_game_launcher import SteamGameLauncher
-from serpent.game_launchers.executable_game_launcher import ExecutableGameLauncher
+from serpent.game_launchers import *
 
 from serpent.window_controller import WindowController
 from serpent.input_controller import InputController
@@ -78,7 +77,8 @@ class Game(offshoot.Pluggable):
     def game_launchers(self):
         return {
             "steam": SteamGameLauncher,
-            "executable": ExecutableGameLauncher
+            "executable": ExecutableGameLauncher,
+            "web_browser": WebBrowserGameLauncher
         }
 
     @property
@@ -129,7 +129,8 @@ class Game(offshoot.Pluggable):
         self.window_geometry = self.extract_window_geometry()
 
         # macOS - Retina display shenanigans require even-valued width and height
-        self._adjust_retina_display_game_resolution()
+        if sys.platform == "darwin":
+            self._adjust_retina_display_game_resolution()
 
         print(self.window_geometry)
 
