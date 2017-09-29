@@ -37,7 +37,7 @@ def create_training_and_validation_sets(file_paths, validation_set_probability=0
 
 
 def generate_seed():
-    return str(uuid.uuid4())
+    return "Serpent.AI"
 
 
 def clear_current_dataset():
