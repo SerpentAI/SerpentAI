@@ -51,18 +51,19 @@ def locate_string(query_string, image, fuzziness=0, ocr_preset=None, offset_x=0,
 
         return text_region
 
-    edit_distances = [editdistance.eval(query_string, string) for string in detected_strings]
-    minimum_edit_distance = min(edit_distances)
+    if len(detected_strings):
+        edit_distances = [editdistance.eval(query_string, string) for string in detected_strings]
+        minimum_edit_distance = min(edit_distances)
 
-    if minimum_edit_distance <= fuzziness:
-        text_region = list(text_regions[edit_distances.index(minimum_edit_distance)])
+        if minimum_edit_distance <= fuzziness:
+            text_region = list(text_regions[edit_distances.index(minimum_edit_distance)])
 
-        text_region[0] += offset_y
-        text_region[1] += offset_x
-        text_region[2] += offset_y
-        text_region[3] += offset_x
+            text_region[0] += offset_y
+            text_region[1] += offset_x
+            text_region[2] += offset_y
+            text_region[3] += offset_x
 
-        return text_region
+            return text_region
 
     return None
 
