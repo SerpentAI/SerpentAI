@@ -4,6 +4,8 @@ from .api.api import MyGameAPI
 
 from serpent.utilities import Singleton
 
+from serpent.game_launchers.web_browser_game_launcher import WebBrowser
+
 
 class SerpentGame(Game, metaclass=Singleton):
 
@@ -15,6 +17,8 @@ class SerpentGame(Game, metaclass=Singleton):
         kwargs["app_id"] = "APP_ID"
         kwargs["app_args"] = None
         kwargs["executable_path"] = "EXECUTABLE_PATH"
+        kwargs["url"] = "URL"
+        kwargs["browser"] = WebBrowser.DEFAULT
 
         super().__init__(**kwargs)
 

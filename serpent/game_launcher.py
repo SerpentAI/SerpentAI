@@ -2,6 +2,7 @@
 class GameLauncherException(BaseException):
     pass
 
+
 class GameLauncher:
 
     def __init__(self, **kwargs):
