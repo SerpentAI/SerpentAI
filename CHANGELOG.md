@@ -1,3 +1,9 @@
+## 0.1.7b1
+
+* FIX - macOS frame reshape error should be resolved; Including the top bar as part of the capture until someone can a programmatic way to get the inner window size.
+* FEATURE - added a Web Browser GameLauncher for people who want to tackle web games
+* FIX - Added a default static seed to the the training of the context classifier dataset split operation
+
 ## 0.1.6b1
 
 * REFACTOR - InputController now pivots on a backend to allow extension; PyAutoGUI extracted to a backend (default)
