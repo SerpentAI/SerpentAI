@@ -73,6 +73,7 @@ class FrameGrabber:
 
         if self.is_retina_display:
             frame = skimage.util.img_as_ubyte(skimage.transform.resize(frame, (frame.shape[0] // 2, frame.shape[1] // 2)))
+            frame = frame[:self.height, :self.width, :]
 
         return frame[..., :3]
 

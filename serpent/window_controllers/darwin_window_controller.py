@@ -54,7 +54,7 @@ class DarwinWindowController(WindowController):
         ''').run()
 
         geometry["width"] = int(window_geometry[0])
-        geometry["height"] = int(window_geometry[1] - 20)
+        geometry["height"] = int(window_geometry[1])
 
         window_information = applescript.AppleScript(f'''
             tell application "System Events" to tell window 1 of process "{window_id}"
@@ -63,6 +63,6 @@ class DarwinWindowController(WindowController):
         ''').run()
 
         geometry["x_offset"] = int(window_information[0])
-        geometry["y_offset"] = int(window_information[1] + 20)
+        geometry["y_offset"] = int(window_information[1])
 
         return geometry
