@@ -197,6 +197,9 @@ class PyAutoGUIInputController(InputController):
             pyautogui.typewrite(message=string, interval=duration)
 
     # Mouse Actions
+    def move(self, x=None, y=None, duration=0.25, absolute=True, **kwargs):
+        pass
+
     def click(self, button=MouseButton.LEFT, y=None, x=None, duration=0.25, **kwargs):
         if self.game_is_focused:
             x += self.game.window_geometry["x_offset"]

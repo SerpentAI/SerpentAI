@@ -6,8 +6,11 @@ import serpent.ocr
 
 import time
 
-import pyautogui
 import ctypes
+import win32api
+
+import scipy.interpolate
+import numpy as np
 
 
 keyboard_key_mapping = {
@@ -128,6 +131,18 @@ keyboard_key_mapping = {
     KeyboardKey.KEY_NUMPAD_PERIOD.name: 0x53
 }
 
+mouse_button_down_mapping = {
+    MouseButton.LEFT.name: 0x0002,
+    MouseButton.MIDDLE.name: 0x0020,
+    MouseButton.RIGHT.name: 0x0008
+}
+
+mouse_button_up_mapping = {
+    MouseButton.LEFT.name: 0x0004,
+    MouseButton.MIDDLE.name: 0x0040,
+    MouseButton.RIGHT.name: 0x0010
+}
+
 PUL = ctypes.POINTER(ctypes.c_ulong)
 
 
@@ -240,13 +255,54 @@ class NativeWin32InputController(InputController):
                     self.tap_keys(keys, duration=duration)
 
     # Mouse Actions
-    def click(self, button=MouseButton.LEFT, y=None, x=None, duration=0.25, **kwargs):
+    def move(self, x=None, y=None, duration=0.25, absolute=True, **kwargs):
         if self.game_is_focused:
             x += self.game.window_geometry["x_offset"]
             y += self.game.window_geometry["y_offset"]
 
-            pyautogui.moveTo(x, y, duration=duration)
-            pyautogui.click(button=self.mouse_buttons.get(button.name, "left"))
+            current_pixel_coordinates = win32api.GetCursorPos()
+            start_coordinates = self._to_windows_coordinates(*current_pixel_coordinates)
+
+            if absolute:
+                end_coordinates = self._to_windows_coordinates(x, y)
+            else:
+                end_coordinates = self._to_windows_coordinates(current_pixel_coordinates[0] + x, current_pixel_coordinates[1] + y)
+
+            coordinates = self._interpolate_mouse_movement(
+                start_windows_coordinates=start_coordinates,
+                end_windows_coordinates=end_coordinates
+            )
+
+            for x, y in coordinates:
+                extra = ctypes.c_ulong(0)
+                ii_ = Input_I()
+                ii_.mi = MouseInput(x, y, 0, (0x0001 | 0x8000), 0, ctypes.pointer(extra))
+                x = Input(ctypes.c_ulong(0), ii_)
+                ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
+
+                time.sleep(duration / 20)
+
+    def click_down(self, button=MouseButton.LEFT, **kwargs):
+        if self.game_is_focused:
+            extra = ctypes.c_ulong(0)
+            ii_ = Input_I()
+            ii_.mi = MouseInput(0, 0, 0, mouse_button_down_mapping[button.name], 0, ctypes.pointer(extra))
+            x = Input(ctypes.c_ulong(0), ii_)
+            ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
+
+    def click_up(self, button=MouseButton.LEFT, **kwargs):
+        if self.game_is_focused:
+            extra = ctypes.c_ulong(0)
+            ii_ = Input_I()
+            ii_.mi = MouseInput(0, 0, 0, mouse_button_up_mapping[button.name], 0, ctypes.pointer(extra))
+            x = Input(ctypes.c_ulong(0), ii_)
+            ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
+
+    def click(self, button=MouseButton.LEFT, duration=0.05, **kwargs):
+        if self.game_is_focused:
+            self.click_down(button=button)
+            time.sleep(duration)
+            self.click_up(button=button)
 
     def click_screen_region(self, button=MouseButton.LEFT, screen_region=None, **kwargs):
         if self.game_is_focused:
@@ -255,7 +311,8 @@ class NativeWin32InputController(InputController):
             x = (screen_region_coordinates[1] + screen_region_coordinates[3]) // 2
             y = (screen_region_coordinates[0] + screen_region_coordinates[2]) // 2
 
-            self.click(button=button, y=y, x=x)
+            self.move(x, y)
+            self.click(button=button)
 
     def click_sprite(self, button=MouseButton.LEFT, sprite=None, game_frame=None, **kwargs):
         if self.game_is_focused:
@@ -267,7 +324,8 @@ class NativeWin32InputController(InputController):
             x = (sprite_location[1] + sprite_location[3]) // 2
             y = (sprite_location[0] + sprite_location[2]) // 2
 
-            self.click(button=button, y=y, x=x)
+            self.move(x, y)
+            self.click(button=button)
 
             return True
 
@@ -286,7 +344,8 @@ class NativeWin32InputController(InputController):
                 x = (string_location[1] + string_location[3]) // 2
                 y = (string_location[0] + string_location[2]) // 2
 
-                self.click(button=button, y=y, x=x)
+                self.move(x, y)
+                self.click(button=button)
 
                 return True
 
@@ -294,13 +353,10 @@ class NativeWin32InputController(InputController):
 
     def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None, duration=1, **kwargs):
         if self.game_is_focused:
-            x0 += self.game.window_geometry["x_offset"]
-            x1 += self.game.window_geometry["x_offset"]
-            y0 += self.game.window_geometry["y_offset"]
-            y1 += self.game.window_geometry["y_offset"]
-
-            pyautogui.moveTo(x0, y0, duration=0.2)
-            pyautogui.dragTo(x1, y1, button=button, duration=duration)
+            self.move(x0, y0)
+            self.click_down(button=button)
+            self.move(x1, y1, duration=duration)
+            self.click_up(button=button)
 
     def drag_screen_region_to_screen_region(self, button=MouseButton.LEFT, start_screen_region=None, end_screen_region=None, duration=1, **kwargs):
         if self.game_is_focused:
@@ -316,11 +372,40 @@ class NativeWin32InputController(InputController):
                 duration=duration
             )
 
-    def scroll(self, y=None, x=None, clicks=1, direction="DOWN", **kwargs):
+    def scroll(self, clicks=1, direction="DOWN", **kwargs):
         if self.game_is_focused:
-            clicks = clicks * (1 if direction == "DOWN" else -1)
+            clicks = clicks * (1 if direction == "UP" else -1) * 120
 
-            x += self.game.window_geometry["x_offset"]
-            y += self.game.window_geometry["y_offset"]
+            extra = ctypes.c_ulong(0)
+            ii_ = Input_I()
+            ii_.mi = MouseInput(0, 0, clicks, 0x0800, 0, ctypes.pointer(extra))
+            x = Input(ctypes.c_ulong(0), ii_)
+            ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
 
-            pyautogui.scroll(clicks, x=x, y=y)
+    @staticmethod
+    def _to_windows_coordinates(x=0, y=0):
+        display_width = win32api.GetSystemMetrics(0)
+        display_height = win32api.GetSystemMetrics(1)
+
+        windows_x = (x * 65535) // display_width
+        windows_y = (y * 65535) // display_height
+
+        return windows_x, windows_y
+
+    @staticmethod
+    def _interpolate_mouse_movement(start_windows_coordinates, end_windows_coordinates, steps=20):
+        x_coordinates = [start_windows_coordinates[0], end_windows_coordinates[0]]
+        y_coordinates = [start_windows_coordinates[1], end_windows_coordinates[1]]
+
+        if x_coordinates[0] == x_coordinates[1]:
+            x_coordinates[1] += 1
+
+        if y_coordinates[0] == y_coordinates[1]:
+            y_coordinates[1] += 1
+
+        interpolation_func = scipy.interpolate.interp1d(x_coordinates, y_coordinates)
+
+        intermediate_x_coordinates = np.linspace(start_windows_coordinates[0], end_windows_coordinates[0], steps + 1)[1:]
+        coordinates = list(map(lambda x: (int(round(x)), int(interpolation_func(x))), intermediate_x_coordinates))
+
+        return coordinates

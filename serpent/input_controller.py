@@ -2,9 +2,9 @@ import enum
 
 
 class MouseButton(enum.Enum):
-    LEFT = 0
-    MIDDLE = 1
-    RIGHT = 2
+    LEFT = "LEFT"
+    MIDDLE = "MIDDLE"
+    RIGHT = "RIGHT"
 
 
 class KeyboardKey(enum.Enum):
@@ -286,9 +286,21 @@ class InputController:
         self.backend.type_string(string, duration=duration, **kwargs)
 
     # Mouse Actions
-    def click(self, button=MouseButton.LEFT, y=None, x=None, duration=0.25, **kwargs):
+    def move(self, x=None, y=None, duration=0.25, absolute=True, **kwargs):
         self._is_game_launched_check()
-        self.backend.click(button=button, y=y, x=x, duration=duration, **kwargs)
+        self.backend.move(x=x, y=y, duration=duration, absolute=absolute, **kwargs)
+
+    def click_down(self, button=MouseButton.LEFT, **kwargs):
+        self._is_game_launched_check()
+        self.backend.click_down(button=button, **kwargs)
+
+    def click_up(self, button=MouseButton.LEFT, **kwargs):
+        self._is_game_launched_check()
+        self.backend.click_up(button=button, **kwargs)
+
+    def click(self, button=MouseButton.LEFT, duration=0.25, **kwargs):
+        self._is_game_launched_check()
+        self.backend.click(button=button, duration=duration, **kwargs)
 
     def click_screen_region(self, button=MouseButton.LEFT, screen_region=None, **kwargs):
         self._is_game_launched_check()
@@ -310,9 +322,9 @@ class InputController:
         self._is_game_launched_check()
         self.backend.drag_screen_region_to_screen_region(button=button, start_screen_region=start_screen_region, end_screen_region=end_screen_region, duration=duration, **kwargs)
 
-    def scroll(self, y=None, x=None, clicks=1, direction="DOWN", **kwargs):
+    def scroll(self, x=None, y=None, clicks=1, direction="DOWN", **kwargs):
         self._is_game_launched_check()
-        self.backend.scroll(y=y, x=x, clicks=clicks, direction=direction, **kwargs)
+        self.backend.scroll(x=x, y=y, clicks=clicks, direction=direction, **kwargs)
 
     def _initialize_backend(self, backend, **kwargs):
         if backend == InputControllers.PYAUTOGUI:
