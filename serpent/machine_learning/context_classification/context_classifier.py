@@ -69,7 +69,7 @@ class ContextClassifier:
         ]
 
     @classmethod
-    def executable_train(cls, epochs=3, classifier="CNNInceptionV3ContextClassifier"):
+    def executable_train(cls, epochs=3, autosave=False, classifier="CNNInceptionV3ContextClassifier"):
         context_paths = list()
 
         for root, directories, files in os.walk("datasets/collect_frames_for_context".replace("/", os.sep)):
@@ -103,7 +103,7 @@ class ContextClassifier:
 
             context_classifier = context_classifier_class(input_shape=frame.shape)
 
-            context_classifier.train(epochs=epochs)
+            context_classifier.train(epochs=epochs, autosave=autosave)
             context_classifier.validate()
 
             context_classifier.save_classifier("datasets/context_classifier.model")

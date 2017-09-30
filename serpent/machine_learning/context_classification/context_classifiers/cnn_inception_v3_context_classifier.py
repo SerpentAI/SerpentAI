@@ -4,6 +4,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.applications.inception_v3 import InceptionV3, preprocess_input
 from keras.layers import Dense, GlobalAveragePooling2D
 from keras.models import Model, load_model
+from keras.callbacks import ModelCheckpoint
 
 import skimage.transform
 
@@ -21,7 +22,7 @@ class CNNInceptionV3ContextClassifier(ContextClassifier):
         self.training_generator = None
         self.validation_generator = None
 
-    def train(self, epochs=3):
+    def train(self, epochs=3, autosave=False):
         if self.training_generator is None or self.validation_generator is None:
             self.prepare_generators()
 
@@ -47,13 +48,27 @@ class CNNInceptionV3ContextClassifier(ContextClassifier):
             metrics=["accuracy"]
         )
 
+        callbacks = []
+
+        if autosave:
+            callbacks.append(ModelCheckpoint(
+                "datasets/context_classifier_{epoch:02d}-{val_loss:.2f}.model",
+                monitor='val_loss',
+                verbose=0,
+                save_best_only=False,
+                save_weights_only=False,
+                mode='auto',
+                period=1
+            ))
+
         self.classifier.fit_generator(
             self.training_generator,
             samples_per_epoch=self.training_sample_count,
             nb_epoch=epochs,
             validation_data=self.validation_generator,
             nb_val_samples=self.validation_sample_count,
-            class_weight="auto"
+            class_weight="auto",
+            callbacks=callbacks
         )
 
     def validate(self):

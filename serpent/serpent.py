@@ -420,9 +420,9 @@ def prepare_game_agent_plugin(game_agent_name):
         f.write(contents)
 
 
-def train_context(epochs=3):
+def train_context(epochs=3, autosave="f"):
     from serpent.machine_learning.context_classification.context_classifier import ContextClassifier
-    ContextClassifier.executable_train(epochs=int(epochs))
+    ContextClassifier.executable_train(epochs=int(epochs), autosave=(autosave.lower() in ["y", "yes", "true", "t", "1"]))
 
 command_function_mapping = {
     "setup": setup,
