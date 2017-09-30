@@ -1,4 +1,4 @@
-from serpent.input_controller import InputController, MouseButton
+from serpent.input_controller import InputController, MouseButton, KeyboardKey
 
 from serpent.sprite_locator import SpriteLocator
 
@@ -7,6 +7,125 @@ import serpent.ocr
 import pyautogui
 
 import time
+
+
+keyboard_key_mapping = {
+    KeyboardKey.KEY_ESCAPE.name: "esc",
+    KeyboardKey.KEY_F1.name: "f1",
+    KeyboardKey.KEY_F2.name: "f2",
+    KeyboardKey.KEY_F3.name: "f3",
+    KeyboardKey.KEY_F4.name: "f4",
+    KeyboardKey.KEY_F5.name: "f5",
+    KeyboardKey.KEY_F6.name: "f6",
+    KeyboardKey.KEY_F7.name: "f7",
+    KeyboardKey.KEY_F8.name: "f8",
+    KeyboardKey.KEY_F9.name: "f9",
+    KeyboardKey.KEY_F10.name: "f10",
+    KeyboardKey.KEY_F11.name: "f11",
+    KeyboardKey.KEY_F12.name: "f12",
+    KeyboardKey.KEY_PRINT_SCREEN.name: "printscreen",
+    KeyboardKey.KEY_SCROLL_LOCK.name: "scrolllock",
+    KeyboardKey.KEY_PAUSE.name: "pause",
+    KeyboardKey.KEY_GRAVE.name: "`",
+    KeyboardKey.KEY_BACKTICK.name: "`",
+    KeyboardKey.KEY_1.name: "1",
+    KeyboardKey.KEY_2.name: "2",
+    KeyboardKey.KEY_3.name: "3",
+    KeyboardKey.KEY_4.name: "4",
+    KeyboardKey.KEY_5.name: "5",
+    KeyboardKey.KEY_6.name: "6",
+    KeyboardKey.KEY_7.name: "7",
+    KeyboardKey.KEY_8.name: "8",
+    KeyboardKey.KEY_9.name: "9",
+    KeyboardKey.KEY_0.name: "0",
+    KeyboardKey.KEY_MINUS.name: "-",
+    KeyboardKey.KEY_DASH.name: "-",
+    KeyboardKey.KEY_EQUALS.name: "=",
+    KeyboardKey.KEY_BACKSPACE.name: "backspace",
+    KeyboardKey.KEY_INSERT.name: "insert",
+    KeyboardKey.KEY_HOME.name: "home",
+    KeyboardKey.KEY_PAGE_UP.name: "pageup",
+    KeyboardKey.KEY_NUMLOCK.name: "numlock",
+    KeyboardKey.KEY_NUMPAD_DIVIDE.name: "divide",
+    KeyboardKey.KEY_NUMPAD_SLASH.name: "divide",
+    KeyboardKey.KEY_NUMPAD_MULTIPLY.name: "multiply",
+    KeyboardKey.KEY_NUMPAD_STAR.name: "multiply",
+    KeyboardKey.KEY_NUMPAD_SUBTRACT.name: "subtract",
+    KeyboardKey.KEY_NUMPAD_DASH.name: "subtract",
+    KeyboardKey.KEY_TAB.name: "tab",
+    KeyboardKey.KEY_Q.name: "q",
+    KeyboardKey.KEY_W.name: "w",
+    KeyboardKey.KEY_E.name: "e",
+    KeyboardKey.KEY_R.name: "r",
+    KeyboardKey.KEY_T.name: "t",
+    KeyboardKey.KEY_Y.name: "y",
+    KeyboardKey.KEY_U.name: "u",
+    KeyboardKey.KEY_I.name: "i",
+    KeyboardKey.KEY_O.name: "o",
+    KeyboardKey.KEY_P.name: "p",
+    KeyboardKey.KEY_LEFT_BRACKET.name: "[",
+    KeyboardKey.KEY_RIGHT_BRACKET.name: "]",
+    KeyboardKey.KEY_BACKSLASH.name: "\\",
+    KeyboardKey.KEY_DELETE.name: "delete",
+    KeyboardKey.KEY_END.name: "end",
+    KeyboardKey.KEY_PAGE_DOWN.name: "pagedown",
+    KeyboardKey.KEY_NUMPAD_7.name: "num7",
+    KeyboardKey.KEY_NUMPAD_8.name: "num8",
+    KeyboardKey.KEY_NUMPAD_9.name: "num9",
+    KeyboardKey.KEY_NUMPAD_ADD.name: "add",
+    KeyboardKey.KEY_NUMPAD_PLUS.name: "add",
+    KeyboardKey.KEY_CAPSLOCK.name: "capslock",
+    KeyboardKey.KEY_A.name: "a",
+    KeyboardKey.KEY_S.name: "s",
+    KeyboardKey.KEY_D.name: "d",
+    KeyboardKey.KEY_F.name: "f",
+    KeyboardKey.KEY_G.name: "g",
+    KeyboardKey.KEY_H.name: "h",
+    KeyboardKey.KEY_J.name: "j",
+    KeyboardKey.KEY_K.name: "k",
+    KeyboardKey.KEY_L.name: "l",
+    KeyboardKey.KEY_SEMICOLON.name: ';',
+    KeyboardKey.KEY_APOSTROPHE.name: "'",
+    KeyboardKey.KEY_RETURN.name: "enter",
+    KeyboardKey.KEY_ENTER.name: "enter",
+    KeyboardKey.KEY_NUMPAD_4.name: "num4",
+    KeyboardKey.KEY_NUMPAD_5.name: "num5",
+    KeyboardKey.KEY_NUMPAD_6.name: "num6",
+    KeyboardKey.KEY_LEFT_SHIFT.name: "shiftleft",
+    KeyboardKey.KEY_Z.name: "z",
+    KeyboardKey.KEY_X.name: "x",
+    KeyboardKey.KEY_C.name: "c",
+    KeyboardKey.KEY_V.name: "v",
+    KeyboardKey.KEY_B.name: "b",
+    KeyboardKey.KEY_N.name: "n",
+    KeyboardKey.KEY_M.name: "m",
+    KeyboardKey.KEY_COMMA.name: ",",
+    KeyboardKey.KEY_PERIOD.name: ".",
+    KeyboardKey.KEY_SLASH.name: "/",
+    KeyboardKey.KEY_RIGHT_SHIFT.name: "shiftright",
+    KeyboardKey.KEY_UP.name: "up",
+    KeyboardKey.KEY_NUMPAD_1.name: "num1",
+    KeyboardKey.KEY_NUMPAD_2.name: "num2",
+    KeyboardKey.KEY_NUMPAD_3.name: "num3",
+    KeyboardKey.KEY_NUMPAD_RETURN.name: "separator",
+    KeyboardKey.KEY_NUMPAD_ENTER.name: "separator",
+    KeyboardKey.KEY_LEFT_CTRL.name: "ctrlleft",
+    KeyboardKey.KEY_LEFT_SUPER.name: "winleft",
+    KeyboardKey.KEY_LEFT_WINDOWS.name: "winleft",
+    KeyboardKey.KEY_LEFT_ALT.name: "altleft",
+    KeyboardKey.KEY_SPACE.name: "space",
+    KeyboardKey.KEY_RIGHT_ALT.name: "altright",
+    KeyboardKey.KEY_RIGHT_SUPER.name: "winright",
+    KeyboardKey.KEY_RIGHT_WINDOWS.name: "winright",
+    KeyboardKey.KEY_APP_MENU.name: "apps",
+    KeyboardKey.KEY_RIGHT_CTRL.name: "ctrlright",
+    KeyboardKey.KEY_LEFT.name: "left",
+    KeyboardKey.KEY_DOWN.name: "down",
+    KeyboardKey.KEY_RIGHT.name: "right",
+    KeyboardKey.KEY_NUMPAD_0.name: "num0",
+    KeyboardKey.KEY_NUMPAD_DECIMAL.name: "decimal",
+    KeyboardKey.KEY_NUMPAD_PERIOD.name: "decimal"
+}
 
 
 class PyAutoGUIInputController(InputController):
@@ -42,20 +161,20 @@ class PyAutoGUIInputController(InputController):
     def tap_keys(self, keys, duration=0.05, **kwargs):
         if self.game_is_focused:
             for key in keys:
-                pyautogui.keyDown(key)
+                self.press_key(key)
 
             time.sleep(duration)
 
             for key in keys:
-                pyautogui.keyUp(key)
+                self.release_key(key)
 
     def tap_key(self, key, duration=0.05, **kwargs):
         if self.game_is_focused:
-            pyautogui.keyDown(key)
+            self.press_key(key)
 
             time.sleep(duration)
 
-            pyautogui.keyUp(key)
+            self.release_key(key)
 
     def press_keys(self, keys, **kwargs):
         for key in keys:
@@ -63,17 +182,15 @@ class PyAutoGUIInputController(InputController):
 
     def press_key(self, key, **kwargs):
         if self.game_is_focused:
-            pyautogui.keyDown(key)
+            pyautogui.keyDown(keyboard_key_mapping[key.name])
 
-    def release_keys(self, **kwargs):
-        for key in self.previous_key_collection_set:
+    def release_keys(self, keys, **kwargs):
+        for key in keys:
             self.release_key(key)
-
-        self.previous_key_collection_set = set()
 
     def release_key(self, key, **kwargs):
         if self.game_is_focused:
-            pyautogui.keyUp(key)
+            pyautogui.keyUp(keyboard_key_mapping[key.name])
 
     def type_string(self, string, duration=0.05, **kwargs):
         if self.game_is_focused:
