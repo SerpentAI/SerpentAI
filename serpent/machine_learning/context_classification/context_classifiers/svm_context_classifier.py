@@ -27,7 +27,7 @@ class SVMContextClassifier(ContextClassifier):
         super().__init__()
         self.input_shape = input_shape
 
-    def train(self, epochs=3, preprocessing_func=None):
+    def train(self, epochs=3, preprocessing_func=None, autosave=False):
         data = list()
         targets = list()
 
