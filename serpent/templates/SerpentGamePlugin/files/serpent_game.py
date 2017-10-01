@@ -4,6 +4,7 @@ from .api.api import MyGameAPI
 
 from serpent.utilities import Singleton
 
+from serpent.input_controller import InputControllers
 from serpent.game_launchers.web_browser_game_launcher import WebBrowser
 
 
@@ -11,6 +12,8 @@ class SerpentGame(Game, metaclass=Singleton):
 
     def __init__(self, **kwargs):
         kwargs["platform"] = "PLATFORM"
+
+        kwargs["input_controller"] = InputControllers.PYAUTOGUI
 
         kwargs["window_name"] = "WINDOW_NAME"
 
