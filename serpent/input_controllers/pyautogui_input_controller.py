@@ -129,8 +129,8 @@ keyboard_key_mapping = {
 
 mouse_button_mapping = {
     MouseButton.LEFT.name: "left",
-    MouseButton.MIDDLE.name: "left",
-    MouseButton.RIGHT.name: "left",
+    MouseButton.MIDDLE.name: "middle",
+    MouseButton.RIGHT.name: "right",
 }
 
 
