@@ -54,6 +54,10 @@ def display_serpent_logo():
     """)
 
 
+def is_boolean(s):
+    return s.lower() in ["y", "yes", "true", "t", "1"]
+
+
 class Singleton(type):
     _instances = {}
 
