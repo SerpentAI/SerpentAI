@@ -22,8 +22,8 @@ class CNNInceptionV3ContextClassifier(ContextClassifier):
         self.training_generator = None
         self.validation_generator = None
 
-    def train(self, epochs=3, autosave=False):
-        if self.training_generator is None or self.validation_generator is None:
+    def train(self, epochs=3, autosave=False, validate=True):
+        if validate and (self.training_generator is None or self.validation_generator is None):
             self.prepare_generators()
 
         base_model = InceptionV3(
