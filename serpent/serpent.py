@@ -426,7 +426,7 @@ def train_context(epochs=3, autosave="False"):
 
 
 def is_true(s):
-    return s or s == "True"
+    return s is True or s == "True"
 
 
 command_function_mapping = {
