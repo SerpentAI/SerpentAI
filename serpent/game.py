@@ -48,7 +48,8 @@ class Game(offshoot.Pluggable):
 
         self.platform = kwargs.get("platform")
 
-        self.input_controller = kwargs.get("input_controller") or InputControllers.PYAUTOGUI
+        default_input_controller_backend = InputControllers.NATIVE_WIN32 if sys.platform == "win32" else InputControllers.PYAUTOGUI
+        self.input_controller = kwargs.get("input_controller") or default_input_controller_backend
 
         self.window_id = None
         self.window_name = kwargs.get("window_name")

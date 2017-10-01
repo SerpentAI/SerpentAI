@@ -273,9 +273,9 @@ class InputController:
         self._is_game_launched_check()
         self.backend.press_key(key, **kwargs)
 
-    def release_keys(self, **kwargs):
+    def release_keys(self, keys, **kwargs):
         self._is_game_launched_check()
-        self.backend.release_keys(**kwargs)
+        self.backend.release_keys(keys, **kwargs)
 
     def release_key(self, key, **kwargs):
         self._is_game_launched_check()

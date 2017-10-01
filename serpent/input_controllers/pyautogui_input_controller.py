@@ -217,7 +217,9 @@ class PyAutoGUIInputController(InputController):
 
     def click(self, button=MouseButton.LEFT, duration=0.25, **kwargs):
         if self.game_is_focused:
-            pyautogui.click(button=mouse_button_mapping[button.name])
+            self.click_down(button=button)
+            time.sleep(duration)
+            self.click_up(button=button)
 
     def click_screen_region(self, button=MouseButton.LEFT, screen_region=None, **kwargs):
         if self.game_is_focused:
