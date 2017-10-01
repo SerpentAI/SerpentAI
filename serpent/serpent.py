@@ -8,7 +8,7 @@ import time
 
 import offshoot
 
-from serpent.utilities import clear_terminal, display_serpent_logo, is_boolean
+from serpent.utilities import clear_terminal, display_serpent_logo, is_true
 
 from serpent.window_controller import WindowController
 
@@ -422,7 +422,7 @@ def prepare_game_agent_plugin(game_agent_name):
 
 def train_context(epochs=3, autosave="False"):
     from serpent.machine_learning.context_classification.context_classifier import ContextClassifier
-    ContextClassifier.executable_train(epochs=int(epochs), autosave=(autosave == "True"))
+    ContextClassifier.executable_train(epochs=int(epochs), autosave=is_true(autosave))
 
 command_function_mapping = {
     "setup": setup,
