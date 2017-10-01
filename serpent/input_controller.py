@@ -2,13 +2,240 @@ import enum
 
 
 class MouseButton(enum.Enum):
-    LEFT = 0
-    MIDDLE = 1
-    RIGHT = 2
+    LEFT = "LEFT"
+    MIDDLE = "MIDDLE"
+    RIGHT = "RIGHT"
+
+
+class KeyboardKey(enum.Enum):
+    """Supporting the 104 de facto standard PC keyboard keys"""
+
+    KEY_ESCAPE = "KEY_ESCAPE"
+    KEY_F1 = "KEY_F1"
+    KEY_F2 = "KEY_F2"
+    KEY_F3 = "KEY_F3"
+    KEY_F4 = "KEY_F4"
+    KEY_F5 = "KEY_F5"
+    KEY_F6 = "KEY_F6"
+    KEY_F7 = "KEY_F7"
+    KEY_F8 = "KEY_F8"
+    KEY_F9 = "KEY_F9"
+    KEY_F10 = "KEY_F10"
+    KEY_F11 = "KEY_F11"
+    KEY_F12 = "KEY_F12"
+    KEY_PRINT_SCREEN = "KEY_PRINT_SCREEN"
+    KEY_SCROLL_LOCK = "KEY_SCROLL_LOCK"
+    KEY_PAUSE = "KEY_PAUSE"
+
+    KEY_GRAVE = "KEY_GRAVE"
+    KEY_BACKTICK = KEY_GRAVE
+    KEY_1 = "KEY_1"
+    KEY_2 = "KEY_2"
+    KEY_3 = "KEY_3"
+    KEY_4 = "KEY_4"
+    KEY_5 = "KEY_5"
+    KEY_6 = "KEY_6"
+    KEY_7 = "KEY_7"
+    KEY_8 = "KEY_8"
+    KEY_9 = "KEY_9"
+    KEY_0 = "KEY_0"
+    KEY_MINUS = "KEY_MINUS"
+    KEY_DASH = KEY_MINUS
+    KEY_EQUALS = "KEY_EQUALS"
+    KEY_BACKSPACE = "KEY_BACKSPACE"
+    KEY_INSERT = "KEY_INSERT"
+    KEY_HOME = "KEY_HOME"
+    KEY_PAGE_UP = "KEY_PAGE_UP"
+    KEY_NUMLOCK = "KEY_NUMLOCK"
+    KEY_NUMPAD_DIVIDE = "KEY_NUMPAD_DIVIDE"
+    KEY_NUMPAD_SLASH = KEY_NUMPAD_DIVIDE
+    KEY_NUMPAD_MULTIPLY = "KEY_NUMPAD_MULTIPLY"
+    KEY_NUMPAD_STAR = KEY_NUMPAD_MULTIPLY
+    KEY_NUMPAD_SUBTRACT = "KEY_NUMPAD_SUBTRACT"
+    KEY_NUMPAD_DASH = KEY_NUMPAD_SUBTRACT
+
+    KEY_TAB = "KEY_TAB"
+    KEY_Q = "KEY_Q"
+    KEY_W = "KEY_W"
+    KEY_E = "KEY_E"
+    KEY_R = "KEY_R"
+    KEY_T = "KEY_T"
+    KEY_Y = "KEY_Y"
+    KEY_U = "KEY_U"
+    KEY_I = "KEY_I"
+    KEY_O = "KEY_O"
+    KEY_P = "KEY_P"
+    KEY_LEFT_BRACKET = "KEY_LEFT_BRACKET"
+    KEY_RIGHT_BRACKET = "KEY_RIGHT_BRACKET"
+    KEY_BACKSLASH = "KEY_BACKSLASH"
+    KEY_DELETE = "KEY_DELETE"
+    KEY_END = "KEY_END"
+    KEY_PAGE_DOWN = "KEY_PAGE_DOWN"
+    KEY_NUMPAD_7 = "KEY_NUMPAD_7"
+    KEY_NUMPAD_8 = "KEY_NUMPAD_8"
+    KEY_NUMPAD_9 = "KEY_NUMPAD_9"
+    KEY_NUMPAD_ADD = "KEY_NUMPAD_ADD"
+    KEY_NUMPAD_PLUS = KEY_NUMPAD_ADD
+
+    KEY_CAPSLOCK = "KEY_CAPSLOCK"
+    KEY_A = "KEY_A"
+    KEY_S = "KEY_S"
+    KEY_D = "KEY_D"
+    KEY_F = "KEY_F"
+    KEY_G = "KEY_G"
+    KEY_H = "KEY_H"
+    KEY_J = "KEY_J"
+    KEY_K = "KEY_K"
+    KEY_L = "KEY_L"
+    KEY_SEMICOLON = "KEY_SEMICOLON"
+    KEY_APOSTROPHE = "KEY_APOSTROPHE"
+    KEY_RETURN = "KEY_RETURN"
+    KEY_ENTER = KEY_RETURN
+    KEY_NUMPAD_4 = "KEY_NUMPAD_4"
+    KEY_NUMPAD_5 = "KEY_NUMPAD_5"
+    KEY_NUMPAD_6 = "KEY_NUMPAD_6"
+
+    KEY_LEFT_SHIFT = "KEY_LEFT_SHIFT"
+    KEY_Z = "KEY_Z"
+    KEY_X = "KEY_X"
+    KEY_C = "KEY_C"
+    KEY_V = "KEY_V"
+    KEY_B = "KEY_B"
+    KEY_N = "KEY_N"
+    KEY_M = "KEY_M"
+    KEY_COMMA = "KEY_COMMA"
+    KEY_PERIOD = "KEY_PERIOD"
+    KEY_SLASH = "KEY_SLASH"
+    KEY_RIGHT_SHIFT = "KEY_RIGHT_SHIFT"
+    KEY_UP = "KEY_UP"
+    KEY_NUMPAD_1 = "KEY_NUMPAD_1"
+    KEY_NUMPAD_2 = "KEY_NUMPAD_2"
+    KEY_NUMPAD_3 = "KEY_NUMPAD_3"
+    KEY_NUMPAD_RETURN = "KEY_NUMPAD_RETURN"
+    KEY_NUMPAD_ENTER = KEY_NUMPAD_RETURN
+
+    KEY_LEFT_CTRL = "KEY_LEFT_CTRL"
+    KEY_LEFT_SUPER = "KEY_LEFT_SUPER"
+    KEY_LEFT_WINDOWS = KEY_LEFT_SUPER
+    KEY_LEFT_ALT = "KEY_LEFT_ALT"
+    KEY_SPACE = "KEY_SPACE"
+    KEY_RIGHT_ALT = "KEY_RIGHT_ALT"
+    KEY_RIGHT_SUPER = "KEY_RIGHT_SUPER"
+    KEY_RIGHT_WINDOWS = KEY_RIGHT_SUPER
+    KEY_APP_MENU = "KEY_APP_MENU"
+    KEY_RIGHT_CTRL = "KEY_RIGHT_CTRL"
+    KEY_LEFT = "KEY_LEFT"
+    KEY_DOWN = "KEY_DOWN"
+    KEY_RIGHT = "KEY_RIGHT"
+    KEY_NUMPAD_0 = "KEY_NUMPAD_0"
+    KEY_NUMPAD_DECIMAL = "KEY_NUMPAD_DECIMAL"
+    KEY_NUMPAD_PERIOD = KEY_NUMPAD_DECIMAL
+
+
+# US layout - What's to be done for other keyboard layouts?
+character_keyboard_key_mapping = {
+    "`": [KeyboardKey.KEY_GRAVE],
+    "~": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_GRAVE],
+    "1": [KeyboardKey.KEY_1],
+    "!": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_1],
+    "2": [KeyboardKey.KEY_2],
+    "@": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_2],
+    "3": [KeyboardKey.KEY_3],
+    "#": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_3],
+    "4": [KeyboardKey.KEY_4],
+    "$": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_4],
+    "5": [KeyboardKey.KEY_5],
+    "%": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_5],
+    "6": [KeyboardKey.KEY_6],
+    "^": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_6],
+    "7": [KeyboardKey.KEY_7],
+    "&": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_7],
+    "8": [KeyboardKey.KEY_8],
+    "*": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_8],
+    "9": [KeyboardKey.KEY_9],
+    "(": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_9],
+    "0": [KeyboardKey.KEY_0],
+    ")": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_0],
+    "-": [KeyboardKey.KEY_MINUS],
+    "_": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_MINUS],
+    "=": [KeyboardKey.KEY_EQUALS],
+    "+": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_EQUALS],
+    "q": [KeyboardKey.KEY_Q],
+    "Q": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_Q],
+    "w": [KeyboardKey.KEY_W],
+    "W": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_W],
+    "e": [KeyboardKey.KEY_E],
+    "E": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_E],
+    "r": [KeyboardKey.KEY_R],
+    "R": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_R],
+    "t": [KeyboardKey.KEY_T],
+    "T": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_T],
+    "y": [KeyboardKey.KEY_Y],
+    "Y": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_Y],
+    "u": [KeyboardKey.KEY_U],
+    "U": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_U],
+    "i": [KeyboardKey.KEY_I],
+    "I": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_I],
+    "o": [KeyboardKey.KEY_O],
+    "O": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_O],
+    "p": [KeyboardKey.KEY_P],
+    "P": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_P],
+    "[": [KeyboardKey.KEY_LEFT_BRACKET],
+    "{": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_LEFT_BRACKET],
+    "]": [KeyboardKey.KEY_RIGHT_BRACKET],
+    "}": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_RIGHT_BRACKET],
+    "\n": [KeyboardKey.KEY_RETURN],
+    "a": [KeyboardKey.KEY_A],
+    "A": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_A],
+    "s": [KeyboardKey.KEY_S],
+    "S": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_S],
+    "d": [KeyboardKey.KEY_D],
+    "D": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_D],
+    "f": [KeyboardKey.KEY_F],
+    "F": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_F],
+    "g": [KeyboardKey.KEY_G],
+    "G": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_G],
+    "h": [KeyboardKey.KEY_H],
+    "H": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_H],
+    "j": [KeyboardKey.KEY_J],
+    "J": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_J],
+    "k": [KeyboardKey.KEY_K],
+    "K": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_K],
+    "l": [KeyboardKey.KEY_L],
+    "L": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_L],
+    ";": [KeyboardKey.KEY_SEMICOLON],
+    ":": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_SEMICOLON],
+    "'": [KeyboardKey.KEY_APOSTROPHE],
+    '"': [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_APOSTROPHE],
+    "z": [KeyboardKey.KEY_Z],
+    "Z": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_Z],
+    "x": [KeyboardKey.KEY_X],
+    "X": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_X],
+    "c": [KeyboardKey.KEY_C],
+    "C": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_C],
+    "v": [KeyboardKey.KEY_V],
+    "V": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_V],
+    "b": [KeyboardKey.KEY_B],
+    "B": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_B],
+    "n": [KeyboardKey.KEY_N],
+    "N": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_N],
+    "m": [KeyboardKey.KEY_M],
+    "M": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_M],
+    ",": [KeyboardKey.KEY_COMMA],
+    "<": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_COMMA],
+    ".": [KeyboardKey.KEY_PERIOD],
+    ">": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_PERIOD],
+    "/": [KeyboardKey.KEY_SLASH],
+    "?": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_SLASH],
+    "\\": [KeyboardKey.KEY_BACKSLASH],
+    "|": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_BACKSLASH],
+    " ": [KeyboardKey.KEY_SPACE]
+}
 
 
 class InputControllers(enum.Enum):
     PYAUTOGUI = 0
+    NATIVE_WIN32 = 1
 
 
 class InputControllerError(BaseException):
@@ -59,9 +286,21 @@ class InputController:
         self.backend.type_string(string, duration=duration, **kwargs)
 
     # Mouse Actions
-    def click(self, button=MouseButton.LEFT, y=None, x=None, duration=0.25, **kwargs):
+    def move(self, x=None, y=None, duration=0.25, absolute=True, **kwargs):
         self._is_game_launched_check()
-        self.backend.click(button=button, y=y, x=x, duration=duration, **kwargs)
+        self.backend.move(x=x, y=y, duration=duration, absolute=absolute, **kwargs)
+
+    def click_down(self, button=MouseButton.LEFT, **kwargs):
+        self._is_game_launched_check()
+        self.backend.click_down(button=button, **kwargs)
+
+    def click_up(self, button=MouseButton.LEFT, **kwargs):
+        self._is_game_launched_check()
+        self.backend.click_up(button=button, **kwargs)
+
+    def click(self, button=MouseButton.LEFT, duration=0.25, **kwargs):
+        self._is_game_launched_check()
+        self.backend.click(button=button, duration=duration, **kwargs)
 
     def click_screen_region(self, button=MouseButton.LEFT, screen_region=None, **kwargs):
         self._is_game_launched_check()
@@ -83,14 +322,17 @@ class InputController:
         self._is_game_launched_check()
         self.backend.drag_screen_region_to_screen_region(button=button, start_screen_region=start_screen_region, end_screen_region=end_screen_region, duration=duration, **kwargs)
 
-    def scroll(self, y=None, x=None, clicks=1, direction="DOWN", **kwargs):
+    def scroll(self, x=None, y=None, clicks=1, direction="DOWN", **kwargs):
         self._is_game_launched_check()
-        self.backend.scroll(y=y, x=x, clicks=clicks, direction=direction, **kwargs)
+        self.backend.scroll(x=x, y=y, clicks=clicks, direction=direction, **kwargs)
 
     def _initialize_backend(self, backend, **kwargs):
         if backend == InputControllers.PYAUTOGUI:
             from serpent.input_controllers.pyautogui_input_controller import PyAutoGUIInputController
             return PyAutoGUIInputController(game=self.game, **kwargs)
+        elif backend == InputControllers.NATIVE_WIN32:
+            from serpent.input_controllers.native_win32_input_controller import NativeWin32InputController
+            return NativeWin32InputController(game=self.game, **kwargs)
         else:
             raise InputControllerError("The specified backend is invalid!")
 
