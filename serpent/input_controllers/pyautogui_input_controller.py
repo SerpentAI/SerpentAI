@@ -127,17 +127,17 @@ keyboard_key_mapping = {
     KeyboardKey.KEY_NUMPAD_PERIOD.name: "decimal"
 }
 
+mouse_button_mapping = {
+    MouseButton.LEFT.name: "left",
+    MouseButton.MIDDLE.name: "left",
+    MouseButton.RIGHT.name: "left",
+}
+
 
 class PyAutoGUIInputController(InputController):
 
     def __init__(self, game=None, **kwargs):
         self.game = game
-
-        self.mouse_buttons = {
-            MouseButton.LEFT.name: "left",
-            MouseButton.MIDDLE.name: "middle",
-            MouseButton.RIGHT.name: "right"
-        }
 
         self.previous_key_collection_set = set()
 
@@ -198,15 +198,26 @@ class PyAutoGUIInputController(InputController):
 
     # Mouse Actions
     def move(self, x=None, y=None, duration=0.25, absolute=True, **kwargs):
-        pass
-
-    def click(self, button=MouseButton.LEFT, y=None, x=None, duration=0.25, **kwargs):
         if self.game_is_focused:
             x += self.game.window_geometry["x_offset"]
             y += self.game.window_geometry["y_offset"]
 
-            pyautogui.moveTo(x, y, duration=duration)
-            pyautogui.click(button=self.mouse_buttons.get(button.name, "left"))
+            if absolute:
+                pyautogui.moveTo(x=x, y=y, duration=duration)
+            else:
+                pyautogui.moveRel(xOffset=x, yOffset=y, duration=duration)
+
+    def click_down(self, button=MouseButton.LEFT, **kwargs):
+        if self.game_is_focused:
+            pyautogui.mouseDown(button=mouse_button_mapping[button.name])
+
+    def click_up(self, button=MouseButton.LEFT, **kwargs):
+        if self.game_is_focused:
+            pyautogui.mouseUp(button=mouse_button_mapping[button.name])
+
+    def click(self, button=MouseButton.LEFT, duration=0.25, **kwargs):
+        if self.game_is_focused:
+            pyautogui.click(button=mouse_button_mapping[button.name])
 
     def click_screen_region(self, button=MouseButton.LEFT, screen_region=None, **kwargs):
         if self.game_is_focused:
@@ -215,7 +226,8 @@ class PyAutoGUIInputController(InputController):
             x = (screen_region_coordinates[1] + screen_region_coordinates[3]) // 2
             y = (screen_region_coordinates[0] + screen_region_coordinates[2]) // 2
 
-            self.click(button=button, y=y, x=x)
+            self.move(x=x, y=y)
+            self.click(button=button)
 
     def click_sprite(self, button=MouseButton.LEFT, sprite=None, game_frame=None, **kwargs):
         if self.game_is_focused:
@@ -227,7 +239,8 @@ class PyAutoGUIInputController(InputController):
             x = (sprite_location[1] + sprite_location[3]) // 2
             y = (sprite_location[0] + sprite_location[2]) // 2
 
-            self.click(button=button, y=y, x=x)
+            self.move(x=x, y=y)
+            self.click(button=button)
 
             return True
 
@@ -246,21 +259,19 @@ class PyAutoGUIInputController(InputController):
                 x = (string_location[1] + string_location[3]) // 2
                 y = (string_location[0] + string_location[2]) // 2
 
-                self.click(button=button, y=y, x=x)
+                self.move(x=x, y=y)
+                self.click(button=button)
 
                 return True
 
             return False
 
-    def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None, duration=1, **kwargs):
+    def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None, duration=0.25, **kwargs):
         if self.game_is_focused:
-            x0 += self.game.window_geometry["x_offset"]
-            x1 += self.game.window_geometry["x_offset"]
-            y0 += self.game.window_geometry["y_offset"]
-            y1 += self.game.window_geometry["y_offset"]
-
-            pyautogui.moveTo(x0, y0, duration=0.2)
-            pyautogui.dragTo(x1, y1, button=button, duration=duration)
+            self.move(x=x0, y=y0)
+            self.click_down(button=button)
+            self.move(x=x1, y=y1, duration=duration)
+            self.click_up(button=button)
 
     def drag_screen_region_to_screen_region(self, button=MouseButton.LEFT, start_screen_region=None, end_screen_region=None, duration=1, **kwargs):
         if self.game_is_focused:
@@ -276,11 +287,7 @@ class PyAutoGUIInputController(InputController):
                 duration=duration
             )
 
-    def scroll(self, y=None, x=None, clicks=1, direction="DOWN", **kwargs):
+    def scroll(self, clicks=1, direction="DOWN", **kwargs):
         if self.game_is_focused:
             clicks = clicks * (1 if direction == "DOWN" else -1)
-
-            x += self.game.window_geometry["x_offset"]
-            y += self.game.window_geometry["y_offset"]
-
-            pyautogui.scroll(clicks, x=x, y=y)
+            pyautogui.scroll(clicks)

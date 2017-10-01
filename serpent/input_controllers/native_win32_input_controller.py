@@ -351,11 +351,11 @@ class NativeWin32InputController(InputController):
 
             return False
 
-    def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None, duration=1, **kwargs):
+    def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None, duration=0.25, **kwargs):
         if self.game_is_focused:
-            self.move(x0, y0)
+            self.move(x=x0, y=y0)
             self.click_down(button=button)
-            self.move(x1, y1, duration=duration)
+            self.move(x=x1, y=y1, duration=duration)
             self.click_up(button=button)
 
     def drag_screen_region_to_screen_region(self, button=MouseButton.LEFT, start_screen_region=None, end_screen_region=None, duration=1, **kwargs):
