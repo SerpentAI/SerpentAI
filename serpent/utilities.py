@@ -54,10 +54,6 @@ def display_serpent_logo():
     """)
 
 
-def is_true(s):
-    return s == "True"
-
-
 class Singleton(type):
     _instances = {}
 

@@ -8,15 +8,15 @@ class SpriteLocator:
     def __init__(self, **kwargs):
         pass
 
-    def locate(self, sprite=None, game_frame=None, region=None, global_location=True):
+    def locate(self, sprite=None, game_frame=None, screen_region=None, use_global_location=True):
         """
         Locates the sprite within the defined game frame
 
         Parameters
             sprite: The sprite to find\n
             game_frame: The frame to search within\n
-            region: (optional) region within which to search within the frame\n
-            global_location: (optional) if using a region, whether to return global location or local to region
+            screen_region: (optional) region within which to search within the frame\n
+            use_global_location: (optional) if using a region, whether to return global location or local to region
 
         Returns
             Tuple of location of the sprite
@@ -25,8 +25,8 @@ class SpriteLocator:
         location = None
         frame = game_frame.frame
 
-        if region is not None:
-            frame = np.array(serpent.cv.extract_region_from_image(frame, region), dtype="uint8")
+        if screen_region is not None:
+            frame = serpent.cv.extract_region_from_image(frame, screen_region)
 
         for i in range(len(constellation_of_pixel_images)):
             constellation_of_pixels_item = list(sprite.constellation_of_pixels[i].items())[0]
@@ -35,9 +35,6 @@ class SpriteLocator:
             query_rgb = constellation_of_pixels_item[1]
 
             rgb_coordinates = Sprite.locate_color(query_rgb, image=frame)
-
-            if rgb_coordinates is None:
-                continue
 
             rgb_coordinates = list(map(lambda yx: (yx[0] - query_coordinates[0], yx[1] - query_coordinates[1]), rgb_coordinates))
 
@@ -59,12 +56,12 @@ class SpriteLocator:
                         x + constellation_of_pixel_images[i].shape[1]
                     )
 
-        if location is not None and region is not None and global_location:
+        if location is not None and screen_region is not None and use_global_location:
             location = (
-                location[0] + region[0],
-                location[1] + region[1],
-                location[2] + region[0],
-                location[3] + region[1]
+                location[0] + screen_region[0],
+                location[1] + screen_region[1],
+                location[2] + screen_region[0],
+                location[3] + screen_region[1]
             )
 
         return location
