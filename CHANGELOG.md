@@ -1,3 +1,7 @@
+## 0.1.9b1
+
+* FIX - emptied out __init__.py for serpent.input_controllers (AKA win32api trying to import on Linux)
+
 ## 0.1.8b1
 
 * MAJOR CHANGE - added a KeyboardKey enum containing all valid keys that can be pressed on a standard keyboard; all InputController methods that accept keys now require KeyboardKey items

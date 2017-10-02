@@ -1,2 +1,0 @@
-from serpent.input_controllers.pyautogui_input_controller import PyAutoGUIInputController
-from serpent.input_controllers.native_win32_input_controller import NativeWin32InputController
