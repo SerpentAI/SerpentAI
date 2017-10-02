@@ -420,9 +420,11 @@ def prepare_game_agent_plugin(game_agent_name):
         f.write(contents)
 
 
-def train_context(epochs=3, autosave="False"):
+def train_context(epochs=3, autosave="False", validate=True):
     from serpent.machine_learning.context_classification.context_classifier import ContextClassifier
-    ContextClassifier.executable_train(epochs=int(epochs), autosave=is_true(autosave))
+    if validate not in (True, 'True', False, 'False'):
+        raise ValueError('validate should be True of False')
+    ContextClassifier.executable_train(epochs=int(epochs), autosave=is_true(autosave), validate=is_true(validate))
 
 
 def is_true(s):
