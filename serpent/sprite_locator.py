@@ -1,6 +1,6 @@
 from serpent.sprite import Sprite
+
 import serpent.cv
-import numpy as np
 
 
 class SpriteLocator:
@@ -23,6 +23,7 @@ class SpriteLocator:
         """
         constellation_of_pixel_images = sprite.generate_constellation_of_pixels_images()
         location = None
+
         frame = game_frame.frame
 
         if screen_region is not None:

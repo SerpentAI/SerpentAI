@@ -15,7 +15,7 @@ from serpent.window_controller import WindowController
 # Add the current working directory to sys.path to discover user plugins!
 sys.path.insert(0, os.getcwd())
 
-VERSION = "0.1.7b1"
+VERSION = "0.1.8b1"
 
 valid_commands = [
     "setup",
@@ -420,15 +420,19 @@ def prepare_game_agent_plugin(game_agent_name):
         f.write(contents)
 
 
-def train_context(epochs=3, autosave="False", validate=True):
+def train_context(epochs=3, validate=True, autosave=False):
+    if validate not in [True, "True", False, "False"]:
+        raise ValueError("'validate' should be True or False")
+
+    if autosave not in [True, "True", False, "False"]:
+        raise ValueError("'autosave' should be True or False")
+
     from serpent.machine_learning.context_classification.context_classifier import ContextClassifier
-    if validate not in (True, 'True', False, 'False'):
-        raise ValueError('validate should be True of False')
-    ContextClassifier.executable_train(epochs=int(epochs), autosave=is_true(autosave), validate=is_true(validate))
+    ContextClassifier.executable_train(epochs=int(epochs), validate=argv_is_true(validate), autosave=argv_is_true(autosave))
 
 
-def is_true(s):
-    return s is True or s == "True"
+def argv_is_true(arg):
+    return arg in [True, "True"]
 
 
 command_function_mapping = {

@@ -1,3 +1,13 @@
+## 0.1.8b1
+
+* MAJOR CHANGE - added a KeyboardKey enum containing all valid keys that can be pressed on a standard keyboard; all InputController methods that accept keys now require KeyboardKey items
+* FEATURE - added a fully-compliant native Windows input controller that uses the SendInput DLL function
+* FEATURE - added 'move', 'click_down' & 'click_up' to the InputController protocol; implemented them in PYAUTOGUI & NATIVE_WIN32
+* FEATURE - context classifier validation during training can now be skipped
+* FEATURE - context classifier model checkpoints can now be autosaved
+* FEATURE - locate() from the SpriteLocator can now use screen regions
+* FIX - prevented an empty list to get to a min() call in locate_string
+
 ## 0.1.7b1
 
 * FIX - macOS frame reshape error should be resolved; Including the top bar as part of the capture until someone can a programmatic way to get the inner window size.

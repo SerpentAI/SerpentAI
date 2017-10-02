@@ -112,4 +112,4 @@ class Sprite:
         elif image.shape[2] == 4:
             color_indices = np.where(np.all(image[:, :, :3] == (list(color) + [255]), axis=-1))
 
-        return list(zip(*color_indices)) if len(color_indices[0]) else []
+        return list(zip(*color_indices)) if len(color_indices[0]) else list()
