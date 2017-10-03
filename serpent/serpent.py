@@ -466,6 +466,9 @@ def capture(capture_type, game_name, interval=1, extra=None):
 def visual_debugger(*buckets):
     """
     Start the visual debugger
+
+    Usage:
+        serpent visual_debugger
     """
     from serpent.visual_debugger.visual_debugger_app import VisualDebuggerApp
     VisualDebuggerApp(buckets=buckets or None).run()
