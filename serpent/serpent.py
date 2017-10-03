@@ -434,8 +434,10 @@ def train_context(epochs=3, validate=True, autosave=False):
 def argv_is_true(arg):
     return arg in [True, "True"]
 
+
 def argv_is_bool(arg):
     return arg in [True, "True", False, "False"]
+
 
 command_function_mapping = {
     "setup": setup,
