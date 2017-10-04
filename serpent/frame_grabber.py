@@ -17,13 +17,15 @@ from datetime import datetime
 from serpent.game_frame import GameFrame
 from serpent.game_frame_buffer import GameFrameBuffer
 
+from serpent.frame_transformation_pipeline import FrameTransformationPipeline
+
 
 redis_client = StrictRedis(**config["redis"])
 
 
 class FrameGrabber:
 
-    def __init__(self, width=640, height=480, x_offset=0, y_offset=0, fps=30, buffer_seconds=5):
+    def __init__(self, width=640, height=480, x_offset=0, y_offset=0, fps=30, pipeline_string=None, buffer_seconds=5):
         self.width = width
         self.height = height
 
@@ -36,19 +38,34 @@ class FrameGrabber:
         self.redis_client = redis_client
         self.screen_grabber = mss.mss()
 
+        self.frame_transformation_pipeline = None
+
+        if pipeline_string is not None and isinstance(pipeline_string, str):
+            self.frame_transformation_pipeline = FrameTransformationPipeline(pipeline_string=pipeline_string)
+
         self.is_retina_display = False
         self.is_retina_display = self._perform_retina_display_check()
 
         # Clear any previously stored frames
         self.redis_client.delete(config["frame_grabber"]["redis_key"])
+        self.redis_client.delete(config["frame_grabber"]["redis_key"] + "_PIPELINE")
 
     def start(self):
         while True:
             cycle_start = datetime.utcnow()
+
             frame = self.grab_frame()
+
+            if self.frame_transformation_pipeline is not None:
+                frame_pipeline = self.frame_transformation_pipeline.transform(frame)
+            else:
+                frame_pipeline = frame
 
             self.redis_client.lpush(config["frame_grabber"]["redis_key"], frame.tobytes())
             self.redis_client.ltrim(config["frame_grabber"]["redis_key"], 0, self.frame_buffer_size)
+
+            self.redis_client.lpush(config["frame_grabber"]["redis_key"] + "_PIPELINE", frame_pipeline.tobytes())
+            self.redis_client.ltrim(config["frame_grabber"]["redis_key"] + "_PIPELINE", 0, self.frame_buffer_size)
 
             cycle_end = datetime.utcnow()
             cycle_duration = (cycle_end - cycle_start).microseconds / 1000000
@@ -88,13 +105,15 @@ class FrameGrabber:
 
         return retina_display
 
-
     @classmethod
-    def get_frames(cls, frame_buffer_indices, frame_shape=None):
+    def get_frames(cls, frame_buffer_indices, frame_shape=None, frame_type="FULL"):
         game_frame_buffer = GameFrameBuffer(size=len(frame_buffer_indices))
 
         for i in frame_buffer_indices:
-            frame_bytes = redis_client.lindex(config["frame_grabber"]["redis_key"], i)
+            redis_key = config["frame_grabber"]["redis_key"]
+            redis_key = redis_key + "_PIPELINE" if frame_type == "PIPELINE" else redis_key
+
+            frame_bytes = redis_client.lindex(redis_key, i)
             frame_array = np.fromstring(frame_bytes, dtype="uint8").reshape(frame_shape)
 
             game_frame = GameFrame(frame_array)

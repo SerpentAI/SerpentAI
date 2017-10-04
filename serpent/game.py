@@ -60,6 +60,12 @@ class Game(offshoot.Pluggable):
         self.is_launched = False
 
         self.frame_grabber_process = None
+        self.frame_transformation_pipeline_string = None
+
+        self.frame_width = None
+        self.frame_height = None
+        self.frame_channels = 3
+
         self.game_frame_limiter = GameFrameLimiter(fps=self.config.get("fps", 30))
 
         self.api_class = None
@@ -156,10 +162,16 @@ class Game(offshoot.Pluggable):
 
         self.window_controller.focus_window(self.window_id)
 
+        frame_type = "FULL"
+
+        if frame_handler in ["COLLECT_FRAMES", "COLLECT_FRAME_REGIONS", "COLLECT_FRAMES_FOR_CONTEXT"]:
+            frame_type = "PIPELINE"
+
         while True:
             self.game_frame_limiter.start()
 
-            game_frame = self.grab_latest_frame()
+            game_frame = self.grab_latest_frame(frame_type=frame_type)
+
             try:
                 if self.is_focused:
                     game_agent.on_game_frame(game_frame, frame_handler=frame_handler, **kwargs)
@@ -185,7 +197,7 @@ class Game(offshoot.Pluggable):
         return None
 
     @offshoot.forbidden
-    def start_frame_grabber(self):
+    def start_frame_grabber(self, pipeline_string=None):
         if not self.is_launched:
             raise GameError(f"Game '{self.__class__.__name__}' is not running...")
 
@@ -193,6 +205,12 @@ class Game(offshoot.Pluggable):
             self.stop_frame_grabber()
 
         frame_grabber_command = f"serpent grab_frames {self.window_geometry['width']} {self.window_geometry['height']} {self.window_geometry['x_offset']} {self.window_geometry['y_offset']}"
+
+        pipeline_string = pipeline_string or self.frame_transformation_pipeline_string
+
+        if pipeline_string is not None:
+            frame_grabber_command += f" {pipeline_string}"
+
         self.frame_grabber_process = subprocess.Popen(shlex.split(frame_grabber_command))
 
         signal.signal(signal.SIGINT, self._handle_signal)
@@ -211,15 +229,23 @@ class Game(offshoot.Pluggable):
         atexit.unregister(self._handle_signal)
 
     @offshoot.forbidden
-    def grab_latest_frame(self):
-        game_frame_buffer = FrameGrabber.get_frames(
-            [0],
-            (
+    def grab_latest_frame(self, frame_type="FULL"):
+        if frame_type == "FULL":
+            frame_shape = [
                 self.window_geometry.get("height"),
                 self.window_geometry.get("width"),
                 3
-            )
-        )
+            ]
+        elif frame_type == "PIPELINE":
+            frame_shape = [
+                self.frame_height or self.window_geometry.get("height"),
+                self.frame_width or self.window_geometry.get("width")
+            ]
+
+            if self.frame_channels == 3:
+                frame_shape.append(3)
+
+        game_frame_buffer = FrameGrabber.get_frames([0], frame_shape, frame_type=frame_type)
 
         return game_frame_buffer.frames[0]
 

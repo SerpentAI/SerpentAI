@@ -158,14 +158,15 @@ def setup():
     os.makedirs(os.path.join(os.getcwd(), "datasets/current"), exist_ok=True)
 
 
-def grab_frames(width, height, x_offset, y_offset):
+def grab_frames(width, height, x_offset, y_offset, pipeline_string=None):
     from serpent.frame_grabber import FrameGrabber
 
     frame_grabber = FrameGrabber(
         width=int(width),
         height=int(height),
         x_offset=int(x_offset),
-        y_offset=int(y_offset)
+        y_offset=int(y_offset),
+        pipeline_string=pipeline_string
     )
 
     frame_grabber.start()
