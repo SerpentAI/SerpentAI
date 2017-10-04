@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import shlex
 import time
+import re
 
 import offshoot
 
@@ -37,7 +38,7 @@ def execute():
     if len(sys.argv) == 1:
         executable_help()
     elif len(sys.argv) > 1:
-        if sys.argv[1] == "-h" or sys.argv[1] == "--help":
+        if is_help(sys.argv[1]):
             executable_help()
         else:
             command = sys.argv[1]
@@ -45,7 +46,46 @@ def execute():
             if command not in valid_commands:
                 raise Exception("'%s' is not a valid Serpent command." % command)
 
+            if len(sys.argv) > 2:
+                if is_help(sys.argv[2]):
+                    print(prepare_help(command_function_mapping[command].__doc__))
+                    return
+
             command_function_mapping[command](*sys.argv[2:])
+
+
+def is_help(s):
+    return s == "-h" or s == "--help"
+
+
+def prepare_help(h):
+    if h is None:
+        return ""
+
+    # Remove the first empty newline
+    split = h.split('\n')
+    if split[0] == '':
+        del split[0]
+
+    # Find the shortest leading space
+    shortest = -1
+    for line in split:
+        search = re.search('\S', line)
+        if search is not None:
+            count = search.start()
+            if shortest == -1 or shortest > count:
+                shortest = count
+
+    # Remove that amount of spaces from each line
+    for i in range(len(split)):
+        if len(split[i]) >= shortest:
+            split[i] = split[i][shortest:]
+
+    # Remove the last empty newline
+    if split[-1] == '':
+        del split[-1]
+
+    return '\n'.join(split)
 
 
 def executable_help():
@@ -59,6 +99,13 @@ def executable_help():
 
 
 def setup():
+    """
+    Setup current directory as a new
+    SerpentAI workspace
+
+    Usage:
+        serpent setup
+    """
     clear_terminal()
     display_serpent_logo()
     print("")
@@ -159,6 +206,22 @@ def setup():
 
 
 def grab_frames(width, height, x_offset, y_offset):
+    """
+    Grab frames from the game window
+
+    Usage:
+        serpent grab_frames (width) (height) (x_offset) (y_offset)
+
+    Arguments:
+        width: Width of the captured frame
+        height: Height of the captured frame
+        x_offset: Horizontal offset from the left
+        y_offset: Vertical offset from the top
+
+    Examples:
+        serpent grab_frames 16 16 100 150
+            Will grab 16x16 frames at offsets of 100 from left and 150 from top
+    """
     from serpent.frame_grabber import FrameGrabber
 
     frame_grabber = FrameGrabber(
@@ -172,14 +235,46 @@ def grab_frames(width, height, x_offset, y_offset):
 
 
 def activate(plugin_name):
+    """
+    Activate a plugin
+
+    Usage:
+        serpent activate (plugin_name)
+
+    Arguments:
+        plugin_name: Name of the plugin to activate
+
+    Examples:
+        serpent activate SerpentSuperHexagonGamePlugin
+            Will activate the SerpentSuperHexagonGamePlugin plugin
+    """
     subprocess.call(shlex.split(f"offshoot install {plugin_name}"))
 
 
 def deactivate(plugin_name):
+    """
+    Deactivate a plugin
+
+    Usage:
+        serpent deactivate (plugin_name)
+
+    Arguments:
+        plugin_name: Name of the plugin to deactivate
+
+    Examples:
+        serpent deactivate SerpentSuperHexagonGamePlugin
+            Will deactivate the SerpentSuperHexagonGamePlugin plugin
+    """
     subprocess.call(shlex.split(f"offshoot uninstall {plugin_name}"))
 
 
 def plugins():
+    """
+    List all plugins
+
+    Usage:
+        serpent plugins
+    """
     plugin_names = set()
 
     for root, directories, files in os.walk(offshoot.config['file_paths']['plugins']):
@@ -205,6 +300,19 @@ def plugins():
 
 
 def launch(game_name):
+    """
+    Launch a game
+
+    Usage:
+        serpent launch (game_name)
+
+    Arguments:
+        game_name: The name of the game to launch (without spaces)
+
+    Examples:
+        serpent launch SuperHexagon
+            Will launch the game Super Hexagon
+    """
     game_class_name = f"Serpent{game_name}Game"
 
     game_class_mapping = offshoot.discover("Game")
@@ -217,6 +325,21 @@ def launch(game_name):
 
 
 def play(game_name, game_agent_name, frame_handler=None):
+    """
+    Play a game
+
+    Usage:
+        serpent play (game_name) (game_agent_name) [frame_handler]
+
+    Arguments:
+        game_name: The name of the game to play
+        game_agent_name: The name of the agent to use
+        frame_handler: The frame handler to use
+
+    Examples:
+        serpent play SuperHexagon SerpentSuperHexagonGameAgent
+            Will play the game Super Hexagon with the game agent SerpentSuperHexagonGameAgent
+    """
     game_class_name = f"Serpent{game_name}Game"
 
     game_class_mapping = offshoot.discover("Game")
@@ -238,6 +361,22 @@ def play(game_name, game_agent_name, frame_handler=None):
 
 
 def generate(plugin_type):
+    """
+    Generate plugins for games or game agents
+
+    Usage:
+        serpent generate (plugin_type)
+
+    Arguments:
+        plugin_type: Either 'game' or 'game_agent' depending on the requirements
+
+    Examples:
+        serpent generate game
+            Will start the process to generate a new game plugin
+
+        serpent generate game_agent
+            Will start the process to generate a new game agent plugin
+    """
     if plugin_type == "game":
         generate_game_plugin()
     elif plugin_type == "game_agent":
@@ -247,11 +386,60 @@ def generate(plugin_type):
 
 
 def train(training_type, *args):
+    """
+    Train a context classifier
+
+    Usage:
+        serpent train (training_type) [epochs] [validate] [autosave]
+
+    Arguments:
+        training_type: The type of training. Currently only supports 'context'
+        epochs: Amount of epochs to train for (Default: 3)
+        validate: Whether to run validation after every epoch (Default: True)
+        autosave: Whether to autosave after every epoch (Default: False)
+
+    Examples:
+        serpent train context 10 True True
+            Will train for 10 epochs with validation and autosaving
+    """
     if training_type == "context":
         train_context(*args)
 
 
 def capture(capture_type, game_name, interval=1, extra=None):
+    """
+    Capture frames, screen regions and contexts from a game
+
+    If you unfocus the game while capturing, it will stop capturing and
+    save them to disk.
+
+    To exit, use CTRL+C
+
+    Usage:
+        serpent capture (capture_type) (game_name) [interval] [extra]
+
+    Arguments:
+        capture_type: The type of capture:
+            frame: Capture full frames
+            context: Capture frames for context training
+            region: Capture frames from a region
+
+        game_name: Name of the game to capture from
+        interval: Capture frames every N seconds (Default: 1)
+        extra: Extra arguments:
+            For context: Name of the context to capture for
+            For region: Name of the region to capture
+
+    Examples:
+        serpent capture frame SuperHexagon
+            Capture full frames from Super Hexagon every second
+
+        serpent capture context SuperHexagon 0.5 main_menu
+            Capture context frames from Super Hexagon every 0.5 seconds classified as main_menu
+
+        serpent capture region SuperHexagon 2 LIFE_PORTAL
+            Capture a region 'LIFE_PORTAL' from Super Hexagon every 2 seconds
+    """
     game_class_name = f"Serpent{game_name}Game"
 
     game_class_mapping = offshoot.discover("Game")
@@ -276,11 +464,23 @@ def capture(capture_type, game_name, interval=1, extra=None):
 
 
 def visual_debugger(*buckets):
+    """
+    Start the visual debugger
+
+    Usage:
+        serpent visual_debugger
+    """
     from serpent.visual_debugger.visual_debugger_app import VisualDebuggerApp
     VisualDebuggerApp(buckets=buckets or None).run()
 
 
 def window_name():
+    """
+    Retrieve the true name of a window.
+
+    Usage:
+        serpent window_name
+    """
     clear_terminal()
     print("Open the Game manually.")
 
