@@ -237,6 +237,11 @@ class Game(offshoot.Pluggable):
                     sprite_name = "_".join(file.name.split("/")[-1].split("_")[:-1]).replace(".png", "").upper()
 
                     sprite_image_data = skimage.io.imread(f"{sprite_path}/{file.name}")
+
+                    if len(sprite_image_data.shape) == 2:
+                        height, width = sprite_image_data.shape[0], sprite_image_data.shape[1]
+                        sprite_image_data = np.resize(sprite_image_data, (height, width, 3))
+
                     sprite_image_data = sprite_image_data[..., np.newaxis]
 
                     if sprite_name not in sprites:
