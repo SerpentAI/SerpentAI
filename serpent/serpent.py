@@ -421,18 +421,19 @@ def prepare_game_agent_plugin(game_agent_name):
 
 
 def train_context(epochs=3, validate=True, autosave=False):
-    if validate not in [True, "True", False, "False"]:
-        raise ValueError("'validate' should be True or False")
-
-    if autosave not in [True, "True", False, "False"]:
-        raise ValueError("'autosave' should be True or False")
-
+    validate = argv_to_bool(validate, "validate")
+    autosave = argv_to_bool(autosave, "autosave")
     from serpent.machine_learning.context_classification.context_classifier import ContextClassifier
-    ContextClassifier.executable_train(epochs=int(epochs), validate=argv_is_true(validate), autosave=argv_is_true(autosave))
+    ContextClassifier.executable_train(epochs=int(epochs), validate=validate, autosave=autosave)
 
 
-def argv_is_true(arg):
-    return arg in [True, "True"]
+def argv_to_bool(arg, name):
+    if arg in [True, "True"]:
+        return True
+    elif arg in [False, "False"]:
+        return False
+    else:
+        raise ValueError("'" + name + "' should be True or False")
 
 
 command_function_mapping = {
