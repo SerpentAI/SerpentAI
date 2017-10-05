@@ -1,19 +1,16 @@
-from serpent.input_controller import InputController
 from serpent.machine_learning.reinforcement_learning.replay_memory import ReplayMemory
 from serpent.machine_learning.reinforcement_learning.epsilon_greedy_q_policy import EpsilonGreedyQPolicy
 
 from serpent.visual_debugger.visual_debugger import VisualDebugger
 
-from keras.models import Model, Sequential
-from keras.layers import Dense, Activation, Flatten, Convolution2D, MaxPooling2D, AveragePooling2D, Input, merge
+from keras.models import Model
+from keras.layers import Dense, Flatten, Convolution2D, MaxPooling2D, AveragePooling2D, Input, merge
 from keras.optimizers import Adam, rmsprop
 
 import numpy as np
 
 import random
 import itertools
-
-from termcolor import cprint
 
 
 class DQN:
@@ -103,7 +100,7 @@ class DQN:
         self.frame_stack = frame_stack.reshape((1,) + frame_stack.shape)
 
     def update_frame_stack(self, game_frame_buffer):
-        game_frames = [game_frame.eighth_resolution_grayscale_frame for game_frame in game_frame_buffer.frames]
+        game_frames = [game_frame.frame for game_frame in game_frame_buffer.frames]
         frame_stack = np.stack(game_frames, axis=2)
 
         self.frame_stack = frame_stack.reshape((1,) + frame_stack.shape)
@@ -230,11 +227,7 @@ class DQN:
             self.epsilon_greedy_q_policy.epsilon = float(epsilon)
 
     def output_step_data(self):
-        if self.mode in ["TRAIN", "OBSERVE"]:
-            print(f"CURRENT MODE: {self.mode}")
-        else:
-            cprint(f"CURRENT MODE: {self.mode}", "grey", "on_yellow", attrs=["dark"])
-
+        print(f"CURRENT MODE: {self.mode}")
         print(f"CURRENT STEP: {self.current_step}")
 
         if self.mode == "OBSERVE":

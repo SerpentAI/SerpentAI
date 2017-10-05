@@ -36,13 +36,16 @@ class DDQN(DQN):
             initial_epsilon=initial_epsilon,
             final_epsilon=final_epsilon,
             gamma=gamma,
-            model_file_path=model_file_path,
+            model_file_path=None,
             model_learning_rate=model_learning_rate,
             override_epsilon=override_epsilon
         )
 
         self.type = "DDQN"
         self.model_online = self._initialize_model()
+
+        if model_file_path is not None:
+            self.load_model_weights(model_file_path, override_epsilon)
 
     def calculate_target_error(self, observation):
         previous_target = self.model_online.predict(observation[0])[0][observation[1]]
@@ -67,7 +70,7 @@ class DDQN(DQN):
                 flashback_image = np.squeeze(mini_batch[i][1][3][:, :, :, 1])
 
                 self.visual_debugger.store_image_data(
-                    np.array(flashback_image * 255, dtype="uint8"),
+                    flashback_image,
                     flashback_image.shape,
                     f"flashback_{flashback_indices.index(i) + 1}"
                 )
