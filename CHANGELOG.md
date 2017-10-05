@@ -1,3 +1,8 @@
+## 0.1.10b1
+
+* FEATURE - added frame transformation pipelines
+* FIX - DQN and DDQN fixes and Windows compatibility tweaks
+
 ## 0.1.9b1
 
 * FIX - emptied out __init__.py for serpent.input_controllers (AKA win32api trying to import on Linux)
