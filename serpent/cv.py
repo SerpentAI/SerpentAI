@@ -34,9 +34,5 @@ def isolate_sprite(image_region_path, output_file_path):
     skimage.io.imsave(output_file_path, result_image)
 
 
-def scale_range(n, minimum, maximum):
-    n += -(np.min(n))
-    n /= np.max(n) / (maximum - minimum)
-    n += minimum
-
-    return n
+def normalize(n, source_min, source_max, target_min=0, target_max=1):
+    return ((n - source_min) * (target_max - target_min) / (source_max - source_min)) + target_min
