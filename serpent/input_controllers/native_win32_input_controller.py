@@ -13,6 +13,7 @@ import scipy.interpolate
 import numpy as np
 
 
+# Adding 1024 to extended keys to be able to detect the need to use a flag later on
 keyboard_key_mapping = {
     KeyboardKey.KEY_ESCAPE.name: 0x01,
     KeyboardKey.KEY_F1.name: 0x3B,
@@ -46,12 +47,12 @@ keyboard_key_mapping = {
     KeyboardKey.KEY_DASH.name: 0x0C,
     KeyboardKey.KEY_EQUALS.name: 0x0D,
     KeyboardKey.KEY_BACKSPACE.name: 0x0E,
-    KeyboardKey.KEY_INSERT.name: 0xD2,
-    KeyboardKey.KEY_HOME.name: 0xC7,
-    KeyboardKey.KEY_PAGE_UP.name: 0xC9,
+    KeyboardKey.KEY_INSERT.name: 0xD2 + 1024,
+    KeyboardKey.KEY_HOME.name: 0xC7 + 1024,
+    KeyboardKey.KEY_PAGE_UP.name: 0xC9 + 1024,
     KeyboardKey.KEY_NUMLOCK.name: 0x45,
-    KeyboardKey.KEY_NUMPAD_DIVIDE.name: 0xB5,
-    KeyboardKey.KEY_NUMPAD_SLASH.name: 0xB5,
+    KeyboardKey.KEY_NUMPAD_DIVIDE.name: 0xB5 + 1024,
+    KeyboardKey.KEY_NUMPAD_SLASH.name: 0xB5 + 1024,
     KeyboardKey.KEY_NUMPAD_MULTIPLY.name: 0x37,
     KeyboardKey.KEY_NUMPAD_STAR.name: 0x37,
     KeyboardKey.KEY_NUMPAD_SUBTRACT.name: 0x4A,
@@ -70,9 +71,9 @@ keyboard_key_mapping = {
     KeyboardKey.KEY_LEFT_BRACKET.name: 0x1A,
     KeyboardKey.KEY_RIGHT_BRACKET.name: 0x1B,
     KeyboardKey.KEY_BACKSLASH.name: 0x2B,
-    KeyboardKey.KEY_DELETE.name: 0xD3,
-    KeyboardKey.KEY_END.name: 0xCF,
-    KeyboardKey.KEY_PAGE_DOWN.name: 0xD1,
+    KeyboardKey.KEY_DELETE.name: 0xD3 + 1024,
+    KeyboardKey.KEY_END.name: 0xCF + 1024,
+    KeyboardKey.KEY_PAGE_DOWN.name: 0xD1 + 1024,
     KeyboardKey.KEY_NUMPAD_7.name: 0x47,
     KeyboardKey.KEY_NUMPAD_8.name: 0x48,
     KeyboardKey.KEY_NUMPAD_9.name: 0x49,
@@ -107,25 +108,25 @@ keyboard_key_mapping = {
     KeyboardKey.KEY_PERIOD.name: 0x34,
     KeyboardKey.KEY_SLASH.name: 0x35,
     KeyboardKey.KEY_RIGHT_SHIFT.name: 0x36,
-    KeyboardKey.KEY_UP.name: 0xC8,
+    KeyboardKey.KEY_UP.name: 0xC8 + 1024,
     KeyboardKey.KEY_NUMPAD_1.name: 0x4F,
     KeyboardKey.KEY_NUMPAD_2.name: 0x50,
     KeyboardKey.KEY_NUMPAD_3.name: 0x51,
-    KeyboardKey.KEY_NUMPAD_RETURN.name: 0x9C,
-    KeyboardKey.KEY_NUMPAD_ENTER.name: 0x9C,
+    KeyboardKey.KEY_NUMPAD_RETURN.name: 0x9C + 1024,
+    KeyboardKey.KEY_NUMPAD_ENTER.name: 0x9C + 1024,
     KeyboardKey.KEY_LEFT_CTRL.name: 0x1D,
-    KeyboardKey.KEY_LEFT_SUPER.name: 0xDB,
-    KeyboardKey.KEY_LEFT_WINDOWS.name: 0xDB,
+    KeyboardKey.KEY_LEFT_SUPER.name: 0xDB + 1024,
+    KeyboardKey.KEY_LEFT_WINDOWS.name: 0xDB + 1024,
     KeyboardKey.KEY_LEFT_ALT.name: 0x38,
     KeyboardKey.KEY_SPACE.name: 0x39,
-    KeyboardKey.KEY_RIGHT_ALT.name: 0xB8,
-    KeyboardKey.KEY_RIGHT_SUPER.name: 0xDC,
-    KeyboardKey.KEY_RIGHT_WINDOWS.name: 0xDC,
-    KeyboardKey.KEY_APP_MENU.name: 0xDD,
-    KeyboardKey.KEY_RIGHT_CTRL.name: 0x9D,
-    KeyboardKey.KEY_LEFT.name: 0xCB,
-    KeyboardKey.KEY_DOWN.name: 0xD0,
-    KeyboardKey.KEY_RIGHT.name: 0xCD,
+    KeyboardKey.KEY_RIGHT_ALT.name: 0xB8 + 1024,
+    KeyboardKey.KEY_RIGHT_SUPER.name: 0xDC + 1024,
+    KeyboardKey.KEY_RIGHT_WINDOWS.name: 0xDC + 1024,
+    KeyboardKey.KEY_APP_MENU.name: 0xDD + 1024,
+    KeyboardKey.KEY_RIGHT_CTRL.name: 0x9D + 1024,
+    KeyboardKey.KEY_LEFT.name: 0xCB + 1024,
+    KeyboardKey.KEY_DOWN.name: 0xD0 + 1024,
+    KeyboardKey.KEY_RIGHT.name: 0xCD + 1024,
     KeyboardKey.KEY_NUMPAD_0.name: 0x52,
     KeyboardKey.KEY_NUMPAD_DECIMAL.name: 0x53,
     KeyboardKey.KEY_NUMPAD_PERIOD.name: 0x53
@@ -230,7 +231,15 @@ class NativeWin32InputController(InputController):
         if self.game_is_focused:
             extra = ctypes.c_ulong(0)
             ii_ = Input_I()
-            ii_.ki = KeyBdInput(0, keyboard_key_mapping[key.name], 0x0008, 0, ctypes.pointer(extra))
+
+            if keyboard_key_mapping[key.name] >= 1024:
+                key = keyboard_key_mapping[key.name] - 1024
+                flags = 0x0008 | 0x0001
+            else:
+                key = keyboard_key_mapping[key.name]
+                flags = 0x0008
+
+            ii_.ki = KeyBdInput(0, key, flags, 0, ctypes.pointer(extra))
             x = Input(ctypes.c_ulong(1), ii_)
             ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
 
@@ -242,7 +251,15 @@ class NativeWin32InputController(InputController):
         if self.game_is_focused:
             extra = ctypes.c_ulong(0)
             ii_ = Input_I()
-            ii_.ki = KeyBdInput(0, keyboard_key_mapping[key.name], 0x0008 | 0x0002, 0, ctypes.pointer(extra))
+
+            if keyboard_key_mapping[key.name] >= 1024:
+                key = keyboard_key_mapping[key.name] - 1024
+                flags = 0x0008 | 0x0001 | 0x0002
+            else:
+                key = keyboard_key_mapping[key.name]
+                flags = 0x0008 | 0x0002
+
+            ii_.ki = KeyBdInput(0, key, flags, 0, ctypes.pointer(extra))
             x = Input(ctypes.c_ulong(1), ii_)
             ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
 
