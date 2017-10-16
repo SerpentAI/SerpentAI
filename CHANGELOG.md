@@ -1,3 +1,9 @@
+## 0.1.12b1
+
+* FIX - inceptionv3 context classifier is now using the newer normalize function instead of the old scale_range one
+* REFACTOR / FIX - added a mechanism to handle scancodes for extended keys in NativeWin32 input controller. Fixes arrow keys on Windows :)
+* FIX - added a dtype kwarg to FrameGrabber get_frames. necessary when using 'FLOAT' pipeline operator
+
 ## 0.1.11b1
 
 * FEATURE - added 'FLOAT' operator in frame transformation pipelines (needed for DQN)
