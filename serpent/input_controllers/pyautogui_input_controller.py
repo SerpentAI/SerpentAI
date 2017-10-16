@@ -124,7 +124,8 @@ keyboard_key_mapping = {
     KeyboardKey.KEY_RIGHT.name: "right",
     KeyboardKey.KEY_NUMPAD_0.name: "num0",
     KeyboardKey.KEY_NUMPAD_DECIMAL.name: "decimal",
-    KeyboardKey.KEY_NUMPAD_PERIOD.name: "decimal"
+    KeyboardKey.KEY_NUMPAD_PERIOD.name: "decimal",
+    KeyboardKey.KEY_COMMAND.name: "command",
 }
 
 mouse_button_mapping = {

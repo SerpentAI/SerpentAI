@@ -131,6 +131,9 @@ class KeyboardKey(enum.Enum):
     KEY_NUMPAD_DECIMAL = "KEY_NUMPAD_DECIMAL"
     KEY_NUMPAD_PERIOD = KEY_NUMPAD_DECIMAL
 
+    # macOS
+    KEY_COMMAND = "KEY_COMMAND"
+
 
 # US layout - What's to be done for other keyboard layouts?
 character_keyboard_key_mapping = {
