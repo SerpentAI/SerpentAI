@@ -106,7 +106,7 @@ class FrameGrabber:
         return retina_display
 
     @classmethod
-    def get_frames(cls, frame_buffer_indices, frame_shape=None, frame_type="FULL"):
+    def get_frames(cls, frame_buffer_indices, frame_shape=None, frame_type="FULL", dtype="uint8"):
         game_frame_buffer = GameFrameBuffer(size=len(frame_buffer_indices))
 
         for i in frame_buffer_indices:
@@ -114,7 +114,7 @@ class FrameGrabber:
             redis_key = redis_key + "_PIPELINE" if frame_type == "PIPELINE" else redis_key
 
             frame_bytes = redis_client.lindex(redis_key, i)
-            frame_array = np.fromstring(frame_bytes, dtype="uint8").reshape(frame_shape)
+            frame_array = np.fromstring(frame_bytes, dtype=dtype).reshape(frame_shape)
 
             game_frame = GameFrame(frame_array)
 
