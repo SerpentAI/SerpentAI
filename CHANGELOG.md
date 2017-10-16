@@ -1,3 +1,13 @@
+## 0.1.11b1
+
+* FEATURE - added 'FLOAT' operator in frame transformation pipelines (needed for DQN)
+* FEATURE - added 'SSIM' mode to sprite identifier
+* FIX - sprite identifier score thresholds now work consistently with all offered modes
+* FIX - resolved an issue with sprite identifier constellation of pixels mode and sprites with alpha channel
+* FIX - added macOS command key to KeyboardKey enum and added a mapping for PyAutoGUI input controller backend
+* FIX - linux window controller will now only consider visible windows when attempting to find game windows
+* FEATURE - better range normalization in serpent.cv: ability to pass in target domain
+
 ## 0.1.10b1
 
 * FEATURE - added frame transformation pipelines
