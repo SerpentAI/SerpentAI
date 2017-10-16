@@ -5,6 +5,8 @@ import shutil
 import subprocess
 import shlex
 import time
+import traceback
+import pdb
 
 import offshoot
 
@@ -45,7 +47,21 @@ def execute():
             if command not in valid_commands:
                 raise Exception("'%s' is not a valid Serpent command." % command)
 
-            command_function_mapping[command](*sys.argv[2:])
+            if sys.argv[2] == "-d"  or sys.argv[2] == "--debug":
+                debug = True
+                sys.argv.pop(2)
+            else:
+                debug = False
+
+            try:
+                command_function_mapping[command](*sys.argv[2:])
+            except Exception as e:
+                if debug:
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    traceback.print_exception(exc_type, exc_value, exc_traceback)
+                    pdb.post_mortem(exc_traceback)
+                else:
+                    raise e
 
 
 def executable_help():
