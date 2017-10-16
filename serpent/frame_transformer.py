@@ -20,3 +20,7 @@ class FrameTransformer:
     @staticmethod
     def grayscale(frame):
         return skimage.util.img_as_ubyte(skimage.color.rgb2gray(frame))
+
+    @staticmethod
+    def to_float(frame):
+        return skimage.util.img_as_float(frame)
