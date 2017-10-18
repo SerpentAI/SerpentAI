@@ -84,7 +84,7 @@ class CNNInceptionV3ContextClassifier(ContextClassifier):
             order=0
         )
 
-        resized_input_frame = np.array(serpent.cv.scale_range(resized_input_frame, -1, 1), dtype="float32")
+        resized_input_frame = np.array(serpent.cv.normalize(resized_input_frame, 0, 1, target_min=-1, target_max=1), dtype="float32")
 
         class_mapping = self.training_generator.class_indices
         class_probabilities = self.classifier.predict(resized_input_frame[None, :, :, :])[0]

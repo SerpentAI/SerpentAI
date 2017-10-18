@@ -1,3 +1,19 @@
+## 0.1.12b1
+
+* FIX - inceptionv3 context classifier is now using the newer normalize function instead of the old scale_range one
+* REFACTOR / FIX - added a mechanism to handle scancodes for extended keys in NativeWin32 input controller. Fixes arrow keys on Windows :)
+* FIX - added a dtype kwarg to FrameGrabber get_frames. necessary when using 'FLOAT' pipeline operator
+
+## 0.1.11b1
+
+* FEATURE - added 'FLOAT' operator in frame transformation pipelines (needed for DQN)
+* FEATURE - added 'SSIM' mode to sprite identifier
+* FIX - sprite identifier score thresholds now work consistently with all offered modes
+* FIX - resolved an issue with sprite identifier constellation of pixels mode and sprites with alpha channel
+* FIX - added macOS command key to KeyboardKey enum and added a mapping for PyAutoGUI input controller backend
+* FIX - linux window controller will now only consider visible windows when attempting to find game windows
+* FEATURE - better range normalization in serpent.cv: ability to pass in target domain
+
 ## 0.1.10b1
 
 * FEATURE - added frame transformation pipelines
