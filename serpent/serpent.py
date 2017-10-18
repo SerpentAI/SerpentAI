@@ -47,7 +47,7 @@ def execute():
             if command not in valid_commands:
                 raise Exception("'%s' is not a valid Serpent command." % command)
 
-            if sys.argv[2] == "-d"  or sys.argv[2] == "--debug":
+            if len(sys.argv) > 2 and (sys.argv[2] == "-d"  or sys.argv[2] == "--debug"):
                 debug = True
                 sys.argv.pop(2)
             else:
