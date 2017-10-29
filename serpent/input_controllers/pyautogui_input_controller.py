@@ -152,54 +152,54 @@ class PyAutoGUIInputController(InputController):
         keys_to_release = self.previous_key_collection_set - key_collection_set
 
         for key in keys_to_press:
-            self.press_key(key)
+            self.press_key(key, **kwargs)
 
         for key in keys_to_release:
-            self.release_key(key)
+            self.release_key(key, **kwargs)
 
         self.previous_key_collection_set = key_collection_set
 
     def tap_keys(self, keys, duration=0.05, **kwargs):
-        if self.game_is_focused:
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             for key in keys:
-                self.press_key(key)
+                self.press_key(key, **kwargs)
 
             time.sleep(duration)
 
             for key in keys:
-                self.release_key(key)
+                self.release_key(key, **kwargs)
 
     def tap_key(self, key, duration=0.05, **kwargs):
-        if self.game_is_focused:
-            self.press_key(key)
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
+            self.press_key(key, **kwargs)
 
             time.sleep(duration)
 
-            self.release_key(key)
+            self.release_key(key, **kwargs)
 
     def press_keys(self, keys, **kwargs):
         for key in keys:
-            self.press_key(key)
+            self.press_key(key, **kwargs)
 
     def press_key(self, key, **kwargs):
-        if self.game_is_focused:
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             pyautogui.keyDown(keyboard_key_mapping[key.name])
 
     def release_keys(self, keys, **kwargs):
         for key in keys:
-            self.release_key(key)
+            self.release_key(key, **kwargs)
 
     def release_key(self, key, **kwargs):
-        if self.game_is_focused:
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             pyautogui.keyUp(keyboard_key_mapping[key.name])
 
     def type_string(self, string, duration=0.05, **kwargs):
-        if self.game_is_focused:
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             pyautogui.typewrite(message=string, interval=duration)
 
     # Mouse Actions
     def move(self, x=None, y=None, duration=0.25, absolute=True, **kwargs):
-        if self.game_is_focused:
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             x += self.game.window_geometry["x_offset"]
             y += self.game.window_geometry["y_offset"]
 
@@ -209,31 +209,31 @@ class PyAutoGUIInputController(InputController):
                 pyautogui.moveRel(xOffset=x, yOffset=y, duration=duration)
 
     def click_down(self, button=MouseButton.LEFT, **kwargs):
-        if self.game_is_focused:
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             pyautogui.mouseDown(button=mouse_button_mapping[button.name])
 
     def click_up(self, button=MouseButton.LEFT, **kwargs):
-        if self.game_is_focused:
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             pyautogui.mouseUp(button=mouse_button_mapping[button.name])
 
     def click(self, button=MouseButton.LEFT, duration=0.25, **kwargs):
-        if self.game_is_focused:
-            self.click_down(button=button)
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
+            self.click_down(button=button, **kwargs)
             time.sleep(duration)
-            self.click_up(button=button)
+            self.click_up(button=button, **kwargs)
 
     def click_screen_region(self, button=MouseButton.LEFT, screen_region=None, **kwargs):
-        if self.game_is_focused:
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             screen_region_coordinates = self.game.screen_regions.get(screen_region)
 
             x = (screen_region_coordinates[1] + screen_region_coordinates[3]) // 2
             y = (screen_region_coordinates[0] + screen_region_coordinates[2]) // 2
 
             self.move(x=x, y=y)
-            self.click(button=button)
+            self.click(button=button, **kwargs)
 
     def click_sprite(self, button=MouseButton.LEFT, sprite=None, game_frame=None, **kwargs):
-        if self.game_is_focused:
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             sprite_location = self.sprite_locator.locate(sprite=sprite, game_frame=game_frame)
 
             if sprite_location is None:
@@ -243,12 +243,12 @@ class PyAutoGUIInputController(InputController):
             y = (sprite_location[0] + sprite_location[2]) // 2
 
             self.move(x=x, y=y)
-            self.click(button=button)
+            self.click(button=button, **kwargs)
 
             return True
 
     def click_string(self, query_string, button=MouseButton.LEFT, game_frame=None, fuzziness=2, ocr_preset=None, **kwargs):
-        if self.game_is_focused:
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             string_location = serpent.ocr.locate_string(
                 query_string,
                 game_frame.frame,
@@ -263,21 +263,21 @@ class PyAutoGUIInputController(InputController):
                 y = (string_location[0] + string_location[2]) // 2
 
                 self.move(x=x, y=y)
-                self.click(button=button)
+                self.click(button=button, **kwargs)
 
                 return True
 
             return False
 
     def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None, duration=0.25, **kwargs):
-        if self.game_is_focused:
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             self.move(x=x0, y=y0)
-            self.click_down(button=button)
+            self.click_down(button=button, **kwargs)
             self.move(x=x1, y=y1, duration=duration)
-            self.click_up(button=button)
+            self.click_up(button=button, **kwargs)
 
     def drag_screen_region_to_screen_region(self, button=MouseButton.LEFT, start_screen_region=None, end_screen_region=None, duration=1, **kwargs):
-        if self.game_is_focused:
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             start_screen_region_coordinates = self._extract_screen_region_coordinates(start_screen_region)
             end_screen_region_coordinates = self._extract_screen_region_coordinates(end_screen_region)
 
@@ -287,10 +287,11 @@ class PyAutoGUIInputController(InputController):
                 y0=start_screen_region_coordinates[1],
                 x1=end_screen_region_coordinates[0],
                 y1=end_screen_region_coordinates[1],
-                duration=duration
+                duration=duration,
+                **kwargs
             )
 
     def scroll(self, clicks=1, direction="DOWN", **kwargs):
-        if self.game_is_focused:
+        if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             clicks = clicks * (1 if direction == "DOWN" else -1)
             pyautogui.scroll(clicks)
