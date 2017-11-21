@@ -9,10 +9,27 @@ class DarwinWindowController(WindowController):
         pass
 
     def locate_window(self, name):
-        tuple_id = name.split("::")
-        if len(tuple_id) == 1:
-            tuple_id = [tuple_id[0], "1"]
-        return tuple_id
+        all_windows = applescript.AppleScript('''
+            set visibleWindows to {}
+            tell application "System Events"
+                repeat with this_app in (get processes whose background only is false) --get applications with 1+ window
+                    tell this_app
+                        set p_name to name
+                    end tell
+                    repeat with this_window in (get windows of this_app)
+                        tell this_window
+                            set w_name to name
+                        end tell
+                        set end of visibleWindows to {p_name, w_name}
+                    end repeat
+                end repeat
+            end tell
+            return visibleWindows
+        ''').run()
+        for (p_name, w_name) in all_windows:
+            if w_name == name:
+                return (p_name, w_name)
+        return ["", ""]
 
     def move_window(self, window_id, x, y):
         applescript.AppleScript(f'''
@@ -36,16 +53,25 @@ class DarwinWindowController(WindowController):
         ''').run()
 
     def is_window_focused(self, window_id):
-        return self.get_focused_window_name() == window_id[0]
+        return self.get_focused_window_name() == window_id[1]
 
     def get_focused_window_name(self):
-        focused_window_id = applescript.AppleScript('''
+        focused_window_name = applescript.AppleScript('''
+            set windowTitle to ""
             tell application "System Events"
-                return title of first application process whose frontmost is true
+                set frontApp to first application process whose frontmost is true
+                set frontAppName to name of frontApp
+                tell process frontAppName
+                    tell (1st window whose value of attribute "AXMain" is true)
+                        set windowTitle to value of attribute "AXTitle"
+                    end tell
+                end tell
             end tell
+
+            return {frontAppName, windowTitle}
         ''').run()
 
-        return focused_window_id
+        return focused_window_name[1]
 
     def get_window_geometry(self, window_id):
         geometry = dict()
