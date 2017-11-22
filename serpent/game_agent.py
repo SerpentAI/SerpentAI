@@ -137,8 +137,6 @@ class GameAgent(offshoot.Pluggable):
         serpent.utilities.clear_terminal()
         print(f"Collected Frame #{self.collected_frame_count}")
 
-        time.sleep(kwargs.get("interval") or self.config.get("collect_frames_interval") or 1)
-
     def handle_collect_frame_regions(self, game_frame, **kwargs):
         region = kwargs.get("region")
 
@@ -149,11 +147,8 @@ class GameAgent(offshoot.Pluggable):
         serpent.utilities.clear_terminal()
         print(f"Collected Frame #{self.collected_frame_count} for Region: {region}")
 
-        time.sleep(kwargs.get("interval") or self.config.get("collect_frames_interval") or 1)
-
     def handle_collect_frames_for_context(self, game_frame, **kwargs):
         context = kwargs.get("context") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
-        interval = kwargs.get("interval") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["interval"]
 
         self.game_frames.append(game_frame)
 
@@ -161,8 +156,6 @@ class GameAgent(offshoot.Pluggable):
 
         serpent.utilities.clear_terminal()
         print(f"Collected Frame #{self.collected_frame_count} for Context: {context}")
-
-        time.sleep(interval)
 
     def on_collect_frames_pause(self, **kwargs):
         for i, game_frame in enumerate(self.game_frames):
