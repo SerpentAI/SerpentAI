@@ -21,7 +21,7 @@ class DarwinWindowController(WindowController):
         ''').run()
         for p_name, windows in all_windows:
             for i, w_name in enumerate(windows):
-                if re.search(".*" + name + ".*", w_name):
+                if re.search(f"^{name}$", w_name):
                     return (p_name, i + 1) # Windows are ordered by order of creations, it's a value that is fixed for the duration of the window's life
         # If we didn't found the window, we fallback by testing if name is a process name
         return [name, 1]
