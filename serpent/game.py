@@ -52,7 +52,8 @@ class Game(offshoot.Pluggable):
         self.input_controller = kwargs.get("input_controller") or default_input_controller_backend
 
         self.window_id = None
-        self.window_name = kwargs.get("window_name")
+        self.pid = None
+        self.window_name = kwargs.get("window_name")        
         self.window_geometry = None
 
         self.window_controller = WindowController()
@@ -117,10 +118,10 @@ class Game(offshoot.Pluggable):
     @offshoot.forbidden
     def launch(self, dry_run=False):
         self.before_launch()
-
-        if not dry_run:
-            self.game_launcher().launch(**self.kwargs)
-
+     
+        if (sys.platform == "win32" or not dry_run):
+            self.pid = self.game_launcher().launch(**self.kwargs)
+            
         self.after_launch()
 
     def before_launch(self):
@@ -131,7 +132,8 @@ class Game(offshoot.Pluggable):
 
         time.sleep(5)
 
-        self.window_id = self.window_controller.locate_window(self.window_name)
+        #self.window_id = self.window_controller.locate_window(self.window_name)
+        self.window_id = self.window_controller.get_hwnds_for_pid(self.pid)[0]
 
         self.window_controller.move_window(self.window_id, 0, 0)
         self.window_controller.focus_window(self.window_id)
