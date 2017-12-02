@@ -4,6 +4,9 @@ import sys
 import shlex
 import subprocess
 
+import psutil
+import os
+
 
 class ExecutableGameLauncher(GameLauncher):
 
@@ -16,9 +19,13 @@ class ExecutableGameLauncher(GameLauncher):
         if executable_path is None:
             raise GameLauncherException("An 'executable_path' kwarg is required...")
 
-        if sys.platform in ["linux", "linux2"]:
-            subprocess.Popen(shlex.split(executable_path))
-        elif sys.platform == "darwin":
-            subprocess.Popen(shlex.split(executable_path))
-        elif sys.platform == "win32":
-            subprocess.Popen(shlex.split(executable_path))
+        if sys.platform == "win32":
+           for pid in psutil.pids():
+                p = psutil.Process(pid)
+                pname = os.path.basename(kwargs.get("executable_path"))
+                if p.name() == pname:      
+                    return p.pid
+           
+        return subprocess.Popen(shlex.split(executable_path)).pid
+
+        

@@ -10,6 +10,9 @@ class WindowController:
     def __init__(self):
         self.adapter = self._load_adapter()()
 
+    def get_hwnds_for_pid (self, pid):
+        return self.adapter.get_hwnds_for_pid(pid)
+
     def locate_window(self, name):
         return self.adapter.locate_window(name)
 
