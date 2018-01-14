@@ -1,5 +1,9 @@
 import enum
 
+import keyboard
+import mouse
+
+import time
 
 class MouseButton(enum.Enum):
     LEFT = "LEFT"
@@ -139,25 +143,25 @@ class KeyboardKey(enum.Enum):
 character_keyboard_key_mapping = {
     "`": [KeyboardKey.KEY_GRAVE],
     "~": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_GRAVE],
-    "1": [KeyboardKey.KEY_1],
+1: [KeyboardKey.KEY_1],
     "!": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_1],
-    "2": [KeyboardKey.KEY_2],
+2: [KeyboardKey.KEY_2],
     "@": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_2],
-    "3": [KeyboardKey.KEY_3],
+3: [KeyboardKey.KEY_3],
     "#": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_3],
-    "4": [KeyboardKey.KEY_4],
+4: [KeyboardKey.KEY_4],
     "$": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_4],
-    "5": [KeyboardKey.KEY_5],
+5: [KeyboardKey.KEY_5],
     "%": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_5],
-    "6": [KeyboardKey.KEY_6],
+6: [KeyboardKey.KEY_6],
     "^": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_6],
-    "7": [KeyboardKey.KEY_7],
+7: [KeyboardKey.KEY_7],
     "&": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_7],
-    "8": [KeyboardKey.KEY_8],
+8: [KeyboardKey.KEY_8],
     "*": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_8],
-    "9": [KeyboardKey.KEY_9],
+9: [KeyboardKey.KEY_9],
     "(": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_9],
-    "0": [KeyboardKey.KEY_0],
+0: [KeyboardKey.KEY_0],
     ")": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_0],
     "-": [KeyboardKey.KEY_MINUS],
     "_": [KeyboardKey.KEY_LEFT_SHIFT, KeyboardKey.KEY_MINUS],
@@ -235,6 +239,110 @@ character_keyboard_key_mapping = {
     " ": [KeyboardKey.KEY_SPACE]
 }
 
+keyboard_module_scan_code_mapping = {
+    1: KeyboardKey.KEY_ESCAPE,
+    59: KeyboardKey.KEY_F1,
+    60: KeyboardKey.KEY_F2,
+    61: KeyboardKey.KEY_F3,
+    62: KeyboardKey.KEY_F4,
+    63: KeyboardKey.KEY_F5,
+    64: KeyboardKey.KEY_F6,
+    65: KeyboardKey.KEY_F7,
+    66: KeyboardKey.KEY_F8,
+    67: KeyboardKey.KEY_F9,
+    68: KeyboardKey.KEY_F10,
+    87: KeyboardKey.KEY_F11,
+    88: KeyboardKey.KEY_F12,
+    99: KeyboardKey.KEY_PRINT_SCREEN,
+    119: KeyboardKey.KEY_PAUSE,
+    41: KeyboardKey.KEY_GRAVE,
+    2: KeyboardKey.KEY_1,
+    3: KeyboardKey.KEY_2,
+    4: KeyboardKey.KEY_3,
+    5: KeyboardKey.KEY_4,
+    6: KeyboardKey.KEY_5,
+    7: KeyboardKey.KEY_6,
+    8: KeyboardKey.KEY_7,
+    9: KeyboardKey.KEY_8,
+    10: KeyboardKey.KEY_9,
+    11: KeyboardKey.KEY_0,
+    12: KeyboardKey.KEY_MINUS,
+    13: KeyboardKey.KEY_EQUALS,
+    14: KeyboardKey.KEY_BACKSPACE,
+    110: KeyboardKey.KEY_INSERT,
+    102: KeyboardKey.KEY_HOME,
+    104: KeyboardKey.KEY_PAGE_UP,
+    69: KeyboardKey.KEY_NUMLOCK,
+    98: KeyboardKey.KEY_NUMPAD_DIVIDE,
+    55: KeyboardKey.KEY_NUMPAD_MULTIPLY,
+    74: KeyboardKey.KEY_NUMPAD_SUBTRACT,
+    15: KeyboardKey.KEY_TAB,
+    16: KeyboardKey.KEY_Q,
+    17: KeyboardKey.KEY_W,
+    18: KeyboardKey.KEY_E,
+    19: KeyboardKey.KEY_R,
+    20: KeyboardKey.KEY_T,
+    21: KeyboardKey.KEY_Y,
+    22: KeyboardKey.KEY_U,
+    23: KeyboardKey.KEY_I,
+    24: KeyboardKey.KEY_O,
+    25: KeyboardKey.KEY_P,
+    26: KeyboardKey.KEY_LEFT_BRACKET,
+    27: KeyboardKey.KEY_RIGHT_BRACKET,
+    43: KeyboardKey.KEY_BACKSLASH,
+    111: KeyboardKey.KEY_DELETE,
+    107: KeyboardKey.KEY_END,
+    109: KeyboardKey.KEY_PAGE_DOWN,
+    71: KeyboardKey.KEY_NUMPAD_7,
+    72: KeyboardKey.KEY_NUMPAD_8,
+    73: KeyboardKey.KEY_NUMPAD_9,
+    78: KeyboardKey.KEY_NUMPAD_ADD,
+    30: KeyboardKey.KEY_A,
+    31: KeyboardKey.KEY_S,
+    32: KeyboardKey.KEY_D,
+    33: KeyboardKey.KEY_F,
+    34: KeyboardKey.KEY_G,
+    35: KeyboardKey.KEY_H,
+    36: KeyboardKey.KEY_J,
+    37: KeyboardKey.KEY_K,
+    38: KeyboardKey.KEY_L,
+    39: KeyboardKey.KEY_SEMICOLON,
+    40: KeyboardKey.KEY_APOSTROPHE,
+    28: KeyboardKey.KEY_RETURN,
+    75: KeyboardKey.KEY_NUMPAD_4,
+    76: KeyboardKey.KEY_NUMPAD_5,
+    77: KeyboardKey.KEY_NUMPAD_6,
+    42: KeyboardKey.KEY_LEFT_SHIFT,
+    44: KeyboardKey.KEY_Z,
+    45: KeyboardKey.KEY_X,
+    46: KeyboardKey.KEY_C,
+    47: KeyboardKey.KEY_V,
+    48: KeyboardKey.KEY_B,
+    49: KeyboardKey.KEY_N,
+    50: KeyboardKey.KEY_M,
+    51: KeyboardKey.KEY_COMMA,
+    52: KeyboardKey.KEY_PERIOD,
+    53: KeyboardKey.KEY_SLASH,
+    54: KeyboardKey.KEY_RIGHT_SHIFT,
+    103: KeyboardKey.KEY_UP,
+    79: KeyboardKey.KEY_NUMPAD_1,
+    80: KeyboardKey.KEY_NUMPAD_2,
+    81: KeyboardKey.KEY_NUMPAD_3,
+    96: KeyboardKey.KEY_NUMPAD_RETURN,
+    29: KeyboardKey.KEY_LEFT_SHIFT,
+    56: KeyboardKey.KEY_LEFT_ALT,
+    57: KeyboardKey.KEY_SPACE,
+    100: KeyboardKey.KEY_RIGHT_ALT,
+    97: KeyboardKey.KEY_RIGHT_CTRL,
+    105: KeyboardKey.KEY_LEFT,
+    108: KeyboardKey.KEY_DOWN,
+    106: KeyboardKey.KEY_RIGHT,
+    82: KeyboardKey.KEY_NUMPAD_0,
+    83: KeyboardKey.KEY_NUMPAD_PERIOD,
+    125: KeyboardKey.KEY_LEFT_WINDOWS,
+    126: KeyboardKey.KEY_RIGHT_WINDOWS
+}
+
 
 class InputControllers(enum.Enum):
     PYAUTOGUI = 0
@@ -288,6 +396,19 @@ class InputController:
         self._is_game_launched_check()
         self.backend.type_string(string, duration=duration, **kwargs)
 
+    def capture_keys(self, duration=0.5):
+        started_at = time.time()
+        captured_key_events = list()
+
+        keyboard.hook(captured_key_events.append)
+
+        while time.time() - started_at <= duration:
+            time.sleep(0.01)
+
+        keyboard.unhook(captured_key_events.append)
+
+        return captured_key_events
+
     # Mouse Actions
     def move(self, x=None, y=None, duration=0.25, absolute=True, **kwargs):
         self._is_game_launched_check()
@@ -328,6 +449,19 @@ class InputController:
     def scroll(self, x=None, y=None, clicks=1, direction="DOWN", **kwargs):
         self._is_game_launched_check()
         self.backend.scroll(x=x, y=y, clicks=clicks, direction=direction, **kwargs)
+
+    def capture_mouse(self, duration=0.5):
+        started_at = time.time()
+        captured_mouse_events = list()
+
+        mouse.hook(captured_mouse_events.append)
+
+        while time.time() - started_at <= duration:
+            time.sleep(0.01)
+
+        mouse.unhook(captured_mouse_events.append)
+
+        return captured_mouse_events
 
     def _initialize_backend(self, backend, **kwargs):
         if backend == InputControllers.PYAUTOGUI:

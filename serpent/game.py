@@ -65,6 +65,7 @@ class Game(offshoot.Pluggable):
         self.frame_width = None
         self.frame_height = None
         self.frame_channels = 3
+        self.frame_dtype = "uint8"
 
         self.game_frame_limiter = GameFrameLimiter(fps=self.config.get("fps", 30))
 
@@ -164,7 +165,7 @@ class Game(offshoot.Pluggable):
 
         frame_type = "FULL"
 
-        if frame_handler in ["COLLECT_FRAMES", "COLLECT_FRAME_REGIONS", "COLLECT_FRAMES_FOR_CONTEXT"]:
+        if frame_handler in ["COLLECT_FRAMES", "COLLECT_FRAME_REGIONS", "COLLECT_FRAMES_FOR_CONTEXT"] and self.frame_transformation_pipeline_string is not None:
             frame_type = "PIPELINE"
 
         while True:
@@ -211,6 +212,9 @@ class Game(offshoot.Pluggable):
         if pipeline_string is not None:
             frame_grabber_command += f" {pipeline_string}"
 
+            if pipeline_string.endswith("|FLOAT"):
+                self.frame_dtype = "float64"
+
         self.frame_grabber_process = subprocess.Popen(shlex.split(frame_grabber_command))
 
         signal.signal(signal.SIGINT, self._handle_signal)
@@ -230,6 +234,8 @@ class Game(offshoot.Pluggable):
 
     @offshoot.forbidden
     def grab_latest_frame(self, frame_type="FULL"):
+        dtype = "uint8"
+
         if frame_type == "FULL":
             frame_shape = [
                 self.window_geometry.get("height"),
@@ -245,7 +251,9 @@ class Game(offshoot.Pluggable):
             if self.frame_channels == 3:
                 frame_shape.append(3)
 
-        game_frame_buffer = FrameGrabber.get_frames([0], frame_shape, frame_type=frame_type)
+            dtype = self.frame_dtype
+
+        game_frame_buffer = FrameGrabber.get_frames([0], frame_shape, frame_type=frame_type, dtype=dtype)
 
         return game_frame_buffer.frames[0]
 

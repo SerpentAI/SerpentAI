@@ -5,6 +5,9 @@ from serpent.config import config
 import time
 import uuid
 import pickle
+import io
+import h5py
+import random
 
 import os
 import os.path
@@ -17,10 +20,14 @@ from serpent.frame_grabber import FrameGrabber
 from serpent.game_frame import GameFrame
 from serpent.game_frame_buffer import GameFrameBuffer
 from serpent.sprite_identifier import SpriteIdentifier
+from serpent.input_controller import keyboard_module_scan_code_mapping
 from serpent.visual_debugger.visual_debugger import VisualDebugger
 
 import skimage.io
 import skimage.transform
+import skimage.util
+
+from PIL import Image
 
 from redis import StrictRedis
 
@@ -50,19 +57,26 @@ class GameAgent(offshoot.Pluggable):
             NOOP=self.handle_noop,
             COLLECT_FRAMES=self.handle_collect_frames,
             COLLECT_FRAME_REGIONS=self.handle_collect_frame_regions,
-            COLLECT_FRAMES_FOR_CONTEXT=self.handle_collect_frames_for_context
+            COLLECT_FRAMES_FOR_CONTEXT=self.handle_collect_frames_for_context,
+            RECORD=self.handle_record
         )
 
         self.frame_handler_setups = dict(
             COLLECT_FRAMES=self.setup_collect_frames,
             COLLECT_FRAME_REGIONS=self.setup_collect_frame_regions,
-            COLLECT_FRAMES_FOR_CONTEXT=self.setup_collect_frames_for_context
+            COLLECT_FRAMES_FOR_CONTEXT=self.setup_collect_frames_for_context,
+            RECORD=self.setup_handle_record
         )
 
         self.frame_handler_pause_callbacks = dict(
             COLLECT_FRAMES=self.on_collect_frames_pause,
             COLLECT_FRAME_REGIONS=self.on_collect_frame_regions_pause,
-            COLLECT_FRAMES_FOR_CONTEXT=self.on_collect_frames_for_context_pause
+            COLLECT_FRAMES_FOR_CONTEXT=self.on_collect_frames_for_context_pause,
+            RECORD=self.on_record_pause
+        )
+
+        self.reward_functions = dict(
+            TEST=self.reward_test   
         )
 
         self.frame_handler_setup_performed = False
@@ -130,6 +144,19 @@ class GameAgent(offshoot.Pluggable):
         self.game_frames = list()
         self.collected_frame_count = 0
 
+    def setup_handle_record(self, **kwargs):
+        self.frame_input_pairs = list()
+        
+        self.keyboard_events = dict()
+        
+        self.frame_keys = dict()
+        self.frame_keyboard_events = dict()
+
+        time.sleep(1)
+
+        serpent.utilities.clear_terminal()
+        print("Start playing the game! Focus out when you are done or want to save the collected data to that point.")
+
     def handle_collect_frames(self, game_frame, **kwargs):
         self.game_frames.append(game_frame)
 
@@ -178,6 +205,56 @@ class GameAgent(offshoot.Pluggable):
 
         time.sleep(interval)
 
+    def handle_record(self, game_frame, **kwargs):
+        keyboard_events = self.input_controller.capture_keys(duration=1 / self.config["fps"])
+        # TODO: mouse capture (no segfault plz)
+
+        game_frame_buffer = FrameGrabber.get_frames(
+            [0, 4, 8, 12],
+            frame_shape=(self.game.frame_height, self.game.frame_width),
+            frame_type="PIPELINE",
+            dtype="float64"
+        )
+
+        frame_uuid = str(uuid.uuid4())
+
+        self.frame_keys[frame_uuid] = list() 
+        self.frame_keyboard_events[frame_uuid] = list() 
+
+        if len(keyboard_events):
+            for keyboard_event in keyboard_events:
+                key_name = keyboard_module_scan_code_mapping.get(keyboard_event.scan_code)
+
+                if keyboard_event.event_type == "down":
+                    if key_name.name not in self.keyboard_events:
+                        self.frame_keys[frame_uuid].append(key_name)
+                        
+                        self.keyboard_events[key_name.name] = [
+                            frame_uuid,
+                            game_frame_buffer.frames,
+                            keyboard_event.time
+                        ]
+                elif keyboard_event.event_type == "up":
+                    if key_name.name in self.keyboard_events:
+                        duration = keyboard_event.time - self.keyboard_events[key_name.name][2]
+                        keypress_data = (key_name, str(duration))
+
+                        print(f"{key_name.name} was pressed for {round(duration, 4)} seconds")
+
+                        frame_uuid = self.keyboard_events[key_name.name][0]
+
+                        self.frame_keyboard_events[frame_uuid].append(keypress_data)
+                        
+                        if len(self.frame_keys[frame_uuid]) == len(self.frame_keyboard_events[frame_uuid]):
+                            self.frame_input_pairs.append((self.keyboard_events[key_name.name][1], self.frame_keyboard_events[frame_uuid]))
+
+                        del self.keyboard_events[key_name.name]
+        else:
+            self.frame_input_pairs.append((game_frame_buffer.frames, []))
+
+            del self.frame_keys[frame_uuid]
+            del self.frame_keyboard_events[frame_uuid]
+
     def on_collect_frames_pause(self, **kwargs):
         for i, game_frame in enumerate(self.game_frames):
             print(f"Saving image {i + 1}/{len(self.game_frames)} to disk...")
@@ -210,6 +287,68 @@ class GameAgent(offshoot.Pluggable):
             skimage.io.imsave(file_name, game_frame.frame)
 
         self.game_frames = list()
+
+    def on_record_pause(self, **kwargs):
+        print(f"Writing Frame/Input Data to 'datasets/frame_input.h5'... (0/{len(self.frame_input_pairs)})")
+
+        compute_reward = "reward_function" in self.config and self.config["reward_function"] in self.reward_functions
+        reward_func = None
+
+        if compute_reward:
+            reward_func = self.reward_functions[self.config["reward_function"]]
+
+        with h5py.File("datasets/frame_input.h5", "a") as f:
+            for i, frames_inputs in enumerate(self.frame_input_pairs):
+                serpent.utilities.clear_terminal()
+                print(f"Writing Frame/Input Data to 'datasets/frame_input.h5'... ({i + 1}/{len(self.frame_input_pairs)})")
+                frames, inputs = frames_inputs
+
+                dataset_uuid = str(uuid.uuid4())
+
+                reward_score = 0
+
+                if compute_reward:
+                    reward_score = reward_func(frames, inputs)
+
+                png_frames = list()
+
+                for frame in frames:
+                    pil_image = Image.fromarray(skimage.util.img_as_ubyte(frame.frame))
+                    pil_image = pil_image.convert("RGB")
+
+                    png_frame = io.BytesIO()
+
+                    pil_image.save(png_frame, format="PNG")
+                    png_frame.seek(0)
+
+                    png_frames.append(png_frame.read())
+
+                del frames
+
+                f.create_dataset(
+                    f"{dataset_uuid}-frames",
+                    data=png_frames
+                )
+
+                f.create_dataset(
+                    f"{dataset_uuid}-inputs",
+                    data=[(keyboard_key.name.encode("utf-8"), duration.encode("utf-8")) for keyboard_key, duration in inputs]
+                )
+
+                f.create_dataset(
+                    f"{dataset_uuid}-reward",
+                    data=reward_score
+                )
+
+            self.frame_input_pairs = list()
+            self.keyboard_event_times = dict()
+
+            time.sleep(10)
+
+
+    def reward_test(self, frames, inputs, **kwargs):
+        return random.choice(range(0, 10))
+
 
     def _setup_frame_handler(self, frame_handler=None, **kwargs):
         frame_handler = frame_handler or self.config.get("frame_handler", "NOOP")

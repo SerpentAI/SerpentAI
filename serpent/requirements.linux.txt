@@ -11,6 +11,8 @@ mss
 python-xlib
 PyAutoGUI
 pyperclip
+keyboard
+mouse
 
 # TF & Keras
 tensorflow-gpu

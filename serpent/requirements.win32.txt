@@ -14,6 +14,8 @@ mss
 PyAutoGUI
 pyperclip
 win32gui
+keyboard
+mouse
 
 # TF & Keras
 tensorflow-gpu

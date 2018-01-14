@@ -22,6 +22,7 @@ valid_commands = [
     "grab_frames",
     "launch",
     "play",
+    "record",
     "generate",
     "activate",
     "deactivate",
@@ -206,27 +207,12 @@ def plugins():
 
 
 def launch(game_name):
-    game_class_name = f"Serpent{game_name}Game"
-
-    game_class_mapping = offshoot.discover("Game")
-    game = game_class_mapping.get(game_class_name)
-
-    if game is None:
-        raise Exception(f"Game '{game_name}' wasn't found. Make sure the plugin is installed.")
-
-    game().launch()
+    game = initialize_game(game_name)
+    game.launch()
 
 
 def play(game_name, game_agent_name, frame_handler=None):
-    game_class_name = f"Serpent{game_name}Game"
-
-    game_class_mapping = offshoot.discover("Game")
-    game_class = game_class_mapping.get(game_class_name)
-
-    if game_class is None:
-        raise Exception(f"Game '{game_name}' wasn't found. Make sure the plugin is installed.")
-
-    game = game_class()
+    game = initialize_game(game_name)
     game.launch(dry_run=True)
 
     game_agent_class_mapping = offshoot.discover("GameAgent")
@@ -236,6 +222,13 @@ def play(game_name, game_agent_name, frame_handler=None):
         raise Exception(f"Game Agent '{game_agent_name}' wasn't found. Make sure the plugin is installed.")
 
     game.play(game_agent_class_name=game_agent_name, frame_handler=frame_handler)
+
+
+def record(game_name, game_agent_name):
+    game = initialize_game(game_name)
+    game.launch(dry_run=True)
+
+    game.play(game_agent_class_name=game_agent_name, frame_handler="RECORD")
 
 
 def generate(plugin_type):
@@ -253,16 +246,7 @@ def train(training_type, *args):
 
 
 def capture(capture_type, game_name, interval=1, extra=None, extra_2=None):
-    game_class_name = f"Serpent{game_name}Game"
-
-    game_class_mapping = offshoot.discover("Game")
-    game_class = game_class_mapping.get(game_class_name)
-
-    if game_class is None:
-        raise Exception(f"Game '{game_name}' wasn't found. Make sure the plugin is installed.")
-
-    game = game_class()
-
+    game = initialize_game(game_name)
     game.launch(dry_run=True)
 
     if capture_type not in ["frame", "context", "region"]:
@@ -432,6 +416,20 @@ def train_context(epochs=3, validate=True, autosave=False):
     ContextClassifier.executable_train(epochs=int(epochs), validate=argv_is_true(validate), autosave=argv_is_true(autosave))
 
 
+def initialize_game(game_name):
+    game_class_name = f"Serpent{game_name}Game"
+
+    game_class_mapping = offshoot.discover("Game")
+    game_class = game_class_mapping.get(game_class_name)
+
+    if game_class is None:
+        raise Exception(f"Game '{game_name}' wasn't found. Make sure the plugin is installed.")
+
+    game = game_class()
+
+    return game
+
+
 def argv_is_true(arg):
     return arg in [True, "True"]
 
@@ -444,6 +442,7 @@ command_function_mapping = {
     "plugins": plugins,
     "launch": launch,
     "play": play,
+    "record": record,
     "generate": generate,
     "train": train,
     "capture": capture,
@@ -459,6 +458,7 @@ command_description_mapping = {
     "plugins": "List all locally-available plugins",
     "launch": "Launch a game through a plugin",
     "play": "Play a game with a game agent through plugins",
+    "record": "Record player input from a game",
     "generate": "Generate code for game and game agent plugins",
     "train": "Train a context classifier with collected context frames",
     "capture": "Capture frames, screen regions and contexts from a game",

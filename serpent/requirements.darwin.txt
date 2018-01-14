@@ -10,6 +10,8 @@ mss
 # Input
 PyAutoGUI
 pyperclip
+keyboard
+mouse
 
 # TF & Keras
 tensorflow-gpu
