@@ -42,4 +42,4 @@ Serpent.AI is currently in BETA. It is the love child of [@nbrochu](https://gith
 
 _Business Contact: info@serpent.ai_
 
-_~Business~ Contact: [Discord Server](https://discord.gg/9D5SuxH)_
+_Twitter: [@Serpent_AI](https://twitter.com/Serpent_AI)_
