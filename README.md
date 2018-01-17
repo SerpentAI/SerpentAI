@@ -18,7 +18,9 @@ The project was born out of admiration for / frustration with [OpenAI Universe](
 
 1. Thou shall run natively. Thou shalt not use Docker containers or VNC servers.
 2. Thou shall allow a user to bring their own games. Thou shalt not wait for licensing deals and special game APIs.
-3. Thou shall encourage diverse and creative approaches. Thou shalt not only enable AI flavors of the month.  
+3. Thou shall encourage diverse and creative approaches. Thou shalt not only enable AI flavors of the month.
+
+_Want to know more about how Serpent.AI came to be? Read [The Story Behind Serpent.AI](http://blog.serpent.ai/the-story-behind-serpent-ai/) on the blog!_
 
 ## Documentation
 
@@ -26,7 +28,7 @@ Guides, tutorials and videos are being produced and added to the [GitHub Wiki](h
 
 ## Getting Help
 
-If you encounter a problem you believe is on Serpent.AI's end, you are encouraged to create a GitHub [issue](https://github.com/SerpentAI/SerpentAI/issues/new). If you do so, please make sure to provide as much context as possible. You can also ask your questions and get help from the community on [Discord](https://discord.gg/9D5SuxH) in the *#serpent-ai-help* public channel.
+If you encounter a problem while using the Serpent.AI framework, you are encouraged to create a GitHub [issue](https://github.com/SerpentAI/SerpentAI/issues/new). If you do so, please make sure to provide as much context as possible. You can also ask your questions and get help from the community on [Discord](https://discord.gg/9D5SuxH) in the *#serpent-ai-help* public channel. Installation problems should also be directed towards that Discord channel and not GitHub issues; Your chances of receiving a prompt response are much better that way!
 
 ## Showcasing your Work
 
