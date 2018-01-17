@@ -1,4 +1,4 @@
-Please do not post installation issues here. An entire community is available to help in #serpent-ai-help on [Discord](https://discord.gg/9D5SuxH).
+Please do not post installation issues here. An entire community is available to help in **#serpent-ai-help** on [Discord](https://discord.gg/9D5SuxH).
 
 * **Operating System:** Linux / Windows / macOS
 * **Serpent.AI Version:** (e.g. 0.1.12b1)
