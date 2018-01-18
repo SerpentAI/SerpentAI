@@ -14,7 +14,7 @@ keyboard
 mouse
 
 # TF & Keras
-tensorflow-gpu
+tensorflow-gpu==1.4.1
 Keras
 
 # Kivy

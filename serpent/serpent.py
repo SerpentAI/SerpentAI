@@ -224,11 +224,16 @@ def play(game_name, game_agent_name, frame_handler=None):
     game.play(game_agent_class_name=game_agent_name, frame_handler=frame_handler)
 
 
-def record(game_name, game_agent_name):
+def record(game_name, game_agent_name, frame_count=4, frame_spacing=4):
     game = initialize_game(game_name)
     game.launch(dry_run=True)
 
-    game.play(game_agent_class_name=game_agent_name, frame_handler="RECORD")
+    game.play(
+        game_agent_class_name=game_agent_name, 
+        frame_handler="RECORD", 
+        frame_count=int(frame_count),
+        frame_spacing=int(frame_spacing)
+    )
 
 
 def generate(plugin_type):

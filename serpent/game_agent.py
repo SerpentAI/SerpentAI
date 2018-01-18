@@ -94,6 +94,8 @@ class GameAgent(offshoot.Pluggable):
         self.uuid = str(uuid.uuid4())
         self.started_at = datetime.now()
 
+        self.kwargs = kwargs
+
     @offshoot.forbidden
     def on_game_frame(self, game_frame, frame_handler=None, **kwargs):
         if not self.frame_handler_setup_performed:
@@ -120,8 +122,8 @@ class GameAgent(offshoot.Pluggable):
         return pickle.loads(serialized_classifier)
 
     @offshoot.forbidden
-    def update_game_frame(self, game_frame):
-        game_frame_buffer = FrameGrabber.get_frames([0], frame_shape=game_frame.frame.shape)
+    def update_game_frame(self, frame_type="FULL"):
+        game_frame_buffer = FrameGrabber.get_frames([0], frame_type=frame_type)
         return game_frame_buffer.frames[0]
 
     def handle_noop(self, game_frame, **kwargs):
@@ -151,6 +153,8 @@ class GameAgent(offshoot.Pluggable):
         
         self.frame_keys = dict()
         self.frame_keyboard_events = dict()
+
+        self.frame_offsets = list(range(0, (self.kwargs["frame_count"] * self.kwargs["frame_spacing"]) - 1, self.kwargs["frame_spacing"]))
 
         time.sleep(1)
 
@@ -206,14 +210,12 @@ class GameAgent(offshoot.Pluggable):
         time.sleep(interval)
 
     def handle_record(self, game_frame, **kwargs):
-        keyboard_events = self.input_controller.capture_keys(duration=1 / self.config["fps"])
+        keyboard_events = self.input_controller.capture_keys(duration=1 / (self.config.get("record_fps") or 4))
         # TODO: mouse capture (no segfault plz)
 
         game_frame_buffer = FrameGrabber.get_frames(
-            [0, 4, 8, 12],
-            frame_shape=(self.game.frame_height, self.game.frame_width),
-            frame_type="PIPELINE",
-            dtype="float64"
+            self.frame_offsets,
+            frame_type="PIPELINE"
         )
 
         frame_uuid = str(uuid.uuid4())
@@ -246,7 +248,10 @@ class GameAgent(offshoot.Pluggable):
                         self.frame_keyboard_events[frame_uuid].append(keypress_data)
                         
                         if len(self.frame_keys[frame_uuid]) == len(self.frame_keyboard_events[frame_uuid]):
-                            self.frame_input_pairs.append((self.keyboard_events[key_name.name][1], self.frame_keyboard_events[frame_uuid]))
+                            self.frame_input_pairs.append((
+                                self.keyboard_events[key_name.name][1], 
+                                self.frame_keyboard_events[frame_uuid]
+                            ))
 
                         del self.keyboard_events[key_name.name]
         else:
@@ -342,6 +347,9 @@ class GameAgent(offshoot.Pluggable):
 
             self.frame_input_pairs = list()
             self.keyboard_event_times = dict()
+
+            serpent.utilities.clear_terminal()
+            print(f"Writing Frame/Input Data to 'datasets/frame_input.h5'... DONE")
 
             time.sleep(10)
 

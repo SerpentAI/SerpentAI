@@ -13,9 +13,11 @@ class GameFrameError(BaseException):
 
 class GameFrame:
 
-    def __init__(self, frame_array, frame_variants=None, **kwargs):
+    def __init__(self, frame_array, frame_variants=None, timestamp=None, **kwargs):
         self.frame_array = frame_array
         self.frame_variants = frame_variants or dict()
+
+        self.timestamp = timestamp
 
         self.offset_x = kwargs.get("offset_x") or 0
         self.offset_y = kwargs.get("offset_y") or 0

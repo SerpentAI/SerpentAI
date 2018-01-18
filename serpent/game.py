@@ -152,7 +152,8 @@ class Game(offshoot.Pluggable):
 
         game_agent = game_agent_class(
             game=self,
-            input_controller=InputController(game=self, backend=self.input_controller)
+            input_controller=InputController(game=self, backend=self.input_controller),
+            **kwargs
         )
 
         self.start_frame_grabber()
@@ -234,26 +235,7 @@ class Game(offshoot.Pluggable):
 
     @offshoot.forbidden
     def grab_latest_frame(self, frame_type="FULL"):
-        dtype = "uint8"
-
-        if frame_type == "FULL":
-            frame_shape = [
-                self.window_geometry.get("height"),
-                self.window_geometry.get("width"),
-                3
-            ]
-        elif frame_type == "PIPELINE":
-            frame_shape = [
-                self.frame_height or self.window_geometry.get("height"),
-                self.frame_width or self.window_geometry.get("width")
-            ]
-
-            if self.frame_channels == 3:
-                frame_shape.append(3)
-
-            dtype = self.frame_dtype
-
-        game_frame_buffer = FrameGrabber.get_frames([0], frame_shape, frame_type=frame_type, dtype=dtype)
+        game_frame_buffer = FrameGrabber.get_frames([0], frame_type=frame_type)
 
         return game_frame_buffer.frames[0]
 
