@@ -65,7 +65,6 @@ class Game(offshoot.Pluggable):
         self.frame_width = None
         self.frame_height = None
         self.frame_channels = 3
-        self.frame_dtype = "uint8"
 
         self.game_frame_limiter = GameFrameLimiter(fps=self.config.get("fps", 30))
 
@@ -156,6 +155,12 @@ class Game(offshoot.Pluggable):
             **kwargs
         )
 
+        # Look if we need to auto-append PNG to frame transformation pipeline based on given frame_handler
+        png_frame_handlers = ["RECORD"]
+
+        if frame_handler in png_frame_handlers and self.frame_transformation_pipeline_string is not None:
+            self.frame_transformation_pipeline_string += "|PNG"
+
         self.start_frame_grabber()
         self.redis_client.delete(config["frame_grabber"]["redis_key"])
 
@@ -166,7 +171,14 @@ class Game(offshoot.Pluggable):
 
         frame_type = "FULL"
 
-        if frame_handler in ["COLLECT_FRAMES", "COLLECT_FRAME_REGIONS", "COLLECT_FRAMES_FOR_CONTEXT"] and self.frame_transformation_pipeline_string is not None:
+        pipeline_frame_handlers = [
+            "COLLECT_FRAMES", 
+            "COLLECT_FRAME_REGIONS", 
+            "COLLECT_FRAMES_FOR_CONTEXT", 
+            "RECORD"
+        ]
+
+        if frame_handler in pipeline_frame_handlers and self.frame_transformation_pipeline_string is not None:
             frame_type = "PIPELINE"
 
         while True:
@@ -212,9 +224,6 @@ class Game(offshoot.Pluggable):
 
         if pipeline_string is not None:
             frame_grabber_command += f" {pipeline_string}"
-
-            if pipeline_string.endswith("|FLOAT"):
-                self.frame_dtype = "float64"
 
         self.frame_grabber_process = subprocess.Popen(shlex.split(frame_grabber_command))
 

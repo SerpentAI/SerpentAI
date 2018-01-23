@@ -67,10 +67,16 @@ class FrameGrabber:
             self.redis_client.lpush(config["frame_grabber"]["redis_key"], frame_bytes)
             self.redis_client.ltrim(config["frame_grabber"]["redis_key"], 0, self.frame_buffer_size)
 
-            frame_pipeline_shape = str(frame_pipeline.shape).replace("(", "").replace(")", "")
-            frame_pipeline_dtype = str(frame_pipeline.dtype)
+            if self.frame_transformation_pipeline.pipeline_string and self.frame_transformation_pipeline.pipeline_string.endswith("|PNG"):
+                frame_pipeline_shape = "PNG"
+                frame_pipeline_dtype = "PNG"
 
-            frame_pipeline_bytes = f"{cycle_start}~{frame_pipeline_shape}~{frame_pipeline_dtype}~".encode("utf-8") + frame_pipeline.tobytes()
+                frame_pipeline_bytes = f"{cycle_start}~{frame_pipeline_shape}~{frame_pipeline_dtype}~".encode("utf-8") + frame_pipeline
+            else:
+                frame_pipeline_shape = str(frame_pipeline.shape).replace("(", "").replace(")", "")
+                frame_pipeline_dtype = str(frame_pipeline.dtype)
+
+                frame_pipeline_bytes = f"{cycle_start}~{frame_pipeline_shape}~{frame_pipeline_dtype}~".encode("utf-8") + frame_pipeline.tobytes()
 
             self.redis_client.lpush(config["frame_grabber"]["redis_key"] + "_PIPELINE", frame_pipeline_bytes)
             self.redis_client.ltrim(config["frame_grabber"]["redis_key"] + "_PIPELINE", 0, self.frame_buffer_size)
@@ -133,8 +139,11 @@ class FrameGrabber:
 
             timestamp, shape, dtype, frame_bytes = frame_data.split("~".encode("utf-8"), maxsplit=3)
 
-            frame_shape = [int(i) for i in shape.decode("utf-8").split(", ")]
-            frame_array = np.fromstring(frame_bytes, dtype=dtype.decode("utf-8")).reshape(frame_shape)
+            if dtype == "PNG".encode("utf-8"):
+                frame_array = frame_bytes
+            else:
+                frame_shape = [int(i) for i in shape.decode("utf-8").split(", ")]
+                frame_array = np.fromstring(frame_bytes, dtype=dtype.decode("utf-8")).reshape(frame_shape)
 
             game_frame = GameFrame(frame_array, timestamp=float(timestamp))
 

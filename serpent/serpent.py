@@ -30,7 +30,8 @@ valid_commands = [
     "train",
     "capture",
     "visual_debugger",
-    "window_name"
+    "window_name",
+    "record_inputs"
 ]
 
 
@@ -286,6 +287,14 @@ def window_name():
     print("\n" + focused_window_name + "\n")
 
 
+def record_inputs():
+    from serpent.input_recorder import InputRecorder
+
+    input_recorder = InputRecorder()
+
+    input_recorder.start()
+
+
 def generate_game_plugin():
     clear_terminal()
     display_serpent_logo()
@@ -452,7 +461,8 @@ command_function_mapping = {
     "train": train,
     "capture": capture,
     "visual_debugger": visual_debugger,
-    "window_name": window_name
+    "window_name": window_name,
+    "record_inputs": record_inputs
 }
 
 command_description_mapping = {
@@ -463,12 +473,13 @@ command_description_mapping = {
     "plugins": "List all locally-available plugins",
     "launch": "Launch a game through a plugin",
     "play": "Play a game with a game agent through plugins",
-    "record": "Record player input from a game",
+    "record": "Record player input from a game (requires superuser)",
     "generate": "Generate code for game and game agent plugins",
     "train": "Train a context classifier with collected context frames",
     "capture": "Capture frames, screen regions and contexts from a game",
     "visual_debugger": "Launch the visual debugger",
-    "window_name": "Launch a utility to find a game's window name"
+    "window_name": "Launch a utility to find a game's window name",
+    "record_inputs": "Start the input recorder"
 }
 
 if __name__ == "__main__":

@@ -12,7 +12,9 @@ class FrameTransformationPipeline:
             raise FrameTransformationPipelineError("A 'pipeline_string' kwarg is expected...")
 
         self.game_frame_transformer = FrameTransformer()
+        
         self.pipeline = self._parse_pipeline_string(pipeline_string)
+        self.pipeline_string = pipeline_string
 
     @property
     def pipeline_operations(self):
@@ -20,7 +22,8 @@ class FrameTransformationPipeline:
             "RESIZE": self.game_frame_transformer.resize,
             "RESCALE": self.game_frame_transformer.rescale,
             "GRAYSCALE": self.game_frame_transformer.grayscale,
-            "FLOAT": self.game_frame_transformer.to_float
+            "FLOAT": self.game_frame_transformer.to_float,
+            "PNG": self.game_frame_transformer.to_png
         }
 
     def transform(self, frame=None):
