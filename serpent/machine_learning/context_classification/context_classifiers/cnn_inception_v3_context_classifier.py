@@ -78,16 +78,23 @@ class CNNInceptionV3ContextClassifier(ContextClassifier):
         if self.training_generator is None or self.validation_generator is None:
             self.prepare_generators()
 
-        resized_input_frame = skimage.transform.resize(
-            input_frame,
-            self.input_shape,
-            order=0
-        )
+        source_min = 0
 
-        resized_input_frame = np.array(serpent.cv.normalize(resized_input_frame, 0, 1, target_min=-1, target_max=1), dtype="float32")
+        if str(input_frame.dtype) == "uint8":
+            source_max = 255
+        elif str(input_frame.dtype) == "float64":
+            source_max = 1
+
+        input_frame = np.array(serpent.cv.normalize(
+            input_frame,
+            source_min,
+            source_max,
+            target_min=-1,
+            target_max=1
+        ), dtype="float32")
 
         class_mapping = self.training_generator.class_indices
-        class_probabilities = self.classifier.predict(resized_input_frame[None, :, :, :])[0]
+        class_probabilities = self.classifier.predict(input_frame[None, :, :, :])[0]
 
         max_probability_index = np.argmax(class_probabilities)
         max_probability = class_probabilities[max_probability_index]
