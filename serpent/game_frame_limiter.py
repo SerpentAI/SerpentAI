@@ -19,5 +19,6 @@ class GameFrameLimiter:
         if remaining_frame_time > 0:
             time.sleep(remaining_frame_time)
 
-    def benchmark(self):
-        pass
+    def benchmark(self, message=""):
+        duration = (datetime.utcnow() - self.started_at).microseconds / 1000000
+        print("%s %f" % (message, duration))

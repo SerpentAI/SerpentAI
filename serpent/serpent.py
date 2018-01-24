@@ -261,7 +261,7 @@ def capture(capture_type, game_name, interval=1, extra=None, extra_2=None):
     if game_class is None:
         raise Exception(f"Game '{game_name}' wasn't found. Make sure the plugin is installed.")
 
-    game = game_class()
+    game = game_class(fps=1./float(interval))
 
     game.launch(dry_run=True)
 

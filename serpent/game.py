@@ -66,7 +66,7 @@ class Game(offshoot.Pluggable):
         self.frame_height = None
         self.frame_channels = 3
 
-        self.game_frame_limiter = GameFrameLimiter(fps=self.config.get("fps", 30))
+        self.game_frame_limiter = GameFrameLimiter(fps=kwargs.get("fps", self.config.get("fps", 30)))
 
         self.api_class = None
         self.api_instance = None
