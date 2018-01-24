@@ -252,7 +252,7 @@ def train(training_type, *args):
         train_context(*args)
 
 
-def capture(capture_type, game_name, interval=1, extra=None):
+def capture(capture_type, game_name, interval=1, extra=None, extra_2=None):
     game_class_name = f"Serpent{game_name}Game"
 
     game_class_mapping = offshoot.discover("Game")
@@ -271,7 +271,7 @@ def capture(capture_type, game_name, interval=1, extra=None):
     if capture_type == "frame":
         game.play(frame_handler="COLLECT_FRAMES", interval=float(interval))
     elif capture_type == "context":
-        game.play(frame_handler="COLLECT_FRAMES_FOR_CONTEXT", interval=float(interval), context=extra)
+        game.play(frame_handler="COLLECT_FRAMES_FOR_CONTEXT", interval=float(interval), context=extra, screen_region=extra_2)
     elif capture_type == "region":
         game.play(frame_handler="COLLECT_FRAME_REGIONS", interval=float(interval), region=extra)
 

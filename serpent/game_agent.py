@@ -14,6 +14,7 @@ import serpent.ocr
 import serpent.utilities
 
 from serpent.frame_grabber import FrameGrabber
+from serpent.game_frame import GameFrame
 from serpent.game_frame_buffer import GameFrameBuffer
 from serpent.sprite_identifier import SpriteIdentifier
 from serpent.visual_debugger.visual_debugger import VisualDebugger
@@ -155,6 +156,19 @@ class GameAgent(offshoot.Pluggable):
         context = kwargs.get("context") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
         interval = kwargs.get("interval") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["interval"]
 
+        screen_region = kwargs.get("screen_region")
+
+        if screen_region is not None:
+            if screen_region not in self.game.screen_regions:
+                raise GameAgentError("Invalid game screen region...")
+
+            frame_region = serpent.cv.extract_region_from_image(
+                game_frame.frame,
+                self.game.screen_regions[screen_region]
+            )
+
+            game_frame = GameFrame(frame_region)
+
         self.game_frames.append(game_frame)
 
         self.collected_frame_count += 1
@@ -190,15 +204,10 @@ class GameAgent(offshoot.Pluggable):
         context = kwargs.get("context") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
 
         for i, game_frame in enumerate(self.game_frames):
-            resized_frame = skimage.transform.resize(
-                game_frame.frame,
-                (game_frame.frame.shape[0] // 2, game_frame.frame.shape[1] // 2)
-            )
-
             file_name = f"datasets/collect_frames_for_context/{context}/frame_{str(uuid.uuid4())}.png"
 
             print(f"Saving image {i + 1}/{len(self.game_frames)} to disk...")
-            skimage.io.imsave(file_name, resized_frame)
+            skimage.io.imsave(file_name, game_frame.frame)
 
         self.game_frames = list()
 
