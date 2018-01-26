@@ -65,8 +65,6 @@ class InputRecorder:
             if key_name.name in self.active_keys:
                 self.active_keys.remove(key_name.name)
 
-        print(key_name)
-
         event = {"name": f"{key_name.name}-{keyboard_event.event_type.upper()}", "timestamp": keyboard_event.time}
         event = pickle.dumps(event)
 
