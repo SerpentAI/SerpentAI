@@ -25,6 +25,8 @@ class InputRecorder:
         self.redis_key_stop = self.__class__.redis_key_stop
         
         redis_client.delete(self.redis_key)
+        redis_client.delete(self.redis_key_pause)
+        redis_client.delete(self.redis_key_stop)
 
     def start(self):
         keyboard.hook(self._on_keyboard_event)

@@ -181,6 +181,10 @@ class Game(offshoot.Pluggable):
         if frame_handler in pipeline_frame_handlers and self.frame_transformation_pipeline_string is not None:
             frame_type = "PIPELINE"
 
+        # Override FPS Config?
+        if frame_handler == "RECORD":
+            self.game_frame_limiter = GameFrameLimiter(fps=10)
+
         while True:
             self.game_frame_limiter.start()
 

@@ -67,7 +67,7 @@ class FrameGrabber:
             self.redis_client.lpush(config["frame_grabber"]["redis_key"], frame_bytes)
             self.redis_client.ltrim(config["frame_grabber"]["redis_key"], 0, self.frame_buffer_size)
 
-            if self.frame_transformation_pipeline.pipeline_string and self.frame_transformation_pipeline.pipeline_string.endswith("|PNG"):
+            if self._has_png_transformation_pipeline():
                 frame_pipeline_shape = "PNG"
                 frame_pipeline_dtype = "PNG"
 
@@ -120,6 +120,9 @@ class FrameGrabber:
                 retina_display = True
 
         return retina_display
+
+    def _has_png_transformation_pipeline(self):
+        return self.frame_transformation_pipeline and self.frame_transformation_pipeline.pipeline_string and self.frame_transformation_pipeline.pipeline_string.endswith("|PNG")
 
     @classmethod
     def get_frames(cls, frame_buffer_indices, frame_type="FULL", **kwargs):
