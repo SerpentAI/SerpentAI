@@ -1,6 +1,7 @@
 from serpent.game_launcher import GameLauncher, GameLauncherException
 
-import sys
+from serpent.utilities import is_linux, is_macos, is_windows
+
 import enum
 import webbrowser
 
@@ -37,10 +38,9 @@ class WebBrowserGameLauncher(GameLauncher):
         if url is None:
             raise GameLauncherException("An 'url' kwarg is required...")
 
-        if sys.platform in ["linux", "linux2"]:
+        if is_linux():
             webbrowser.get(self.web_browsers.get(browser.name)).open_new(url)
-        elif sys.platform == "darwin":
+        elif is_macos():
             webbrowser.get(self.web_browsers.get(browser.name)).open_new(url)
-        elif sys.platform == "win32":
+        elif is_windows():
             webbrowser.get(self.web_browsers.get(browser.name)).open_new(url)
-

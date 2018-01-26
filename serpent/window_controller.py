@@ -1,4 +1,4 @@
-import sys
+from serpent.utilities import is_linux, is_macos, is_windows
 
 
 class WindowControllerError(BaseException):
@@ -32,12 +32,12 @@ class WindowController:
         return self.adapter.get_window_geometry(window_id)
 
     def _load_adapter(self):
-        if sys.platform in ["linux", "linux2"]:
+        if is_linux():
             from serpent.window_controllers.linux_window_controller import LinuxWindowController
             return LinuxWindowController
-        elif sys.platform == "darwin":
+        elif is_macos():
             from serpent.window_controllers.darwin_window_controller import DarwinWindowController
             return DarwinWindowController
-        elif sys.platform == "win32":
+        elif is_windows():
             from serpent.window_controllers.win32_window_controller import Win32WindowController
             return Win32WindowController

@@ -8,7 +8,7 @@ import time
 
 import offshoot
 
-from serpent.utilities import clear_terminal, display_serpent_logo
+from serpent.utilities import clear_terminal, display_serpent_logo, is_linux, is_macos, is_windows
 
 from serpent.window_controller import WindowController
 
@@ -22,6 +22,7 @@ valid_commands = [
     "grab_frames",
     "launch",
     "play",
+    "record",
     "generate",
     "activate",
     "deactivate",
@@ -29,7 +30,8 @@ valid_commands = [
     "train",
     "capture",
     "visual_debugger",
-    "window_name"
+    "window_name",
+    "record_inputs"
 ]
 
 
@@ -111,17 +113,17 @@ def setup():
         tensorflow_backend = "CPU"
 
     # Generate Platform-Specific requirements.txt
-    if sys.platform in ["linux", "linux2"]:
+    if is_linux():
         shutil.copy(
             os.path.join(os.path.dirname(__file__), "requirements.linux.txt"),
             os.path.join(os.getcwd(), "requirements.txt")
         )
-    elif sys.platform == "darwin":
+    elif is_macos():
         shutil.copy(
             os.path.join(os.path.dirname(__file__), "requirements.darwin.txt"),
             os.path.join(os.getcwd(), "requirements.txt")
         )
-    elif sys.platform == "win32":
+    elif is_windows():
         shutil.copy(
             os.path.join(os.path.dirname(__file__), "requirements.win32.txt"),
             os.path.join(os.getcwd(), "requirements.txt")
@@ -139,11 +141,11 @@ def setup():
     # Install the dependencies
     print("Installing dependencies...")
 
-    if sys.platform in ["linux", "linux2"]:
+    if is_linux():
         subprocess.call(shlex.split("pip install python-xlib"))
-    elif sys.platform == "darwin":
+    elif is_macos():
         subprocess.call(shlex.split("pip install python-xlib pyobjc-framework-Quartz py-applescript"))
-    elif sys.platform == "win32":
+    elif is_windows():
         # Anaconda Packages
         subprocess.call(shlex.split("conda install numpy scipy scikit-image scikit-learn h5py -y"), shell=True)
 
@@ -206,27 +208,12 @@ def plugins():
 
 
 def launch(game_name):
-    game_class_name = f"Serpent{game_name}Game"
-
-    game_class_mapping = offshoot.discover("Game")
-    game = game_class_mapping.get(game_class_name)
-
-    if game is None:
-        raise Exception(f"Game '{game_name}' wasn't found. Make sure the plugin is installed.")
-
-    game().launch()
+    game = initialize_game(game_name)
+    game.launch()
 
 
 def play(game_name, game_agent_name, frame_handler=None):
-    game_class_name = f"Serpent{game_name}Game"
-
-    game_class_mapping = offshoot.discover("Game")
-    game_class = game_class_mapping.get(game_class_name)
-
-    if game_class is None:
-        raise Exception(f"Game '{game_name}' wasn't found. Make sure the plugin is installed.")
-
-    game = game_class()
+    game = initialize_game(game_name)
     game.launch(dry_run=True)
 
     game_agent_class_mapping = offshoot.discover("GameAgent")
@@ -236,6 +223,18 @@ def play(game_name, game_agent_name, frame_handler=None):
         raise Exception(f"Game Agent '{game_agent_name}' wasn't found. Make sure the plugin is installed.")
 
     game.play(game_agent_class_name=game_agent_name, frame_handler=frame_handler)
+
+
+def record(game_name, game_agent_name, frame_count=4, frame_spacing=4):
+    game = initialize_game(game_name)
+    game.launch(dry_run=True)
+
+    game.play(
+        game_agent_class_name=game_agent_name, 
+        frame_handler="RECORD", 
+        frame_count=int(frame_count),
+        frame_spacing=int(frame_spacing)
+    )
 
 
 def generate(plugin_type):
@@ -253,16 +252,7 @@ def train(training_type, *args):
 
 
 def capture(capture_type, game_name, interval=1, extra=None, extra_2=None):
-    game_class_name = f"Serpent{game_name}Game"
-
-    game_class_mapping = offshoot.discover("Game")
-    game_class = game_class_mapping.get(game_class_name)
-
-    if game_class is None:
-        raise Exception(f"Game '{game_name}' wasn't found. Make sure the plugin is installed.")
-
-    game = game_class()
-
+    game = initialize_game(game_name)
     game.launch(dry_run=True)
 
     if capture_type not in ["frame", "context", "region"]:
@@ -295,6 +285,14 @@ def window_name():
 
     print(f"\nGame Window Detected! Please set the kwargs['window_name'] value in the Game plugin to:")
     print("\n" + focused_window_name + "\n")
+
+
+def record_inputs():
+    from serpent.input_recorder import InputRecorder
+
+    input_recorder = InputRecorder()
+
+    input_recorder.start()
 
 
 def generate_game_plugin():
@@ -432,6 +430,20 @@ def train_context(epochs=3, validate=True, autosave=False):
     ContextClassifier.executable_train(epochs=int(epochs), validate=argv_is_true(validate), autosave=argv_is_true(autosave))
 
 
+def initialize_game(game_name):
+    game_class_name = f"Serpent{game_name}Game"
+
+    game_class_mapping = offshoot.discover("Game")
+    game_class = game_class_mapping.get(game_class_name)
+
+    if game_class is None:
+        raise Exception(f"Game '{game_name}' wasn't found. Make sure the plugin is installed.")
+
+    game = game_class()
+
+    return game
+
+
 def argv_is_true(arg):
     return arg in [True, "True"]
 
@@ -444,11 +456,13 @@ command_function_mapping = {
     "plugins": plugins,
     "launch": launch,
     "play": play,
+    "record": record,
     "generate": generate,
     "train": train,
     "capture": capture,
     "visual_debugger": visual_debugger,
-    "window_name": window_name
+    "window_name": window_name,
+    "record_inputs": record_inputs
 }
 
 command_description_mapping = {
@@ -459,11 +473,13 @@ command_description_mapping = {
     "plugins": "List all locally-available plugins",
     "launch": "Launch a game through a plugin",
     "play": "Play a game with a game agent through plugins",
+    "record": "Record player input from a game (requires superuser)",
     "generate": "Generate code for game and game agent plugins",
     "train": "Train a context classifier with collected context frames",
     "capture": "Capture frames, screen regions and contexts from a game",
     "visual_debugger": "Launch the visual debugger",
-    "window_name": "Launch a utility to find a game's window name"
+    "window_name": "Launch a utility to find a game's window name",
+    "record_inputs": "Start the input recorder"
 }
 
 if __name__ == "__main__":

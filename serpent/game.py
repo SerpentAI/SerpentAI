@@ -7,7 +7,6 @@ import subprocess
 import signal
 import shlex
 import time
-import sys
 import os, os.path
 import atexit
 
@@ -24,7 +23,7 @@ from serpent.game_frame_limiter import GameFrameLimiter
 
 from serpent.sprite import Sprite
 
-import serpent.utilities
+from serpent.utilities import clear_terminal, is_windows
 
 import skimage.io
 import skimage.color
@@ -48,7 +47,7 @@ class Game(offshoot.Pluggable):
 
         self.platform = kwargs.get("platform")
 
-        default_input_controller_backend = InputControllers.NATIVE_WIN32 if sys.platform == "win32" else InputControllers.PYAUTOGUI
+        default_input_controller_backend = InputControllers.NATIVE_WIN32 if is_windows() else InputControllers.PYAUTOGUI
         self.input_controller = kwargs.get("input_controller") or default_input_controller_backend
 
         self.window_id = None
@@ -151,8 +150,15 @@ class Game(offshoot.Pluggable):
 
         game_agent = game_agent_class(
             game=self,
-            input_controller=InputController(game=self, backend=self.input_controller)
+            input_controller=InputController(game=self, backend=self.input_controller),
+            **kwargs
         )
+
+        # Look if we need to auto-append PNG to frame transformation pipeline based on given frame_handler
+        png_frame_handlers = ["RECORD"]
+
+        if frame_handler in png_frame_handlers and self.frame_transformation_pipeline_string is not None:
+            self.frame_transformation_pipeline_string += "|PNG"
 
         self.start_frame_grabber()
         self.redis_client.delete(config["frame_grabber"]["redis_key"])
@@ -164,8 +170,19 @@ class Game(offshoot.Pluggable):
 
         frame_type = "FULL"
 
-        if frame_handler in ["COLLECT_FRAMES", "COLLECT_FRAME_REGIONS", "COLLECT_FRAMES_FOR_CONTEXT"]:
+        pipeline_frame_handlers = [
+            "COLLECT_FRAMES", 
+            "COLLECT_FRAME_REGIONS", 
+            "COLLECT_FRAMES_FOR_CONTEXT", 
+            "RECORD"
+        ]
+
+        if frame_handler in pipeline_frame_handlers and self.frame_transformation_pipeline_string is not None:
             frame_type = "PIPELINE"
+
+        # Override FPS Config?
+        if frame_handler == "RECORD":
+            self.game_frame_limiter = GameFrameLimiter(fps=10)
 
         while True:
             self.game_frame_limiter.start()
@@ -176,7 +193,7 @@ class Game(offshoot.Pluggable):
                 if self.is_focused:
                     game_agent.on_game_frame(game_frame, frame_handler=frame_handler, **kwargs)
                 else:
-                    serpent.utilities.clear_terminal()
+                    clear_terminal()
                     print("PAUSED\n")
 
                     game_agent.on_pause(frame_handler=frame_handler, **kwargs)
@@ -230,22 +247,7 @@ class Game(offshoot.Pluggable):
 
     @offshoot.forbidden
     def grab_latest_frame(self, frame_type="FULL"):
-        if frame_type == "FULL":
-            frame_shape = [
-                self.window_geometry.get("height"),
-                self.window_geometry.get("width"),
-                3
-            ]
-        elif frame_type == "PIPELINE":
-            frame_shape = [
-                self.frame_height or self.window_geometry.get("height"),
-                self.frame_width or self.window_geometry.get("width")
-            ]
-
-            if self.frame_channels == 3:
-                frame_shape.append(3)
-
-        game_frame_buffer = FrameGrabber.get_frames([0], frame_shape, frame_type=frame_type)
+        game_frame_buffer = FrameGrabber.get_frames([0], frame_type=frame_type)
 
         return game_frame_buffer.frames[0]
 

@@ -5,22 +5,35 @@ from serpent.config import config
 import time
 import uuid
 import pickle
+import h5py
+import random
+
+import subprocess
+import signal
+import shlex
+import atexit
 
 import os
 import os.path
 
 import serpent.cv
 import serpent.ocr
-import serpent.utilities
+
+from serpent.utilities import clear_terminal, is_unix
 
 from serpent.frame_grabber import FrameGrabber
+from serpent.input_recorder import InputRecorder
+
 from serpent.game_frame import GameFrame
 from serpent.game_frame_buffer import GameFrameBuffer
+
 from serpent.sprite_identifier import SpriteIdentifier
+
 from serpent.visual_debugger.visual_debugger import VisualDebugger
 
 import skimage.io
 import skimage.transform
+import skimage.util
 
 from redis import StrictRedis
 
@@ -50,19 +63,26 @@ class GameAgent(offshoot.Pluggable):
             NOOP=self.handle_noop,
             COLLECT_FRAMES=self.handle_collect_frames,
             COLLECT_FRAME_REGIONS=self.handle_collect_frame_regions,
-            COLLECT_FRAMES_FOR_CONTEXT=self.handle_collect_frames_for_context
+            COLLECT_FRAMES_FOR_CONTEXT=self.handle_collect_frames_for_context,
+            RECORD=self.handle_record
         )
 
         self.frame_handler_setups = dict(
             COLLECT_FRAMES=self.setup_collect_frames,
             COLLECT_FRAME_REGIONS=self.setup_collect_frame_regions,
-            COLLECT_FRAMES_FOR_CONTEXT=self.setup_collect_frames_for_context
+            COLLECT_FRAMES_FOR_CONTEXT=self.setup_collect_frames_for_context,
+            RECORD=self.setup_handle_record
         )
 
         self.frame_handler_pause_callbacks = dict(
             COLLECT_FRAMES=self.on_collect_frames_pause,
             COLLECT_FRAME_REGIONS=self.on_collect_frame_regions_pause,
-            COLLECT_FRAMES_FOR_CONTEXT=self.on_collect_frames_for_context_pause
+            COLLECT_FRAMES_FOR_CONTEXT=self.on_collect_frames_for_context_pause,
+            RECORD=self.on_record_pause
+        )
+
+        self.reward_functions = dict(
+            TEST=self.reward_test   
         )
 
         self.frame_handler_setup_performed = False
@@ -79,6 +99,8 @@ class GameAgent(offshoot.Pluggable):
 
         self.uuid = str(uuid.uuid4())
         self.started_at = datetime.now()
+
+        self.kwargs = kwargs
 
     @offshoot.forbidden
     def on_game_frame(self, game_frame, frame_handler=None, **kwargs):
@@ -106,8 +128,8 @@ class GameAgent(offshoot.Pluggable):
         return pickle.loads(serialized_classifier)
 
     @offshoot.forbidden
-    def update_game_frame(self, game_frame):
-        game_frame_buffer = FrameGrabber.get_frames([0], frame_shape=game_frame.frame.shape)
+    def update_game_frame(self, frame_type="FULL"):
+        game_frame_buffer = FrameGrabber.get_frames([0], frame_type=frame_type)
         return game_frame_buffer.frames[0]
 
     def handle_noop(self, game_frame, **kwargs):
@@ -130,12 +152,23 @@ class GameAgent(offshoot.Pluggable):
         self.game_frames = list()
         self.collected_frame_count = 0
 
+    def setup_handle_record(self, **kwargs):
+        self.game_frame_buffers = list()
+        self.input_recorder_process = None
+        
+        self.frame_offsets = list(range(0, (self.kwargs["frame_count"] * self.kwargs["frame_spacing"]) - 1, self.kwargs["frame_spacing"]))
+        
+        self._start_input_recorder()
+
+        clear_terminal()
+        print("Start playing the game! Focus out when you are done or want to save the collected data to that point.")
+
     def handle_collect_frames(self, game_frame, **kwargs):
         self.game_frames.append(game_frame)
 
         self.collected_frame_count += 1
 
-        serpent.utilities.clear_terminal()
+        clear_terminal()
         print(f"Collected Frame #{self.collected_frame_count}")
 
         time.sleep(kwargs.get("interval") or self.config.get("collect_frames_interval") or 1)
@@ -147,7 +180,7 @@ class GameAgent(offshoot.Pluggable):
 
         self.collected_frame_count += 1
 
-        serpent.utilities.clear_terminal()
+        clear_terminal()
         print(f"Collected Frame #{self.collected_frame_count} for Region: {region}")
 
         time.sleep(kwargs.get("interval") or self.config.get("collect_frames_interval") or 1)
@@ -173,11 +206,19 @@ class GameAgent(offshoot.Pluggable):
 
         self.collected_frame_count += 1
 
-        serpent.utilities.clear_terminal()
+        clear_terminal()
         print(f"Collected Frame #{self.collected_frame_count} for Context: {context}")
 
         time.sleep(interval)
 
+    def handle_record(self, game_frame, **kwargs):
+        game_frame_buffer = FrameGrabber.get_frames(
+            self.frame_offsets, 
+            frame_type="PIPELINE"
+        )
+
+        self.game_frame_buffers.append(game_frame_buffer)
+    
     def on_collect_frames_pause(self, **kwargs):
         for i, game_frame in enumerate(self.game_frames):
             print(f"Saving image {i + 1}/{len(self.game_frames)} to disk...")
@@ -211,6 +252,110 @@ class GameAgent(offshoot.Pluggable):
 
         self.game_frames = list()
 
+    def on_record_pause(self, **kwargs):
+        InputRecorder.pause_input_recording()
+
+        keyboard_events = list()
+        keyboard_event_count = self.redis_client.llen(config["input_recorder"]["redis_key"])
+
+        for i in range(keyboard_event_count):
+            keyboard_events.append(pickle.loads(self.redis_client.lpop(config["input_recorder"]["redis_key"])))
+
+        data = self._merge_frames_and_keyboard_events(keyboard_events)
+
+        if not len(data):
+            time.sleep(1)
+            return None
+
+        latest_game_frame_buffer = None
+
+        active_keys = set()
+        down_keys = dict()
+
+        observations = dict()
+
+        compute_reward = "reward_function" in self.config and self.config["reward_function"] in self.reward_functions
+        reward_func = None
+
+        if compute_reward:
+            reward_func = self.reward_functions[self.config["reward_function"]]
+
+        for item in data:
+            if isinstance(item, GameFrameBuffer):
+                latest_game_frame_buffer = item
+
+                reward_score = 0
+
+                if compute_reward:
+                    reward_score = reward_func(item.frames)
+                
+                timestamp = item.frames[-2].timestamp
+                observations[timestamp] = [item, dict(), list(active_keys), reward_score]
+            else:
+                key_name, key_event = item["name"].split("-")
+
+                if key_event == "DOWN":
+                    active_keys.add(key_name)
+
+                    if latest_game_frame_buffer is not None:
+                        timestamp = latest_game_frame_buffer.frames[-2].timestamp
+                        observations[timestamp][1][key_name] = item["timestamp"]
+
+                        down_keys[key_name] = timestamp
+
+                elif key_event == "UP":
+                    active_keys.remove(key_name)
+
+                    if key_name in down_keys:
+                        timestamp = down_keys[key_name]
+                        
+                        duration = item["timestamp"] - observations[timestamp][1][key_name]
+                        observations[timestamp][1][key_name] = duration
+
+                        del down_keys[key_name]
+
+        print(f"Writing Recorded Input Data to 'datasets/input_recording.h5'... (0/{len(observations)})")
+
+        with h5py.File("datasets/input_recording.h5", "a") as f:
+            i = 0
+
+            for timestamp, observation in observations.items():
+                clear_terminal()
+                print(f"Writing Recorded Input Data to 'datasets/input_recording.h5'... ({i + 1}/{len(observations)})")
+                game_frame_buffer, inputs, actives, reward_score = observation
+
+                f.create_dataset(
+                    f"{timestamp}-frames",
+                    data=[game_frame.frame_bytes for game_frame in game_frame_buffer.frames]
+                )
+
+                f.create_dataset(
+                    f"{timestamp}-inputs",
+                    data=[(key_name.encode("utf-8"), str(duration).encode("utf-8")) for key_name, duration in inputs.items()]
+                )
+
+                f.create_dataset(
+                    f"{timestamp}-inputs-active",
+                    data=[key_name.encode("utf-8") for key_name in actives]
+                )
+
+                f.create_dataset(
+                    f"{timestamp}-reward",
+                    data=reward_score
+                )
+
+                i += 1
+
+            self.game_frame_buffers = list()
+
+            clear_terminal()
+            print(f"Writing Frame/Input Data to 'datasets/input_recording.h5'... DONE")
+
+        time.sleep(1)
+
+    def reward_test(self, frames, **kwargs):
+        return random.choice(range(0, 10))
+
     def _setup_frame_handler(self, frame_handler=None, **kwargs):
         frame_handler = frame_handler or self.config.get("frame_handler", "NOOP")
 
@@ -222,3 +367,77 @@ class GameAgent(offshoot.Pluggable):
     def _register_sprites(self):
         for sprite_name, sprite in self.game.sprites.items():
             self.sprite_identifier.register(sprite)
+    
+    @offshoot.forbidden
+    def _start_input_recorder(self):
+        if self.input_recorder_process is not None:
+            self._stop_input_recorder()
+
+        input_recorder_command = "sudo serpent record_inputs" if is_unix() else "serpent record_inputs"
+
+        self.input_recorder_process = subprocess.Popen(shlex.split(input_recorder_command))
+
+        signal.signal(signal.SIGINT, self._handle_signal)
+        signal.signal(signal.SIGTERM, self._handle_signal)
+
+        atexit.register(self._handle_signal, 15, None, False)
+
+    @offshoot.forbidden
+    def _stop_input_recorder(self):
+        if self.input_recorder_process is None:
+            return None
+
+        self.input_recorder_process.kill()
+        self.input_recorder_process = None
+
+        atexit.unregister(self._handle_signal)
+
+    @offshoot.forbidden
+    def _handle_signal(self, signum=15, frame=None, do_exit=True):
+        if self.input_recorder_process is not None:
+            if self.input_recorder_process.poll() is None:
+                self.input_recorder_process.send_signal(signum)
+
+                if do_exit:
+                    exit()
+    
+    @offshoot.forbidden
+    def _merge_frames_and_keyboard_events(self, keyboard_events):
+        game_frame_buffer_index = 0
+        keyboard_event_index = 0
+
+        merged = list()
+
+        while True:
+            game_frame_buffer = None
+            keyboard_event = None
+
+            if game_frame_buffer_index > (len(self.game_frame_buffers) - 1) and keyboard_event_index > (len(keyboard_events) - 1):
+                break
+            else:
+                if game_frame_buffer_index <= (len(self.game_frame_buffers) - 1):
+                    game_frame_buffer = self.game_frame_buffers[game_frame_buffer_index]
+                
+                if keyboard_event_index <= (len(keyboard_events) - 1):
+                    keyboard_event = keyboard_events[keyboard_event_index]
+
+            if game_frame_buffer is None:
+                item = keyboard_event
+                keyboard_event_index += 1
+            elif keyboard_event is None:
+                item = game_frame_buffer
+                game_frame_buffer_index += 1
+            else:
+                game_frame_buffer_timestamp = game_frame_buffer.frames[-2].timestamp
+                keyboard_event_timestamp = keyboard_event["timestamp"]
+
+                if game_frame_buffer_timestamp < keyboard_event_timestamp:
+                    item = game_frame_buffer
+                    game_frame_buffer_index += 1
+                else:
+                    item = keyboard_event
+                    keyboard_event_index += 1
+                
+            merged.append(item)
+
+        return merged

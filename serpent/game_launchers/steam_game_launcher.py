@@ -1,6 +1,6 @@
 from serpent.game_launcher import GameLauncher, GameLauncherException
+from serpent.utilities import is_linux, is_macos, is_windows
 
-import sys
 import shlex
 import subprocess
 import webbrowser
@@ -24,9 +24,9 @@ class SteamGameLauncher(GameLauncher):
             args_list = [f"--{k}={v}" for k, v in app_args.items()]
             protocol_string += "/en/" + " ".join(args_list)
 
-        if sys.platform in ["linux", "linux2"]:
+        if is_linux():
             subprocess.call(shlex.split(f"xdg-open '{protocol_string}'"))
-        elif sys.platform == "darwin":
+        elif is_macos():
             subprocess.call(shlex.split(f"open '{protocol_string}'"))
-        elif sys.platform == "win32":
+        elif is_windows():
             webbrowser.open(f"{protocol_string}")

@@ -1,13 +1,44 @@
 import sys
 import subprocess
 
+import enum
+
+
+class OperatingSystem(enum.Enum):
+    LINUX = 0
+    WINDOWS = 1
+    MACOS = 2
+
+
+def operating_system():
+    if sys.platform in ["linux", "linux2"]:
+        return OperatingSystem.LINUX
+    elif sys.platform == "darwin":
+        return OperatingSystem.MACOS
+    elif sys.platform == "win32":
+        return OperatingSystem.WINDOWS
+
+
+def is_linux():
+    return operating_system().name == "LINUX"
+
+
+def is_macos():
+    return operating_system().name == "MACOS"
+
+
+def is_unix():
+    return operating_system().name in ["LINUX", "MACOS"]
+
+
+def is_windows():
+    return operating_system().name == "WINDOWS"
+
 
 def clear_terminal():
-    if sys.platform in ["linux", "linux2"]:
+    if is_unix():
         print("\033c")
-    elif sys.platform == "darwin":
-        print("\033c")
-    elif sys.platform == "win32":
+    elif is_windows():
         subprocess.call(["cls"], shell=True)
 
 

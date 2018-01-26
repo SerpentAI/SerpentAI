@@ -20,6 +20,9 @@ frame_handlers:
 frame_grabber:
     redis_key: SERPENT:FRAMES
 
+input_recorder:
+    redis_key: SERPENT:INPUTS
+
 visual_debugger:
     redis_key_prefix: SERPENT:VISUAL_DEBUGGER
     available_buckets:

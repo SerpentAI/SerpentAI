@@ -13,9 +13,17 @@ class GameFrameError(BaseException):
 
 class GameFrame:
 
-    def __init__(self, frame_array, frame_variants=None, **kwargs):
-        self.frame_array = frame_array
+    def __init__(self, frame_data, frame_variants=None, timestamp=None, **kwargs):
+        if isinstance(frame_data, bytes):
+            self.frame_bytes = frame_data
+            self.frame_array = None
+        elif isinstance(frame_data, np.ndarray):
+            self.frame_bytes = None
+            self.frame_array = frame_data
+
         self.frame_variants = frame_variants or dict()
+
+        self.timestamp = timestamp
 
         self.offset_x = kwargs.get("offset_x") or 0
         self.offset_y = kwargs.get("offset_y") or 0
@@ -24,7 +32,7 @@ class GameFrame:
 
     @property
     def frame(self):
-        return self.frame_array
+        return self.frame_array or self.frame_bytes
 
     @property
     def half_resolution_frame(self):

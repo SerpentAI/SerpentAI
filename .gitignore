@@ -7,8 +7,6 @@ __pycache__/
 
 .python-version
 
-*.ipynb
-
 plugins/
 
 *.egg-info
