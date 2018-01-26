@@ -1,5 +1,3 @@
-import sys
-
 import skimage.color
 import skimage.segmentation
 import skimage.filters
@@ -9,11 +7,11 @@ import skimage.transform
 import skimage.measure
 import skimage.io
 
-if sys.platform in ["linux", "linux2"]:
+from serpent.utilities import is_unix, is_windows
+
+if is_unix():
     import tesserocr
-elif sys.platform == "darwin":
-    import tesserocr
-elif sys.platform == "win32":
+elif is_windows():
     import pytesseract
 
 import editdistance
@@ -121,17 +119,11 @@ def perform_ocr(image, scale=10, order=5, horizontal_closing=10, vertical_closin
 
     image = skimage.util.img_as_ubyte(image)
 
-    if sys.platform in ["linux", "linux2"]:
+    if is_unix():
         return tesserocr.image_to_text(
             Image.fromarray(image),
             psm=tesserocr.PSM.SINGLE_LINE,
             oem=tesserocr.OEM.TESSERACT_ONLY
         ).strip()
-    elif sys.platform == "darwin":
-        return tesserocr.image_to_text(
-            Image.fromarray(image),
-            psm=tesserocr.PSM.SINGLE_LINE,
-            oem=tesserocr.OEM.TESSERACT_ONLY
-        ).strip()
-    elif sys.platform == "win32":
+    elif is_windows():
         return pytesseract.image_to_string(Image.fromarray(image))

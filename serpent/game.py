@@ -7,7 +7,6 @@ import subprocess
 import signal
 import shlex
 import time
-import sys
 import os, os.path
 import atexit
 
@@ -24,7 +23,7 @@ from serpent.game_frame_limiter import GameFrameLimiter
 
 from serpent.sprite import Sprite
 
-import serpent.utilities
+from serpent.utilities import clear_terminal, is_windows
 
 import skimage.io
 import skimage.color
@@ -48,7 +47,7 @@ class Game(offshoot.Pluggable):
 
         self.platform = kwargs.get("platform")
 
-        default_input_controller_backend = InputControllers.NATIVE_WIN32 if sys.platform == "win32" else InputControllers.PYAUTOGUI
+        default_input_controller_backend = InputControllers.NATIVE_WIN32 if is_windows() else InputControllers.PYAUTOGUI
         self.input_controller = kwargs.get("input_controller") or default_input_controller_backend
 
         self.window_id = None
@@ -194,7 +193,7 @@ class Game(offshoot.Pluggable):
                 if self.is_focused:
                     game_agent.on_game_frame(game_frame, frame_handler=frame_handler, **kwargs)
                 else:
-                    serpent.utilities.clear_terminal()
+                    clear_terminal()
                     print("PAUSED\n")
 
                     game_agent.on_pause(frame_handler=frame_handler, **kwargs)

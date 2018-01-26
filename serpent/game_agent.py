@@ -5,7 +5,6 @@ from serpent.config import config
 import time
 import uuid
 import pickle
-import io
 import h5py
 import random
 
@@ -17,28 +16,24 @@ import atexit
 import os
 import os.path
 
-import collections
-
 import serpent.cv
 import serpent.ocr
-import serpent.utilities
+
+from serpent.utilities import clear_terminal, is_unix
 
 from serpent.frame_grabber import FrameGrabber
 from serpent.input_recorder import InputRecorder
+
 from serpent.game_frame import GameFrame
 from serpent.game_frame_buffer import GameFrameBuffer
+
 from serpent.sprite_identifier import SpriteIdentifier
-from serpent.input_controller import keyboard_module_scan_code_mapping
+
 from serpent.visual_debugger.visual_debugger import VisualDebugger
 
 import skimage.io
 import skimage.transform
 import skimage.util
-import time
-import sys
-import os, os.path
-import atexit
-from PIL import Image
 
 from redis import StrictRedis
 
@@ -165,7 +160,7 @@ class GameAgent(offshoot.Pluggable):
         
         self._start_input_recorder()
 
-        serpent.utilities.clear_terminal()
+        clear_terminal()
         print("Start playing the game! Focus out when you are done or want to save the collected data to that point.")
 
     def handle_collect_frames(self, game_frame, **kwargs):
@@ -173,7 +168,7 @@ class GameAgent(offshoot.Pluggable):
 
         self.collected_frame_count += 1
 
-        serpent.utilities.clear_terminal()
+        clear_terminal()
         print(f"Collected Frame #{self.collected_frame_count}")
 
         time.sleep(kwargs.get("interval") or self.config.get("collect_frames_interval") or 1)
@@ -185,7 +180,7 @@ class GameAgent(offshoot.Pluggable):
 
         self.collected_frame_count += 1
 
-        serpent.utilities.clear_terminal()
+        clear_terminal()
         print(f"Collected Frame #{self.collected_frame_count} for Region: {region}")
 
         time.sleep(kwargs.get("interval") or self.config.get("collect_frames_interval") or 1)
@@ -211,7 +206,7 @@ class GameAgent(offshoot.Pluggable):
 
         self.collected_frame_count += 1
 
-        serpent.utilities.clear_terminal()
+        clear_terminal()
         print(f"Collected Frame #{self.collected_frame_count} for Context: {context}")
 
         time.sleep(interval)
@@ -325,7 +320,7 @@ class GameAgent(offshoot.Pluggable):
             i = 0
 
             for timestamp, observation in observations.items():
-                serpent.utilities.clear_terminal()
+                clear_terminal()
                 print(f"Writing Recorded Input Data to 'datasets/input_recording.h5'... ({i + 1}/{len(observations)})")
                 game_frame_buffer, inputs, actives, reward_score = observation
 
@@ -353,7 +348,7 @@ class GameAgent(offshoot.Pluggable):
 
             self.game_frame_buffers = list()
 
-            serpent.utilities.clear_terminal()
+            clear_terminal()
             print(f"Writing Frame/Input Data to 'datasets/frame_input.h5'... DONE")
 
         time.sleep(1)
@@ -378,7 +373,7 @@ class GameAgent(offshoot.Pluggable):
         if self.input_recorder_process is not None:
             self._stop_input_recorder()
 
-        input_recorder_command = "sudo serpent record_inputs"
+        input_recorder_command = "sudo serpent record_inputs" if is_unix() else "serpent record_inputs"
 
         self.input_recorder_process = subprocess.Popen(shlex.split(input_recorder_command))
 
@@ -411,11 +406,9 @@ class GameAgent(offshoot.Pluggable):
         game_frame_buffer_index = 0
         keyboard_event_index = 0
 
-        merged = list();
+        merged = list()
 
         while True:
-            item = None
-
             game_frame_buffer = None
             keyboard_event = None
 

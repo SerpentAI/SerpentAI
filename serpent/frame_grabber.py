@@ -9,13 +9,14 @@ import skimage.util
 
 from serpent.config import config
 
-import sys
 import time
 
 from serpent.game_frame import GameFrame
 from serpent.game_frame_buffer import GameFrameBuffer
 
 from serpent.frame_transformation_pipeline import FrameTransformationPipeline
+
+from serpent.utilities import is_macos
 
 
 redis_client = StrictRedis(**config["redis"])
@@ -113,7 +114,7 @@ class FrameGrabber:
     def _perform_retina_display_check(self):
         retina_display = False
 
-        if sys.platform == "darwin":
+        if is_macos():
             frame = self.grab_frame()
 
             if frame.shape[0] > self.height:

@@ -8,7 +8,7 @@ import time
 
 import offshoot
 
-from serpent.utilities import clear_terminal, display_serpent_logo
+from serpent.utilities import clear_terminal, display_serpent_logo, is_linux, is_macos, is_windows
 
 from serpent.window_controller import WindowController
 
@@ -113,17 +113,17 @@ def setup():
         tensorflow_backend = "CPU"
 
     # Generate Platform-Specific requirements.txt
-    if sys.platform in ["linux", "linux2"]:
+    if is_linux():
         shutil.copy(
             os.path.join(os.path.dirname(__file__), "requirements.linux.txt"),
             os.path.join(os.getcwd(), "requirements.txt")
         )
-    elif sys.platform == "darwin":
+    elif is_macos():
         shutil.copy(
             os.path.join(os.path.dirname(__file__), "requirements.darwin.txt"),
             os.path.join(os.getcwd(), "requirements.txt")
         )
-    elif sys.platform == "win32":
+    elif is_windows():
         shutil.copy(
             os.path.join(os.path.dirname(__file__), "requirements.win32.txt"),
             os.path.join(os.getcwd(), "requirements.txt")
@@ -141,11 +141,11 @@ def setup():
     # Install the dependencies
     print("Installing dependencies...")
 
-    if sys.platform in ["linux", "linux2"]:
+    if is_linux():
         subprocess.call(shlex.split("pip install python-xlib"))
-    elif sys.platform == "darwin":
+    elif is_macos():
         subprocess.call(shlex.split("pip install python-xlib pyobjc-framework-Quartz py-applescript"))
-    elif sys.platform == "win32":
+    elif is_windows():
         # Anaconda Packages
         subprocess.call(shlex.split("conda install numpy scipy scikit-image scikit-learn h5py -y"), shell=True)
 
