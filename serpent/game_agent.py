@@ -349,7 +349,7 @@ class GameAgent(offshoot.Pluggable):
             self.game_frame_buffers = list()
 
             clear_terminal()
-            print(f"Writing Frame/Input Data to 'datasets/frame_input.h5'... DONE")
+            print(f"Writing Frame/Input Data to 'datasets/input_recording.h5'... DONE")
 
         time.sleep(1)
 

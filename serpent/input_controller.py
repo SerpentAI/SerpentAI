@@ -1,10 +1,5 @@
 import enum
 
-import keyboard
-import mouse
-
-import time
-
 from serpent.utilities import is_linux, is_macos, is_windows
 
 
@@ -610,19 +605,6 @@ class InputController:
         self._is_game_launched_check()
         self.backend.type_string(string, duration=duration, **kwargs)
 
-    def capture_keys(self, duration=0.5):
-        started_at = time.time()
-        captured_key_events = list()
-
-        keyboard.hook(captured_key_events.append)
-
-        while time.time() - started_at <= duration:
-            time.sleep(0.01)
-
-        keyboard.unhook(captured_key_events.append)
-
-        return captured_key_events
-
     # Mouse Actions
     def move(self, x=None, y=None, duration=0.25, absolute=True, **kwargs):
         self._is_game_launched_check()
@@ -663,19 +645,6 @@ class InputController:
     def scroll(self, x=None, y=None, clicks=1, direction="DOWN", **kwargs):
         self._is_game_launched_check()
         self.backend.scroll(x=x, y=y, clicks=clicks, direction=direction, **kwargs)
-
-    def capture_mouse(self, duration=0.5):
-        started_at = time.time()
-        captured_mouse_events = list()
-
-        mouse.hook(captured_mouse_events.append)
-
-        while time.time() - started_at <= duration:
-            time.sleep(0.01)
-
-        mouse.unhook(captured_mouse_events.append)
-
-        return captured_mouse_events
 
     def _initialize_backend(self, backend, **kwargs):
         if backend == InputControllers.PYAUTOGUI:
