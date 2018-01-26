@@ -6,6 +6,7 @@ from redis import StrictRedis
 from serpent.config import config
 
 from serpent.input_controller import keyboard_module_scan_code_mapping
+from serpent.utilities import is_windows
 
 
 redis_client = StrictRedis(**config["redis"])
@@ -45,7 +46,15 @@ class InputRecorder:
             self.stop()
             return None
 
-        key_name = keyboard_module_scan_code_mapping.get(keyboard_event.scan_code)
+        if is_windows():
+            scan_code = keyboard_event.scan_code + (1024 if keyboard_event.is_keypad else 0)
+        else:
+            scan_code = keyboard_event.scan_code
+
+        key_name = keyboard_module_scan_code_mapping.get(scan_code)
+
+        if key_name is None:
+            return None
 
         if keyboard_event.event_type == "down":
             if key_name.name in self.active_keys:
@@ -55,6 +64,8 @@ class InputRecorder:
         elif keyboard_event.event_type == "up":
             if key_name.name in self.active_keys:
                 self.active_keys.remove(key_name.name)
+
+        print(key_name)
 
         event = {"name": f"{key_name.name}-{keyboard_event.event_type.upper()}", "timestamp": keyboard_event.time}
         event = pickle.dumps(event)
