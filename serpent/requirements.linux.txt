@@ -11,8 +11,7 @@ mss
 python-xlib
 PyAutoGUI
 pyperclip
-keyboard
-mouse
+sneakysnek
 
 # TF & Keras
 tensorflow-gpu==1.4.1
