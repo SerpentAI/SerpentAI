@@ -1,5 +1,5 @@
 import pickle
-import keyboard
+import time
 
 from redis import StrictRedis
 
@@ -7,6 +7,10 @@ from serpent.config import config
 
 from serpent.input_controller import keyboard_module_scan_code_mapping
 from serpent.utilities import is_windows
+
+from sneakysnek.recorder import Recorder
+from sneakysnek.keyboard_event import KeyboardEvent, KeyboardEvents
+from sneakysnek.mouse_event import MouseEvent, MouseEvents
 
 
 redis_client = StrictRedis(**config["redis"])
@@ -20,6 +24,7 @@ class InputRecorder:
 
     def __init__(self):
         self.active_keys = set()
+        self.recorder = None
 
         self.redis_key = self.__class__.redis_key
         self.redis_key_pause = self.__class__.redis_key_pause
@@ -30,15 +35,15 @@ class InputRecorder:
         redis_client.delete(self.redis_key_stop)
 
     def start(self):
-        keyboard.hook(self._on_keyboard_event)
+        self.recorder = Recorder.record(self._on_input_event)
 
         while True:
-            pass
+            time.sleep(1)
 
     def stop(self):
-        keyboard.unhook(self._on_keyboard_event)
+        self.recorder.stop()
 
-    def _on_keyboard_event(self, keyboard_event):
+    def _on_input_event(self, event):
         if redis_client.get(self.redis_key_pause) == b"1":
             return None
 
@@ -46,29 +51,38 @@ class InputRecorder:
             self.stop()
             return None
 
-        if is_windows():
-            scan_code = keyboard_event.scan_code + (1024 if keyboard_event.is_keypad else 0)
-        else:
-            scan_code = keyboard_event.scan_code
+        if isinstance(event, KeyboardEvent):
+            if event.event == KeyboardEvents.DOWN:
+                if event.keyboard_key.name in self.active_keys:
+                    return None
 
-        key_name = keyboard_module_scan_code_mapping.get(scan_code)
+                self.active_keys.add(event.keyboard_key.name)
+            elif event.event == KeyboardEvents.UP:
+                if event.keyboard_key.name in self.active_keys:
+                    self.active_keys.remove(event.keyboard_key.name)
 
-        if key_name is None:
-            return None
+            event = {
+                "type": "keyboard",
+                "name": f"{event.keyboard_key.name}-{event.event.value.upper()}", 
+                "timestamp": event.timestamp
+            }
 
-        if keyboard_event.event_type == "down":
-            if key_name.name in self.active_keys:
-                return None
+            event = pickle.dumps(event)
+            redis_client.rpush(config["input_recorder"]["redis_key"], event)
+        elif isinstance(event, MouseEvent):
+            event = {
+                "type": "mouse",
+                "name": event.event.name,
+                "button": event.button.name if event.button else None,
+                "direction": event.direction if event.direction else None,
+                "velocity": event.velocity if event.velocity else None,
+                "x": event.x,
+                "y": event.y,
+                "timestamp": event.timestamp
+            }
 
-            self.active_keys.add(key_name.name)
-        elif keyboard_event.event_type == "up":
-            if key_name.name in self.active_keys:
-                self.active_keys.remove(key_name.name)
-
-        event = {"name": f"{key_name.name}-{keyboard_event.event_type.upper()}", "timestamp": keyboard_event.time}
-        event = pickle.dumps(event)
-
-        redis_client.rpush(config["input_recorder"]["redis_key"], event)
+            event = pickle.dumps(event)
+            redis_client.rpush(config["input_recorder"]["redis_key"], event)
 
     @classmethod
     def pause_input_recording(cls):
