@@ -32,7 +32,7 @@ class GameFrame:
 
     @property
     def frame(self):
-        return self.frame_array or self.frame_bytes
+        return self.frame_array if self.frame_array is not None else self.frame_bytes
 
     @property
     def half_resolution_frame(self):

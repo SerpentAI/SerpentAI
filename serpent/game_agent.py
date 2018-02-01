@@ -222,7 +222,7 @@ class GameAgent(offshoot.Pluggable):
     def on_collect_frames_pause(self, **kwargs):
         for i, game_frame in enumerate(self.game_frames):
             print(f"Saving image {i + 1}/{len(self.game_frames)} to disk...")
-            skimage.io.imsave(f"datasets/collect_frames/frame_{str(uuid.uuid4())}.png", game_frame.frame)
+            skimage.io.imsave(f"datasets/collect_frames/frame_{game_frame.timestamp}.png", game_frame.frame)
 
         self.game_frames = list()
 
@@ -237,7 +237,7 @@ class GameAgent(offshoot.Pluggable):
                 os.mkdir(region_path)
 
             print(f"Saving image {i + 1}/{len(self.game_frames)} to disk...")
-            skimage.io.imsave(f"{region_path}/region_{str(uuid.uuid4())}.png", frame_region)
+            skimage.io.imsave(f"{region_path}/region_{game_frame.timestamp}.png", frame_region)
 
         self.game_frames = list()
 
@@ -245,7 +245,7 @@ class GameAgent(offshoot.Pluggable):
         context = kwargs.get("context") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
 
         for i, game_frame in enumerate(self.game_frames):
-            file_name = f"datasets/collect_frames_for_context/{context}/frame_{str(uuid.uuid4())}.png"
+            file_name = f"datasets/collect_frames_for_context/{context}/frame_{game_frame.timestamp}.png"
 
             print(f"Saving image {i + 1}/{len(self.game_frames)} to disk...")
             skimage.io.imsave(file_name, game_frame.frame)
