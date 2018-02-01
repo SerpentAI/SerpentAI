@@ -67,9 +67,7 @@ class InputRecorder:
                 "timestamp": event.timestamp
             }
 
-            print(event)
             event = pickle.dumps(event)
-
             redis_client.rpush(config["input_recorder"]["redis_key"], event)
         elif isinstance(event, MouseEvent):
             event = {
@@ -83,9 +81,7 @@ class InputRecorder:
                 "timestamp": event.timestamp
             }
 
-            print(event)
             event = pickle.dumps(event)
-            
             redis_client.rpush(config["input_recorder"]["redis_key"], event)
 
     @classmethod

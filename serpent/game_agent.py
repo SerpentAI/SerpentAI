@@ -343,7 +343,6 @@ class GameAgent(offshoot.Pluggable):
                     data=[key_name.encode("utf-8") for key_name in keyboard_inputs_active]
                 )
 
-                # Filter out stuff that happens outside the game window
                 filtered_mouse_inputs = list()
                 mouse_move_index = None
 
