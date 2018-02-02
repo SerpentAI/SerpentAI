@@ -17,7 +17,6 @@ import os
 import os.path
 
 import serpent.cv
-import serpent.ocr
 
 from serpent.utilities import clear_terminal, is_unix
 

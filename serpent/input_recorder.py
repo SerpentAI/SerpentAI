@@ -5,12 +5,9 @@ from redis import StrictRedis
 
 from serpent.config import config
 
-from serpent.input_controller import keyboard_module_scan_code_mapping
-from serpent.utilities import is_windows
-
 from sneakysnek.recorder import Recorder
 from sneakysnek.keyboard_event import KeyboardEvent, KeyboardEvents
-from sneakysnek.mouse_event import MouseEvent, MouseEvents
+from sneakysnek.mouse_event import MouseEvent
 
 
 redis_client = StrictRedis(**config["redis"])

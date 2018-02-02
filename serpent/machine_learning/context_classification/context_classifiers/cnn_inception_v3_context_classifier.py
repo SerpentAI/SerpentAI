@@ -1,10 +1,15 @@
 from serpent.machine_learning.context_classification.context_classifier import ContextClassifier
 
-from keras.preprocessing.image import ImageDataGenerator
-from keras.applications.inception_v3 import InceptionV3, preprocess_input
-from keras.layers import Dense, GlobalAveragePooling2D
-from keras.models import Model, load_model
-from keras.callbacks import ModelCheckpoint
+from serpent.utilities import SerpentError
+
+try:
+    from keras.preprocessing.image import ImageDataGenerator
+    from keras.applications.inception_v3 import InceptionV3, preprocess_input
+    from keras.layers import Dense, GlobalAveragePooling2D
+    from keras.models import Model, load_model
+    from keras.callbacks import ModelCheckpoint
+except ImportError:
+    raise SerpentError("Setup has not been been performed for the ML module. Please run 'serpent setup ml'")
 
 import skimage.transform
 

@@ -12,19 +12,8 @@ mss
 
 # Input
 PyAutoGUI
-pyperclip
 win32gui
 sneakysnek
-
-# TF & Keras
-tensorflow-gpu==1.4.1
-Keras
-
-# Kivy
-Kivy
-
-# OCR
-pytesseract
 
 # Network
 autobahn

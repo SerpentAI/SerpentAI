@@ -8,11 +8,15 @@ import skimage.measure
 import skimage.io
 
 from serpent.utilities import is_unix, is_windows
+from serpent.utilities import SerpentError
 
-if is_unix():
-    import tesserocr
-elif is_windows():
-    import pytesseract
+try:
+    if is_unix():
+        import tesserocr
+    elif is_windows():
+        import pytesseract
+except ImportError:
+    raise SerpentError("Setup has not been been performed for the OCR module. Please run 'serpent setup ocr'")
 
 import editdistance
 

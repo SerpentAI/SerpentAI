@@ -9,29 +9,13 @@ mss
 
 # Input
 PyAutoGUI
-pyperclip
 sneakysnek
-
-# TF & Keras
-tensorflow-gpu==1.4.1
-Keras
-
-# Kivy
-pygame
-kivy
 
 # SciPy
 numpy
 scikit-learn
 scikit-image
 h5py
-
-# UI
-termcolor
-xtermcolor
-
-# OCR
-tesserocr
 
 # Network
 autobahn

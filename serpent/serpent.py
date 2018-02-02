@@ -8,18 +8,19 @@ import time
 
 import offshoot
 
-from serpent.utilities import clear_terminal, display_serpent_logo, is_linux, is_macos, is_windows
+from serpent.utilities import clear_terminal, display_serpent_logo, is_linux, is_macos, is_windows, is_unix
 
 from serpent.window_controller import WindowController
 
 # Add the current working directory to sys.path to discover user plugins!
 sys.path.insert(0, os.getcwd())
 
-VERSION = "0.1.12b1"
+VERSION = "2018.1.0"
 
 valid_commands = [
     "setup",
     "update",
+    "modules",
     "grab_frames",
     "launch",
     "play",
@@ -61,11 +62,23 @@ def executable_help():
     print("")
 
 
-def setup():
+def setup(module=None):
     clear_terminal()
     display_serpent_logo()
     print("")
 
+    if module is None:
+        setup_base()
+    elif module == "ocr":
+        setup_ocr()
+    elif module == "gui":
+        setup_gui()
+    elif module == "ml":
+        setup_ml()
+    else:
+        print(f"Invalid Setup Module: {module}")
+
+def setup_base():
     # Copy Config Templates
     print("Creating Configuration Files...")
 
@@ -107,12 +120,6 @@ def setup():
         os.path.join(os.getcwd(), "offshoot.manifest.json")
     )
 
-    # Decide on CPU or GPU Tensorflow
-    tensorflow_backend = input("\nWhich backend do you plan to use for Tensorflow (One of: 'CPU', 'GPU' - Note: GPU backend can only be used on NVIDIA GTX 600 series and up): \n")
-
-    if tensorflow_backend not in ["CPU", "GPU"]:
-        tensorflow_backend = "CPU"
-
     # Generate Platform-Specific requirements.txt
     if is_linux():
         shutil.copy(
@@ -130,15 +137,6 @@ def setup():
             os.path.join(os.getcwd(), "requirements.txt")
         )
 
-    if tensorflow_backend == "CPU":
-        with open(os.path.join(os.getcwd(), "requirements.txt"), "r") as f:
-            contents = f.read()
-
-        contents = contents.replace("tensorflow-gpu", "tensorflow")
-
-        with open(os.path.join(os.getcwd(), "requirements.txt"), "w") as f:
-            f.write(contents)
-
     # Install the dependencies
     print("Installing dependencies...")
 
@@ -150,9 +148,6 @@ def setup():
         # Anaconda Packages
         subprocess.call(shlex.split("conda install numpy scipy scikit-image scikit-learn h5py -y"), shell=True)
 
-        # Kivy Dependencies
-        subprocess.call(shlex.split("pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew"))
-
     subprocess.call(shlex.split("pip install -r requirements.txt"))
 
     # Create Dataset Directories
@@ -161,13 +156,146 @@ def setup():
     os.makedirs(os.path.join(os.getcwd(), "datasets/current"), exist_ok=True)
 
 
+def setup_ocr():
+    if is_linux():
+        print("Before continuing with the OCR module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Linux-Installation-Guide#ocr")
+    elif is_macos():
+        print("Before continuing with the OCR module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/macOS-Installation-Guide#ocr")
+    elif is_windows():
+        print("Before continuing with the OCR module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Windows-Installation-Guide#ocr")
+
+    print("")
+    input("Press Enter to continue...")
+
+    if is_unix():
+        subprocess.call(shlex.split("pip install tesserocr"))
+    elif is_windows():
+        subprocess.call(shlex.split("pip install pytesseract"))
+
+    print("")
+    print("OCR module setup complete!")
+
+
+def setup_gui():
+    if is_linux():
+        print("Before continuing with the GUI module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Linux-Installation-Guide#gui")
+    elif is_macos():
+        print("Before continuing with the GUI module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/macOS-Installation-Guide#gui")
+    elif is_windows():
+        print("Before continuing with the GUI module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Windows-Installation-Guide#gui")
+
+    print("")
+    input("Press Enter to continue...")
+
+    if is_linux():
+        subprocess.call(shlex.split("pip install Kivy"))
+    elif is_macos():
+        subprocess.call(shlex.split("pip install pygame Kivy"))
+    elif is_windows():
+        subprocess.call(shlex.split("pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew"))
+        subprocess.call(shlex.split("pip install Kivy"))
+
+    print("")
+    print("GUI module setup complete!")
+
+
+def setup_ml():
+    if is_linux():
+        print("Before continuing with the ML module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Linux-Installation-Guide#ml")
+    elif is_macos():
+        print("Before continuing with the ML module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/macOS-Installation-Guide#ml")
+    elif is_windows():
+        print("Before continuing with the ML module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Windows-Installation-Guide#ml")
+
+    print("")
+    input("Press Enter to continue...")
+
+    # Decide on CPU or GPU Tensorflow
+    tensorflow_backend = input("\nWhich backend do you plan to use for Tensorflow (One of: 'CPU', 'GPU' - Note: GPU backend can only be used on NVIDIA GTX 600 series and up): \n")
+
+    if tensorflow_backend not in ["CPU", "GPU"]:
+        tensorflow_backend = "CPU"
+
+    if tensorflow_backend == "GPU":
+        subprocess.call(shlex.split("pip install tensorflow-gpu==1.4.1"))
+    elif tensorflow_backend == "CPU":
+        subprocess.call(shlex.split("pip install tensorflow==1.4.1"))
+
+    subprocess.call(shlex.split("pip install Keras"))
+    
+    print("")
+    print("ML module setup complete!")
+
+
 def update():
     clear_terminal()
     display_serpent_logo()
+    print("")
 
     print("Updating Serpent.AI to the latest version...")
 
     subprocess.call(shlex.split("pip install --upgrade SerpentAI"))
+
+    if is_linux():
+        shutil.copy(
+            os.path.join(os.path.dirname(__file__), "requirements.linux.txt"),
+            os.path.join(os.getcwd(), "requirements.txt")
+        )
+    elif is_macos():
+        shutil.copy(
+            os.path.join(os.path.dirname(__file__), "requirements.darwin.txt"),
+            os.path.join(os.getcwd(), "requirements.txt")
+        )
+    elif is_windows():
+        shutil.copy(
+            os.path.join(os.path.dirname(__file__), "requirements.win32.txt"),
+            os.path.join(os.getcwd(), "requirements.txt")
+        )
+
+    subprocess.call(shlex.split("pip install -r requirements.txt"))
+
+    import yaml
+
+    with open(os.path.join(os.path.dirname(__file__), "config", "config.yml"), "r") as f:
+        serpent_config = yaml.safe_load(f) or {}
+
+    with open(os.path.join(os.getcwd(), "config", "config.yml"), "r") as f:
+        user_config = yaml.safe_load(f) or {}
+
+    config_changed = False
+
+    for key, value in serpent_config.items():
+        if key not in user_config:
+            user_config[key] = value
+            config_changed = True
+
+    if config_changed:
+       with open(os.path.join(os.getcwd(), "config", "config.yml"), "w") as f:
+           f.write(yaml.dump(user_config)) 
+
+
+def modules():
+    import importlib
+    exists = importlib.util.find_spec
+
+    serpent_modules = {
+        "OCR": (exists("tesserocr") or exists("pytesseract")) is not None,
+        "GUI": exists("kivy") is not None,
+        "ML": exists("keras") is not None
+    }
+
+    clear_terminal()
+    display_serpent_logo()
+    print("")
+
+    print("Installed Serpent.AI Modules:")
+    print("")
+
+    print(f"OCR => {'Yes' if serpent_modules['OCR'] else 'No; Install with `serpent setup ocr` if needed'}")
+    print(f"GUI => {'Yes' if serpent_modules['GUI'] else 'No; Install with `serpent setup gui` if needed'}")
+    print(f"ML => {'Yes' if serpent_modules['ML'] else 'No; Install with `serpent setup ml` if needed'}")
+
+    print("")
 
 
 def grab_frames(width, height, x_offset, y_offset, pipeline_string=None):
@@ -285,7 +413,7 @@ def window_name():
     clear_terminal()
     print("Open the Game manually.")
 
-    input("\nPress ANY key and then focus the game window...")
+    input("\nPress Enter and then focus the game window...")
 
     window_controller = WindowController()
 
@@ -461,6 +589,7 @@ def argv_is_true(arg):
 command_function_mapping = {
     "setup": setup,
     "update": update,
+    "modules": modules,
     "grab_frames": grab_frames,
     "activate": activate,
     "deactivate": deactivate,
@@ -479,13 +608,14 @@ command_function_mapping = {
 command_description_mapping = {
     "setup": "Perform first time setup for the framework",
     "update": "Update the framework to the latest version",
+    "modules": "List the install status of the framework's optional modules",
     "grab_frames": "Start the frame grabber",
     "activate": "Activate a plugin",
     "deactivate": "Deactivate a plugin",
     "plugins": "List all locally-available plugins",
     "launch": "Launch a game through a plugin",
     "play": "Play a game with a game agent through plugins",
-    "record": "Record player input from a game (requires superuser)",
+    "record": "Record player input from a game",
     "generate": "Generate code for game and game agent plugins",
     "train": "Train a context classifier with collected context frames",
     "capture": "Capture frames, screen regions and contexts from a game",
