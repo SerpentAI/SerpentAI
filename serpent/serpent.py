@@ -19,6 +19,7 @@ VERSION = "0.1.12b1"
 
 valid_commands = [
     "setup",
+    "update",
     "grab_frames",
     "launch",
     "play",
@@ -158,6 +159,15 @@ def setup():
     os.makedirs(os.path.join(os.getcwd(), "datasets/collect_frames"), exist_ok=True)
     os.makedirs(os.path.join(os.getcwd(), "datasets/collect_frames_for_context"), exist_ok=True)
     os.makedirs(os.path.join(os.getcwd(), "datasets/current"), exist_ok=True)
+
+
+def update():
+    clear_terminal()
+    display_serpent_logo()
+
+    print("Updating Serpent.AI to the latest version...")
+
+    subprocess.call(shlex.split("pip install --upgrade SerpentAI"))
 
 
 def grab_frames(width, height, x_offset, y_offset, pipeline_string=None):
@@ -450,6 +460,7 @@ def argv_is_true(arg):
 
 command_function_mapping = {
     "setup": setup,
+    "update": update,
     "grab_frames": grab_frames,
     "activate": activate,
     "deactivate": deactivate,
@@ -467,6 +478,7 @@ command_function_mapping = {
 
 command_description_mapping = {
     "setup": "Perform first time setup for the framework",
+    "update": "Update the framework to the latest version",
     "grab_frames": "Start the frame grabber",
     "activate": "Activate a plugin",
     "deactivate": "Deactivate a plugin",
