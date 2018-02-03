@@ -1,23 +1,28 @@
-from kivy.app import App
-
-from kivy.core.window import Window
-from kivy.core.image import Image as CoreImage
-
-from kivy.uix.widget import Widget
-from kivy.uix.image import Image
-from kivy.uix.label import Label
-
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.boxlayout import BoxLayout
-
-from kivy.clock import Clock
-
-from PIL import Image as PILImage
-
 from serpent.visual_debugger.visual_debugger import VisualDebugger
 
+from serpent.utilities import SerpentError
+
 from serpent.config import config
+
+try:
+    from kivy.app import App
+
+    from kivy.core.window import Window
+    from kivy.core.image import Image as CoreImage
+
+    from kivy.uix.widget import Widget
+    from kivy.uix.image import Image
+    from kivy.uix.label import Label
+
+    from kivy.uix.floatlayout import FloatLayout
+    from kivy.uix.gridlayout import GridLayout
+    from kivy.uix.boxlayout import BoxLayout
+
+    from kivy.clock import Clock
+except ImportError:
+    raise SerpentError("Setup has not been been performed for the GUI module. Please run 'serpent setup gui'")
+
+from PIL import Image as PILImage
 
 import io
 
@@ -105,7 +110,3 @@ class VisualDebuggerImage(Image):
 
         texture.min_filter = 'nearest'
         texture.mag_filter = 'nearest'
-
-
-
-

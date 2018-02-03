@@ -6,7 +6,7 @@ Serpent.AI is a simple yet powerful, novel framework to assist developers in the
 
 The framework features a large assortment of supporting modules that provide solutions to commonly encountered scenarios when using video games as environments  as well as CLI tools to accelerate development. It provides some useful conventions but is absolutely NOT opiniated about what you put in your agents: Want to use the latest, cutting-edge deep reinforcement learning algorithm? ALLOWED. Want to use computer vision techniques, image processing and trigonometry? ALLOWED. Want to randomly press the Left or Right buttons? _sigh_ ALLOWED. To top it all off, Serpent.AI was designed to be entirely plugin-based (for both game support and game agents) so your experiments are actually portable and distributable to your peers and random strangers on the Internet.
 
-You'll also be glad to hear that all 3 major OSes are supported: Linux, Windows & macOS. *Note: Early support for macOS. WIP*
+You'll also be glad to hear that all 3 major OSes are supported: Linux, Windows & macOS.
 
 ![](https://s3.ca-central-1.amazonaws.com/serpent-ai-assets/demo_isaac.gif)
 
@@ -38,7 +38,7 @@ Have you built something cool using Serpent.AI? Want to give the community progr
 
 _Experiment: Game agent learning to match tiles (You Must Build a Boat)_
 
-Serpent.AI is currently in BETA. It is the love child of [@nbrochu](https://github.com/nbrochu)'s passion for science & experimentation, programming and video games. All of development and experiments can be seen live on the [Twitch Channel](https://www.twitch.tv/serpent_ai).
+Serpent.AI is the love child of [@nbrochu](https://github.com/nbrochu)'s passion for science & experimentation, programming and video games. All of development and experiments can be seen live on the [Twitch Channel](https://www.twitch.tv/serpent_ai).
 
 _Business Contact: info@serpent.ai_
 

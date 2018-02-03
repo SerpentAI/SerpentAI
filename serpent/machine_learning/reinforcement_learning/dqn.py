@@ -3,9 +3,14 @@ from serpent.machine_learning.reinforcement_learning.epsilon_greedy_q_policy imp
 
 from serpent.visual_debugger.visual_debugger import VisualDebugger
 
-from keras.models import Model
-from keras.layers import Dense, Flatten, Convolution2D, MaxPooling2D, AveragePooling2D, Input, merge
-from keras.optimizers import Adam, rmsprop
+from serpent.utilities import SerpentError
+
+try:
+    from keras.models import Model
+    from keras.layers import Dense, Flatten, Convolution2D, MaxPooling2D, AveragePooling2D, Input, merge
+    from keras.optimizers import Adam, rmsprop
+except ImportError:
+    raise SerpentError("Setup has not been been performed for the ML module. Please run 'serpent setup ml'")
 
 import numpy as np
 

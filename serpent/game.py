@@ -61,10 +61,6 @@ class Game(offshoot.Pluggable):
         self.frame_grabber_process = None
         self.frame_transformation_pipeline_string = None
 
-        self.frame_width = None
-        self.frame_height = None
-        self.frame_channels = 3
-
         self.game_frame_limiter = GameFrameLimiter(fps=self.config.get("fps", 30))
 
         self.api_class = None
@@ -158,7 +154,8 @@ class Game(offshoot.Pluggable):
         png_frame_handlers = ["RECORD"]
 
         if frame_handler in png_frame_handlers and self.frame_transformation_pipeline_string is not None:
-            self.frame_transformation_pipeline_string += "|PNG"
+            if not self.frame_transformation_pipeline_string.endswith("|PNG"):
+                self.frame_transformation_pipeline_string += "|PNG"
 
         self.start_frame_grabber()
         self.redis_client.delete(config["frame_grabber"]["redis_key"])

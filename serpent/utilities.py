@@ -4,6 +4,10 @@ import subprocess
 import enum
 
 
+class SerpentError(BaseException):
+    pass
+
+
 class OperatingSystem(enum.Enum):
     LINUX = 0
     WINDOWS = 1

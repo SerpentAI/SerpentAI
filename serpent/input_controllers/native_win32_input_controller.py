@@ -2,8 +2,6 @@ from serpent.input_controller import InputController, MouseButton, KeyboardKey, 
 
 from serpent.sprite_locator import SpriteLocator
 
-import serpent.ocr
-
 import time
 
 import ctypes
@@ -345,8 +343,11 @@ class NativeWin32InputController(InputController):
             self.click(button=button, **kwargs)
 
             return True
-
+    
+    # Requires the Serpent OCR module
     def click_string(self, query_string, button=MouseButton.LEFT, game_frame=None, fuzziness=2, ocr_preset=None, **kwargs):
+        import serpent.ocr
+
         if ("force" in kwargs and kwargs["force"] is True) or self.game_is_focused:
             string_location = serpent.ocr.locate_string(
                 query_string,

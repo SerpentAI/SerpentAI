@@ -17,7 +17,6 @@ import os
 import os.path
 
 import serpent.cv
-import serpent.ocr
 
 from serpent.utilities import clear_terminal, is_unix
 
@@ -255,13 +254,13 @@ class GameAgent(offshoot.Pluggable):
     def on_record_pause(self, **kwargs):
         InputRecorder.pause_input_recording()
 
-        keyboard_events = list()
-        keyboard_event_count = self.redis_client.llen(config["input_recorder"]["redis_key"])
+        input_events = list()
+        input_event_count = self.redis_client.llen(config["input_recorder"]["redis_key"])
 
-        for i in range(keyboard_event_count):
-            keyboard_events.append(pickle.loads(self.redis_client.lpop(config["input_recorder"]["redis_key"])))
+        for i in range(input_event_count):
+            input_events.append(pickle.loads(self.redis_client.lpop(config["input_recorder"]["redis_key"])))
 
-        data = self._merge_frames_and_keyboard_events(keyboard_events)
+        data = self._merge_frames_and_input_events(input_events)
 
         if not len(data):
             time.sleep(1)
@@ -275,7 +274,7 @@ class GameAgent(offshoot.Pluggable):
         observations = dict()
 
         compute_reward = "reward_function" in self.config and self.config["reward_function"] in self.reward_functions
-        reward_func = None
+        reward_func = None 
 
         if compute_reward:
             reward_func = self.reward_functions[self.config["reward_function"]]
@@ -290,8 +289,8 @@ class GameAgent(offshoot.Pluggable):
                     reward_score = reward_func(item.frames)
                 
                 timestamp = item.frames[-2].timestamp
-                observations[timestamp] = [item, dict(), list(active_keys), reward_score]
-            else:
+                observations[timestamp] = [item, dict(), list(active_keys), list(), reward_score]
+            elif item["type"] == "keyboard":
                 key_name, key_event = item["name"].split("-")
 
                 if key_event == "DOWN":
@@ -313,6 +312,10 @@ class GameAgent(offshoot.Pluggable):
                         observations[timestamp][1][key_name] = duration
 
                         del down_keys[key_name]
+            elif item["type"] == "mouse":
+                if latest_game_frame_buffer is not None:
+                    timestamp = latest_game_frame_buffer.frames[-2].timestamp
+                    observations[timestamp][3].append(item)
 
         print(f"Writing Recorded Input Data to 'datasets/input_recording.h5'... (0/{len(observations)})")
 
@@ -322,7 +325,7 @@ class GameAgent(offshoot.Pluggable):
             for timestamp, observation in observations.items():
                 clear_terminal()
                 print(f"Writing Recorded Input Data to 'datasets/input_recording.h5'... ({i + 1}/{len(observations)})")
-                game_frame_buffer, inputs, actives, reward_score = observation
+                game_frame_buffer, keyboard_inputs, keyboard_inputs_active, mouse_inputs, reward_score = observation
 
                 f.create_dataset(
                     f"{timestamp}-frames",
@@ -330,13 +333,54 @@ class GameAgent(offshoot.Pluggable):
                 )
 
                 f.create_dataset(
-                    f"{timestamp}-inputs",
-                    data=[(key_name.encode("utf-8"), str(duration).encode("utf-8")) for key_name, duration in inputs.items()]
+                    f"{timestamp}-keyboard-inputs",
+                    data=[(key_name.encode("utf-8"), str(duration).encode("utf-8")) for key_name, duration in keyboard_inputs.items()]
                 )
 
                 f.create_dataset(
-                    f"{timestamp}-inputs-active",
-                    data=[key_name.encode("utf-8") for key_name in actives]
+                    f"{timestamp}-keyboard-inputs-active",
+                    data=[key_name.encode("utf-8") for key_name in keyboard_inputs_active]
+                )
+
+                filtered_mouse_inputs = list()
+                mouse_move_index = None
+
+                valid_game_window_x = range(
+                    self.game.window_geometry["x_offset"],
+                    self.game.window_geometry["x_offset"] + self.game.window_geometry["width"] + 1
+                )
+
+                valid_game_window_y = range(
+                    self.game.window_geometry["y_offset"],
+                    self.game.window_geometry["y_offset"] + self.game.window_geometry["height"] + 1
+                )
+
+                for mouse_input in mouse_inputs:
+                    if mouse_input["x"] in valid_game_window_x and mouse_input["y"] in valid_game_window_y:
+                        if mouse_input["name"] == "MOVE":
+                            mouse_move_index = len(filtered_mouse_inputs)
+                        
+                        filtered_mouse_inputs.append(mouse_input)
+                
+                mouse_input_data = list()
+
+                for i, mouse_input in enumerate(filtered_mouse_inputs):
+                    if mouse_input["name"] == "MOVE" and i != mouse_move_index:
+                        continue
+                    
+                    mouse_input_data.append((
+                        mouse_input["name"].encode("utf-8"),
+                        mouse_input["button"].encode("utf-8") if mouse_input["button"] else b"",
+                        mouse_input["direction"].encode("utf-8") if mouse_input["direction"] else b"",
+                        mouse_input["velocity"] or b"",
+                        mouse_input["x"],
+                        mouse_input["y"],
+                        mouse_input["timestamp"]
+                    ))
+
+                f.create_dataset(
+                    f"{timestamp}-mouse-inputs",
+                    data=mouse_input_data
                 )
 
                 f.create_dataset(
@@ -373,7 +417,7 @@ class GameAgent(offshoot.Pluggable):
         if self.input_recorder_process is not None:
             self._stop_input_recorder()
 
-        input_recorder_command = "sudo serpent record_inputs" if is_unix() else "serpent record_inputs"
+        input_recorder_command = "serpent record_inputs"
 
         self.input_recorder_process = subprocess.Popen(shlex.split(input_recorder_command))
 
@@ -402,41 +446,41 @@ class GameAgent(offshoot.Pluggable):
                     exit()
     
     @offshoot.forbidden
-    def _merge_frames_and_keyboard_events(self, keyboard_events):
+    def _merge_frames_and_input_events(self, input_events):
         game_frame_buffer_index = 0
-        keyboard_event_index = 0
+        input_event_index = 0
 
         merged = list()
 
         while True:
             game_frame_buffer = None
-            keyboard_event = None
+            input_event = None
 
-            if game_frame_buffer_index > (len(self.game_frame_buffers) - 1) and keyboard_event_index > (len(keyboard_events) - 1):
+            if game_frame_buffer_index > (len(self.game_frame_buffers) - 1) and input_event_index > (len(input_events) - 1):
                 break
             else:
                 if game_frame_buffer_index <= (len(self.game_frame_buffers) - 1):
                     game_frame_buffer = self.game_frame_buffers[game_frame_buffer_index]
                 
-                if keyboard_event_index <= (len(keyboard_events) - 1):
-                    keyboard_event = keyboard_events[keyboard_event_index]
+                if input_event_index <= (len(input_events) - 1):
+                    input_event = input_events[input_event_index]
 
             if game_frame_buffer is None:
-                item = keyboard_event
-                keyboard_event_index += 1
-            elif keyboard_event is None:
+                item = input_event
+                input_event_index += 1
+            elif input_event is None:
                 item = game_frame_buffer
                 game_frame_buffer_index += 1
             else:
                 game_frame_buffer_timestamp = game_frame_buffer.frames[-2].timestamp
-                keyboard_event_timestamp = keyboard_event["timestamp"]
+                input_event_timestamp = input_event["timestamp"]
 
-                if game_frame_buffer_timestamp < keyboard_event_timestamp:
+                if game_frame_buffer_timestamp < input_event_timestamp:
                     item = game_frame_buffer
                     game_frame_buffer_index += 1
                 else:
-                    item = keyboard_event
-                    keyboard_event_index += 1
+                    item = input_event
+                    input_event_index += 1
                 
             merged.append(item)
 

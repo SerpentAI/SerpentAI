@@ -1,3 +1,25 @@
+## 2018.1.0
+
+Exiting Beta! Changed the versioning scheme to YEAR.QUARTER.RELEASE
+
+* IMPROVEMENT - easier framework installation; only the core gets installed with `serpent setup`; other modules with more involved installation steps can be set up later as needed!
+* IMPROVEMENT - added a `serpent update` command; headache-free framework updates
+* IMPROVEMENT - added a `serpent modules` command to check the installation status of optional modules
+* MAJOR FEATURE - cross-platform gameplay recording with ̀`serpent record`; capture keyboard/mouse inputs alongside frame buffers who are optionally put through a reward function; data is neatly packed in a single HDF5 file when done;
+* FEATURE - a "force" kwarg can now be passed to input controller methods to ignore the game focus requirement
+* FEATURE - context frame captures can now be scoped to game plugins' screen regions
+* FEATURE - GameFrame objects now have a timestamp representing the capture time with microsecond precision
+* FEATURE - GameFrame objects can now hold frame bytes (for PNG data) instead of a frame array
+* FEATURE - FrameGrabber get_frames doesn't require shape and dtype information anymore
+* FEATURE - added a mechanism to register custom reward functions in a GameAgent
+* TWEAK - no longer halving width & height in context frame capture; frame transformation pipeline should be used instead
+* TWEAK - files generated from any frame capture operation are now named with the timestamp instead of a random UUID4
+* FIX - CNNInceptionV3Classifier can now also handle uint8 dtypes
+* INTERNAL - reshape metadata and timestamp are now encoded alongside frame bytes; saving a ton of reshape preperation logic
+* INTERNAL - added 'PNG' operator in frame transformation pipelines
+* INTERNAL / REFACTOR - better OS abstractions to control platform-specific snippets
+* NOTEBOOK - added a Jupyter Notebook to demonstrate common operations with the input recording HDF5 files
+
 ## 0.1.12b1
 
 * FIX - inceptionv3 context classifier is now using the newer normalize function instead of the old scale_range one
