@@ -22,10 +22,10 @@ try:
         try:
             plugin_config = yaml.safe_load(f) or {}
         except yaml.scanner.ScannerError as e:
-            raise Exception(f"Configuration file at '{offshoot.config['file_paths']['config']}' contains invalid YAML...")
+            raise Exception("Configuration file at '{offshoot.config['file_paths']['config']}' contains invalid YAML...")
         except Exception as e:
             print(type(e))
 except FileNotFoundError as e:
-    raise Exception(f"Configuration file not found at: '{offshoot.config['file_paths']['config']}'...")
+    raise Exception("Configuration file not found at: '{offshoot.config['file_paths']['config']}'...")
 
-config = {**plugin_config, **config}
+config = {plugin_config, config}
