@@ -36,6 +36,9 @@ class SpriteIdentifier:
         top_sprite_match = None
 
         for sprite_name, sprite in self.sprites.items():
+            if sprite.image_shape != query_sprite.image_shape:
+                continue
+
             for constellation_of_pixels in sprite.constellation_of_pixels:
                 for i in range(query_sprite.image_data.shape[3]):
                     query_sprite_image = query_sprite.image_data[..., i]

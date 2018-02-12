@@ -15,7 +15,7 @@ class FrameTransformer:
     @staticmethod
     def resize(frame, size_string=None):
         width, height = size_string.lower().split("x")
-        return skimage.util.img_as_ubyte(skimage.transform.resize(frame, (int(height), int(width))))
+        return skimage.util.img_as_ubyte(skimage.transform.resize(frame, (int(height), int(width)), order=0))
 
     @staticmethod
     def rescale(frame, scale=None):

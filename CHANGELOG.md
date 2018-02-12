@@ -1,3 +1,10 @@
+## 2018.1.1
+
+* FIX - use interpolation order 0 in frame transformation pipeline resize
+* FIX - use offshoot selection kwarg when discovering to avoid running code of all plugins
+* FIX - sprite identifier needs to reject sprites that don't have the same shape as query sprite when using constellation of pixels
+* FIX - mild attempt to shutdown frame grabber process on game agent exception
+
 ## 2018.1.0
 
 Exiting Beta! Changed the versioning scheme to YEAR.QUARTER.RELEASE

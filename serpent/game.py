@@ -135,11 +135,11 @@ class Game(offshoot.Pluggable):
 
         print(self.window_geometry)
 
-    def play(self, game_agent_class_name=None, frame_handler=None, **kwargs):
+    def play(self, game_agent_class_name="GameAgent", frame_handler=None, **kwargs):
         if not self.is_launched:
             raise GameError(f"Game '{self.__class__.__name__}' is not running...")
 
-        game_agent_class = offshoot.discover("GameAgent").get(game_agent_class_name, GameAgent)
+        game_agent_class = offshoot.discover("GameAgent", selection=game_agent_class_name).get(game_agent_class_name, GameAgent)
 
         if game_agent_class is None:
             raise GameError("The provided Game Agent class name does not map to an existing class...")
@@ -181,27 +181,30 @@ class Game(offshoot.Pluggable):
         if frame_handler == "RECORD":
             self.game_frame_limiter = GameFrameLimiter(fps=10)
 
-        while True:
-            self.game_frame_limiter.start()
+        try:
+            while True:
+                self.game_frame_limiter.start()
 
-            game_frame = self.grab_latest_frame(frame_type=frame_type)
+                game_frame = self.grab_latest_frame(frame_type=frame_type)
 
-            try:
-                if self.is_focused:
-                    game_agent.on_game_frame(game_frame, frame_handler=frame_handler, **kwargs)
-                else:
-                    clear_terminal()
-                    print("PAUSED\n")
+                try:
+                    if self.is_focused:
+                        game_agent.on_game_frame(game_frame, frame_handler=frame_handler, **kwargs)
+                    else:
+                        clear_terminal()
+                        print("PAUSED\n")
 
-                    game_agent.on_pause(frame_handler=frame_handler, **kwargs)
+                        game_agent.on_pause(frame_handler=frame_handler, **kwargs)
 
-                    time.sleep(1)
-            except Exception as e:
-                raise e
-                # print(e)
-                # time.sleep(0.1)
+                        time.sleep(1)
+                except Exception as e:
+                    raise e
+                    # print(e)
+                    # time.sleep(0.1)
 
-            self.game_frame_limiter.stop_and_delay()
+                self.game_frame_limiter.stop_and_delay()
+        finally:
+            self.stop_frame_grabber()
 
     @offshoot.forbidden
     def extract_window_geometry(self):
