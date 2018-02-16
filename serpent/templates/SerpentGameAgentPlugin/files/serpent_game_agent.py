@@ -10,8 +10,6 @@ class SerpentGameAgent(GameAgent):
 
         self.frame_handler_setups["PLAY"] = self.setup_play
 
-        self.analytics_client = None
-
     def setup_play(self):
         pass
 

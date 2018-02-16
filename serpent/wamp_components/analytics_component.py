@@ -41,11 +41,12 @@ class AnalyticsWAMPComponent(ApplicationSession):
         self.redis_client = await self._initialize_redis_client()
 
         while True:
-            redis_key, event = await self.redis_client.brpop("SERPENT:AISAAC_MAZE:EVENTS")
+            redis_key, event = await self.redis_client.brpop(f"SERPENT:{config['analytics']['topic']}:EVENTS")
             event = json.loads(event.decode("utf-8"))
 
             topic = event.pop("project_key")
             self.publish(topic, event)
+            print(event)
 
     async def _initialize_redis_client(self):
         return await aioredis.create_redis(

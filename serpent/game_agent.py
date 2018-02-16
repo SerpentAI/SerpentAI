@@ -28,6 +28,8 @@ from serpent.game_frame_buffer import GameFrameBuffer
 
 from serpent.sprite_identifier import SpriteIdentifier
 
+from serpent.analytics_client import AnalyticsClient
+
 from serpent.visual_debugger.visual_debugger import VisualDebugger
 
 import skimage.io
@@ -93,6 +95,8 @@ class GameAgent(offshoot.Pluggable):
 
         self.sprite_identifier = SpriteIdentifier()
         self._register_sprites()
+
+        self.analytics_client = AnalyticsClient(project_key=config["analytics"]["topic"])
 
         self.flag = None
 
