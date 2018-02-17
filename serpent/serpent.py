@@ -15,7 +15,7 @@ from serpent.window_controller import WindowController
 # Add the current working directory to sys.path to discover user plugins!
 sys.path.insert(0, os.getcwd())
 
-VERSION = "2018.1.0"
+VERSION = "2018.1.2"
 
 valid_commands = [
     "setup",
@@ -217,9 +217,15 @@ def setup_ml():
         tensorflow_backend = "CPU"
 
     if tensorflow_backend == "GPU":
-        subprocess.call(shlex.split("pip install tensorflow-gpu==1.4.1"))
+        if is_windows():
+            subprocess.call(shlex.split("pip install tensorflow-gpu==1.4.0"))
+        else:
+            subprocess.call(shlex.split("pip install tensorflow-gpu==1.4.1"))
     elif tensorflow_backend == "CPU":
-        subprocess.call(shlex.split("pip install tensorflow==1.4.1"))
+        if is_windows():
+            subprocess.call(shlex.split("pip install tensorflow==1.4.0"))
+        else:
+            subprocess.call(shlex.split("pip install tensorflow==1.4.1"))
 
     subprocess.call(shlex.split("pip install Keras"))
     

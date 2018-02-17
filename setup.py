@@ -75,7 +75,7 @@ requires = [
 
 setup(
     name='SerpentAI',
-    version="2018.1.1",
+    version="2018.1.2",
     description='Game Agent Development Kit. Helping you create AIs / Bots to play any game you own!',
     long_description=long_description,
     author="Nicholas Brochu",

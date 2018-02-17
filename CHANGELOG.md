@@ -1,3 +1,9 @@
+## 2018.1.2
+
+* FEATURE - analytics client is now automatically initialized and in scope for a game agent
+* FIX - analytics WAMP component now uses the analytics topic config key to determine redis key
+* FIX - Locking Tensorflow to appropriate version on Windows
+
 ## 2018.1.1
 
 * FIX - use interpolation order 0 in frame transformation pipeline resize
