@@ -2,7 +2,7 @@
 
 # Serpent.AI - Game Agent Framework (Python)
 
-### Want to see the framework in action? The Serpent.AI Lab streams experiments in games 24/7 on [Twitch](https://www.twitch.tv/serpent_ai_labs) - [YouTube](https://www.youtube.com/c/SerpentAI/live) - [Mixer](https://mixer.com/Serpent_AI) 
+### Want to see the framework in action? The Serpent.AI Lab streams experiments 24/7 on [Twitch](https://www.twitch.tv/serpent_ai_labs)
 
 Serpent.AI is a simple yet powerful, novel framework to assist developers in the creation of game agents. Turn ANY video game you own  into a sandbox environment ripe for experimentation, all with familiar Python code. The framework's _raison d'être_ is first and foremost to provide a valuable tool for Machine Learning & AI research. It also turns out to be ridiculously fun to use as a hobbyist (and dangerously addictive; a fair warning)!
 
