@@ -64,12 +64,12 @@ class ContextClassifier:
     @classmethod
     def available_implementations(cls):
         return [
-            "SVMContextClassifier",
-            "CNNInceptionV3ContextClassifier"
+            "CNNInceptionV3ContextClassifier",
+            "CNNXceptionContextClassifier",
         ]
 
     @classmethod
-    def executable_train(cls, epochs=3, autosave=False, classifier="CNNInceptionV3ContextClassifier", validate=True):
+    def executable_train(cls, epochs=3, autosave=False, classifier="CNNXceptionContextClassifier", validate=True):
         context_paths = list()
 
         for root, directories, files in os.walk("datasets/collect_frames_for_context".replace("/", os.sep)):
@@ -111,11 +111,11 @@ class ContextClassifier:
 
     @classmethod
     def context_classifier_mapping(cls):
-        from serpent.machine_learning.context_classification.context_classifiers.svm_context_classifier import SVMContextClassifier
         from serpent.machine_learning.context_classification.context_classifiers.cnn_inception_v3_context_classifier import CNNInceptionV3ContextClassifier
+        from serpent.machine_learning.context_classification.context_classifiers.cnn_xception_context_classifier import CNNXceptionContextClassifier
 
         return {
-            "SVMContextClassifier": SVMContextClassifier,
-            "CNNInceptionV3ContextClassifier": CNNInceptionV3ContextClassifier
+            "CNNInceptionV3ContextClassifier": CNNInceptionV3ContextClassifier,
+            "CNNXceptionContextClassifier": CNNXceptionContextClassifier
         }
 
