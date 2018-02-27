@@ -25,6 +25,9 @@ class SerpentGame(Game, metaclass=Singleton):
         self.api_class = MyGameAPI
         self.api_instance = None
 
+        self.environments = dict()
+        self.environment_data = dict()
+
     @property
     def screen_regions(self):
         regions = {

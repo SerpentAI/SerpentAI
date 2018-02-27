@@ -1,0 +1,34 @@
+# Stub to make unit testing possible...
+
+redis:
+    host: 127.0.0.1
+    port: 6379
+    db: 0
+
+analytics:
+    host: 127.0.0.1
+    port: 9999
+    realm: serpent
+    auth:
+        username: serpent
+        password: serpent
+    topic: ANALYTICS_TOPIC
+
+frame_handlers:
+    COLLECT_FRAMES_FOR_CONTEXT:
+        context: game
+        interval: 1
+
+frame_grabber:
+    redis_key: SERPENT:FRAMES
+
+input_recorder:
+    redis_key: SERPENT:INPUTS
+
+visual_debugger:
+    redis_key_prefix: SERPENT:VISUAL_DEBUGGER
+    available_buckets:
+        - "0"
+        - "1"
+        - "2"
+        - "3"
