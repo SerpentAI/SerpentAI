@@ -43,7 +43,7 @@ class Game(offshoot.Pluggable):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.config = config.get(f"{self.__class__.__name__}Plugin")
+        self.config = config.get(f"{self.__class__.__name__}Plugin", dict())
 
         self.platform = kwargs.get("platform")
 
@@ -66,11 +66,19 @@ class Game(offshoot.Pluggable):
         self.api_class = None
         self.api_instance = None
 
+        self.environments = dict()
+        self.environment_data = dict()
+
         self.sprites = self._discover_sprites()
 
         self.redis_client = StrictRedis(**config["redis"])
 
         self.kwargs = kwargs
+
+    @property
+    @offshoot.forbidden
+    def game_name(self):
+        return self.__class__.__name__.replace("Serpent", "").replace("Game", "")
 
     @property
     @offshoot.forbidden
@@ -117,6 +125,35 @@ class Game(offshoot.Pluggable):
             self.game_launcher().launch(**self.kwargs)
 
         self.after_launch()
+
+    @offshoot.forbidden
+    def relaunch(self, before_relaunch=None, after_relaunch=None):
+        clear_terminal()
+        print("")
+        print("Relaunching the game...")
+
+        self.stop_frame_grabber()
+
+        time.sleep(1)
+
+        if before_relaunch is not None:
+            before_relaunch()
+
+        time.sleep(1)
+
+        subprocess.call(shlex.split(f"serpent launch {self.game_name}"))
+        self.launch(dry_run=True)
+
+        self.start_frame_grabber()
+        self.redis_client.delete(config["frame_grabber"]["redis_key"])
+
+        while self.redis_client.llen(config["frame_grabber"]["redis_key"]) == 0:
+            time.sleep(0.1)
+
+        self.window_controller.focus_window(self.window_id)
+
+        if after_relaunch is not None:
+            after_relaunch()
 
     def before_launch(self):
         pass
