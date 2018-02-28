@@ -35,22 +35,3 @@ class SerpentGame(Game, metaclass=Singleton):
         }
 
         return regions
-
-    @property
-    def ocr_presets(self):
-        presets = {
-            "SAMPLE_PRESET": {
-                "extract": {
-                    "gradient_size": 1,
-                    "closing_size": 1
-                },
-                "perform": {
-                    "scale": 10,
-                    "order": 1,
-                    "horizontal_closing": 1,
-                    "vertical_closing": 1
-                }
-            }
-        }
-
-        return presets

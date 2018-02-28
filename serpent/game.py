@@ -100,11 +100,6 @@ class Game(offshoot.Pluggable):
         raise NotImplementedError()
 
     @property
-    @offshoot.expected
-    def ocr_presets(self):
-        raise NotImplementedError()
-
-    @property
     @offshoot.forbidden
     def api(self):
         if self.api_instance is None:
