@@ -78,6 +78,7 @@ def setup(module=None):
     else:
         print(f"Invalid Setup Module: {module}")
 
+
 def setup_base():
     # Copy Config Templates
     print("Creating Configuration Files...")
@@ -227,8 +228,8 @@ def setup_ml():
         else:
             subprocess.call(shlex.split("pip install tensorflow==1.4.1"))
 
-    subprocess.call(shlex.split("pip install Keras"))
-    
+    subprocess.call(shlex.split("pip install Keras tensorforce==0.3.5.1"))
+
     print("")
     print("ML module setup complete!")
 
@@ -276,8 +277,8 @@ def update():
             config_changed = True
 
     if config_changed:
-       with open(os.path.join(os.getcwd(), "config", "config.yml"), "w") as f:
-           f.write(yaml.dump(user_config)) 
+        with open(os.path.join(os.getcwd(), "config", "config.yml"), "w") as f:
+            f.write(yaml.dump(user_config)) 
 
 
 def modules():
@@ -287,7 +288,7 @@ def modules():
     serpent_modules = {
         "OCR": (exists("tesserocr") or exists("pytesseract")) is not None,
         "GUI": exists("kivy") is not None,
-        "ML": exists("keras") is not None
+        "ML": exists("keras") is not None and exists("tensorforce") is not None
     }
 
     clear_terminal()
