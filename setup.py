@@ -17,6 +17,7 @@ packages = [
     "serpent.machine_learning.context_classification",
     "serpent.machine_learning.context_classification.context_classifiers",
     "serpent.machine_learning.reinforcement_learning",
+    "serpent.machine_learning.reinforcement_learning.agents",
     "serpent.visual_debugger",
     "serpent.wamp_components",
     "serpent.window_controllers"
