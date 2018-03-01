@@ -109,6 +109,7 @@ class GameAgent(offshoot.Pluggable):
     def on_game_frame(self, game_frame, frame_handler=None, **kwargs):
         if not self.frame_handler_setup_performed:
             self._setup_frame_handler(frame_handler=frame_handler, **kwargs)
+            return None
 
         frame_handler = self.frame_handlers.get(frame_handler or self.config.get("frame_handler", "NOOP"))
 

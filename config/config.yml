@@ -6,13 +6,23 @@ redis:
     db: 0
 
 analytics:
+    broadcast: false
+    debug: false
+    topic: ANALYTICS_TOPIC
+    event_whitelist:
+        - NEW_EPISODE
+        - END_EPISODE
+        - EPISODE_STEP
+        - GAME_INPUT
+        - REWARD
+        - TOTAL_REWARD
     host: 127.0.0.1
     port: 9999
     realm: serpent
     auth:
         username: serpent
         password: serpent
-    topic: ANALYTICS_TOPIC
+    
 
 frame_handlers:
     COLLECT_FRAMES_FOR_CONTEXT:

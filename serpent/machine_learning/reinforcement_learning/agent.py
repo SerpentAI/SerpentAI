@@ -1,3 +1,6 @@
+from serpent.config import config
+
+from serpent.analytics_client import AnalyticsClient
 
 
 class Agent:
@@ -19,10 +22,12 @@ class Agent:
         self.current_reward = 0
         self.cumulative_reward = 0
 
+        self.analytics_client = AnalyticsClient(project_key=config["analytics"]["topic"])
+
     def generate_action(self, state, **kwargs):
         raise NotImplementedError()
 
-    def observe(self, reward=0, **kwargs):
+    def observe(self, reward=0, terminal=False, **kwargs):
         if self.callbacks.get("before_observe") is not None:
             self.callbacks["before_observe"]()
 
@@ -30,6 +35,11 @@ class Agent:
 
         self.current_reward = reward
         self.cumulative_reward += reward
+
+        self.analytics_client.track(event_key="REWARD", data={"reward": self.current_reward})
+
+        if terminal:
+            self.analytics_client.track(event_key="TOTAL_REWARD", data={"reward": self.cumulative_reward})
 
         if self.callbacks.get("after_observe") is not None:
             self.callbacks["after_observe"]()
