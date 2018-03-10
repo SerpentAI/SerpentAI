@@ -2,18 +2,22 @@ from serpent.config import config
 
 from serpent.analytics_client import AnalyticsClient
 
+from serpent.enums import InputControlTypes
+
+from serpent.utilities import SerpentError
+
 
 class Agent:
 
     def __init__(self, name, game_inputs=None, callbacks=None):
         self.name = name
 
-        if game_inputs is None:
-            raise SerpentError("'game_inputs' should be a dict...")
+        if not isinstance(game_inputs, list):
+            raise SerpentError("'game_inputs' should be list...")
 
         # TODO: Support multiple actions
         self.game_inputs = game_inputs
-        self.game_inputs_mapping = self._generate_game_inputs_mapping()
+        self.game_inputs_mappings = self._generate_game_inputs_mappings()
 
         self.callbacks = callbacks or dict()
 
@@ -24,7 +28,7 @@ class Agent:
 
         self.analytics_client = AnalyticsClient(project_key=config["analytics"]["topic"])
 
-    def generate_action(self, state, **kwargs):
+    def generate_actions(self, state, **kwargs):
         raise NotImplementedError()
 
     def observe(self, reward=0, terminal=False, **kwargs):
@@ -50,10 +54,19 @@ class Agent:
         self.current_reward = 0
         self.cumulative_reward = 0
 
-    def _generate_game_inputs_mapping(self):
-        mapping = dict()
+    def _generate_game_inputs_mappings(self):
+        mappings = list()
 
-        for index, key in enumerate(self.game_inputs):
-            mapping[index] = key
+        for game_inputs_item in self.game_inputs:
+            if game_inputs_item["control_type"] == InputControlTypes.CONTINUOUS:
+                mappings.append(None)
+                continue
 
-        return mapping
+            mapping = dict()
+
+            for index, key in enumerate(game_inputs_item["inputs"]):
+                mapping[index] = key
+
+            mappings.append(mapping)
+
+        return mappings

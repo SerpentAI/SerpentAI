@@ -3,6 +3,8 @@ from serpent.machine_learning.reinforcement_learning.agent import Agent
 from serpent.game_frame import GameFrame
 from serpent.game_frame_buffer import GameFrameBuffer
 
+from serpent.enums import InputControlTypes
+
 from serpent.utilities import SerpentError
 
 import os
@@ -37,9 +39,7 @@ class PPOAgent(Agent):
 
         states_spec = {"type": input_type, "shape": input_shape}
 
-        # TODO: Support multiple actions
-        # TODO: Support continuous action spaces
-        actions_spec = {"type": "int", "num_actions": len(self.game_inputs)}
+        actions_spec = self._generate_actions_spec()
 
         summary_spec = None
 
@@ -108,7 +108,7 @@ class PPOAgent(Agent):
         except Exception:
             pass
 
-    def generate_action(self, state, **kwargs):
+    def generate_actions(self, state, **kwargs):
         if isinstance(state, GameFrame):
             self.current_state = state.frame
         elif isinstance(state, GameFrameBuffer):
@@ -119,10 +119,23 @@ class PPOAgent(Agent):
         else:
             self.current_state = state
 
-        action = self.agent.act(self.current_state)
-        label = self.game_inputs_mapping[action]
+        agent_actions = self.agent.act(self.current_state)
+        actions = list()
 
-        return label, self.game_inputs[label]
+        for index, game_inputs_item in enumerate(self.game_inputs):
+            if game_inputs_item["control_type"] == InputControlTypes.DISCRETE:
+                label = self.game_inputs_mappings[index][agent_actions[game_inputs_item["name"]]]
+                action = game_inputs_item["inputs"][label]
+
+                actions.append((label, action, None))
+            elif game_inputs_item["control_type"] == InputControlTypes.CONTINUOUS:
+                label = game_inputs_item["name"]
+                action = game_inputs_item["inputs"]["events"]
+                input_value = float(agent_actions[label])
+
+            actions.append((label, action, input_value))
+
+        return actions
 
     def observe(self, reward=0, terminal=False, **kwargs):
         if self.current_state is None:
@@ -150,6 +163,11 @@ class PPOAgent(Agent):
         self.current_reward = reward
         self.cumulative_reward += reward
 
+        self.analytics_client.track(event_key="REWARD", data={"reward": self.current_reward})
+
+        if terminal:
+            self.analytics_client.track(event_key="TOTAL_REWARD", data={"reward": self.cumulative_reward})
+
         if self.callbacks.get("after_observe") is not None:
             self.callbacks["after_observe"]()
 
@@ -158,3 +176,18 @@ class PPOAgent(Agent):
 
     def restore_model(self):
         self.agent.restore_model(directory=os.path.join(os.getcwd(), "datasets", self.name))
+
+    def _generate_actions_spec(self):
+        actions_spec = dict()
+
+        for game_inputs_item in self.game_inputs:
+            if game_inputs_item["control_type"] == InputControlTypes.DISCRETE:
+                actions_spec[game_inputs_item["name"]] = dict(type="int", num_actions=len(game_inputs_item["inputs"]))
+            elif game_inputs_item["control_type"] == InputControlTypes.CONTINUOUS:
+                actions_spec[game_inputs_item["name"]] = dict(
+                    type="float",
+                    min_value=game_inputs_item["inputs"]["minimum"],
+                    max_value=game_inputs_item["inputs"]["maximum"]
+                )
+
+        return actions_spec

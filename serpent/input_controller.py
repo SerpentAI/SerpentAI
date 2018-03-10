@@ -3,7 +3,10 @@ import enum
 from serpent.utilities import is_linux, is_macos, is_windows
 
 from sneakysnek.keyboard_keys import KeyboardKey
+from sneakysnek.keyboard_event import KeyboardEvent, KeyboardEvents
+
 from sneakysnek.mouse_buttons import MouseButton
+from sneakysnek.mouse_event import MouseEvent, MouseEvents
 
 
 # US layout - What's to be done for other keyboard layouts?

@@ -23,7 +23,6 @@ analytics:
         username: serpent
         password: serpent
     
-
 frame_handlers:
     COLLECT_FRAMES_FOR_CONTEXT:
         context: game
