@@ -11,9 +11,9 @@
 [![](https://img.shields.io/badge/project-blog-brightgreen.svg?colorB=1bcc6f)](http://blog.serpent.ai)
 [![](https://img.shields.io/badge/project-forums-brightgreen.svg?colorB=1bcc6f)](http://discuss.serpent.ai)
 [![](https://img.shields.io/badge/project-wiki-brightgreen.svg?colorB=1bcc6f)](https://github.com/SerpentAI/SerpentAI/wiki)  
-![](https://img.shields.io/pypi/v/SerpentAI.svg)
-![](https://img.shields.io/pypi/pyversions/SerpentAI.svg)
-![](https://img.shields.io/pypi/l/SerpentAI.svg)
+[![](https://img.shields.io/pypi/v/SerpentAI.svg)](#)
+[![](https://img.shields.io/pypi/pyversions/SerpentAI.svg)](#)
+[![](https://img.shields.io/pypi/l/SerpentAI.svg)](#)
 
 ### Want to see the framework in action? The Serpent.AI Labs stream experiments 24/7 on [Twitch](https://www.twitch.tv/serpent_ai_labs)
 
