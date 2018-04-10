@@ -2,7 +2,20 @@
 
 # Serpent.AI - Game Agent Framework (Python)
 
-### Want to see the framework in action? The Serpent.AI Lab streams experiments 24/7 on [Twitch](https://www.twitch.tv/serpent_ai_labs)
+[![](https://img.shields.io/badge/twitch-%40Serpent__AI-brightgreen.svg?colorB=6441a5)](https://www.twitch.tv/serpent_ai)
+[![](https://img.shields.io/badge/twitch-%40Serpent__AI__Labs-brightgreen.svg?colorB=6441a5)](https://www.twitch.tv/serpent_ai_labs)
+[![](https://img.shields.io/badge/youtube-SerpentAI-brightgreen.svg?colorB=ff0000)](https://www.youtube.com/c/SerpentAI)
+[![](https://img.shields.io/badge/twitter-@Serpent__AI-brightgreen.svg?colorB=1da1f2)](https://twitter.com/Serpent_AI)
+[![](https://img.shields.io/badge/patreon-donate-brightgreen.svg?colorB=f96854)](https://www.patreon.com/serpent_ai)  
+[![](https://img.shields.io/badge/project-website-brightgreen.svg?colorB=1bcc6f)](http://serpent.ai)
+[![](https://img.shields.io/badge/project-blog-brightgreen.svg?colorB=1bcc6f)](http://blog.serpent.ai)
+[![](https://img.shields.io/badge/project-forums-brightgreen.svg?colorB=1bcc6f)](http://discuss.serpent.ai)
+[![](https://img.shields.io/badge/project-wiki-brightgreen.svg?colorB=1bcc6f)](https://github.com/SerpentAI/SerpentAI/wiki)  
+![](https://img.shields.io/pypi/v/SerpentAI.svg)
+![](https://img.shields.io/pypi/pyversions/SerpentAI.svg)
+![](https://img.shields.io/pypi/l/SerpentAI.svg)
+
+### Want to see the framework in action? The Serpent.AI Labs stream experiments 24/7 on [Twitch](https://www.twitch.tv/serpent_ai_labs)
 
 ### Join the newly created Serpent.AI community over at [http://discuss.serpent.ai](http://discuss.serpent.ai)
 
@@ -42,8 +55,6 @@ Have you built something cool using Serpent.AI? Want to give the community progr
 
 _Experiment: Game agent learning to match tiles (You Must Build a Boat)_
 
-Serpent.AI is the love child of [@nbrochu](https://github.com/nbrochu)'s passion for science & experimentation, programming and video games. All of development and experiments can be seen live on the [Twitch Channel](https://www.twitch.tv/serpent_ai).
+Serpent.AI is the love child of [@nbrochu](https://github.com/nbrochu)'s passion for science & experimentation, programming and video games.
 
 _Business Contact: info@serpent.ai_
-
-_Twitter: [@Serpent_AI](https://twitter.com/Serpent_AI)_
