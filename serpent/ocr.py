@@ -127,7 +127,7 @@ def perform_ocr(image, scale=10, order=5, horizontal_closing=10, vertical_closin
         return tesserocr.image_to_text(
             Image.fromarray(image),
             psm=tesserocr.PSM.SINGLE_LINE,
-            oem=tesserocr.OEM.TESSERACT_ONLY
+            oem=tesserocr.OEM.LSTM_ONLY
         ).strip()
     elif is_windows():
         return pytesseract.image_to_string(Image.fromarray(image))
