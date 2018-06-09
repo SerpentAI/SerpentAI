@@ -71,6 +71,7 @@ class DashboardApp(App):
 
         Config.set("graphics", "borderless", 1)
         Config.set("graphics", "resizable", 0)
+        Config.set("graphics", "fullscreen", 0)
 
         Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
