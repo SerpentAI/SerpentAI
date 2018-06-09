@@ -1,8 +1,11 @@
-from serpent.utilities import SerpentError
+from serpent.utilities import SerpentError, is_windows
 
 from serpent.config import config
 
-import mss
+if is_windows():
+    import win32api
+else:
+    import mss
 
 import time
 import subprocess
@@ -150,8 +153,11 @@ class DashboardApp(App):
         atexit.unregister(self._handle_signal_dashboard_api)
 
     def _determine_fullscreen_resolution(self):
-        monitors = mss.mss().monitors
-        return monitors[0]["width"], monitors[0]["height"]
+        if is_windows():
+            return [win32api.GetSystemMetrics(0), win32api.GetSystemMetrics(1)]
+        else:
+            monitors = mss.mss().monitors
+            return monitors[0]["width"], monitors[0]["height"]
 
     def _handle_signal_crossbar(self, signum=15, frame=None, do_exit=True):
         if self.crossbar_process is not None:
