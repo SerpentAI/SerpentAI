@@ -3,10 +3,10 @@ import enum
 from serpent.utilities import is_linux, is_macos, is_windows
 
 from sneakysnek.keyboard_keys import KeyboardKey
-from sneakysnek.keyboard_event import KeyboardEvent, KeyboardEvents
+from sneakysnek.keyboard_event import KeyboardEvent as SneakySnekKeyboardEvent
 
 from sneakysnek.mouse_buttons import MouseButton
-from sneakysnek.mouse_event import MouseEvent, MouseEvents
+from sneakysnek.mouse_event import MouseEvent as SneakySnekMouseEvent
 
 
 # US layout - What's to be done for other keyboard layouts?
@@ -200,9 +200,29 @@ class InputController:
         self._is_game_launched_check()
         self.backend.drag_screen_region_to_screen_region(button=button, start_screen_region=start_screen_region, end_screen_region=end_screen_region, duration=duration, **kwargs)
 
-    def scroll(self, x=None, y=None, clicks=1, direction="DOWN", **kwargs):
+    def scroll(self, clicks=1, direction="DOWN", **kwargs):
         self._is_game_launched_check()
-        self.backend.scroll(x=x, y=y, clicks=clicks, direction=direction, **kwargs)
+        self.backend.scroll(clicks=clicks, direction=direction, **kwargs)
+
+    def ratios_to_coordinates(self, ratios, screen_region=None):
+        window_offset_x = self.game.window_geometry["x_offset"]
+        window_offset_y = self.game.window_geometry["y_offset"]
+
+        if screen_region is None:
+            width = self.game.window_geometry["width"]
+            height = self.game.window_geometry["height"]
+
+            y0, x0, y1, x1 = (0, 0, height, width)
+        else:
+            y0, x0, y1, x1 = self.game.screen_regions[screen_region]
+
+            width = x1 - x0
+            height = y1 - y0
+
+        return (
+            window_offset_x + x0 + (ratios[0] * width),
+            window_offset_y + y0 + (ratios[1] * height)
+        )
 
     def _initialize_backend(self, backend, **kwargs):
         if backend == InputControllers.PYAUTOGUI:
@@ -228,3 +248,140 @@ class InputController:
         y += self.game.window_geometry["y_offset"]
 
         return x, y
+
+
+class KeyboardEvents(enum.Enum):
+    DOWN = "DOWN"
+    UP = "UP"
+
+
+class KeyboardEvent(SneakySnekKeyboardEvent):
+
+    def __init__(self, event, keyboard_key, **kwargs):
+        super().__init__(event, keyboard_key)
+        self.kwargs = kwargs
+
+    @property
+    def as_label(self):
+        pass
+
+    @property
+    def as_input(self):
+        pass
+
+
+class MouseEvents(enum.Enum):
+    CLICK = "CLICK"
+    CLICK_DOWN = "CLICK_DOWN"
+    CLICK_UP = "CLICK_UP"
+    CLICK_SCREEN_REGION = "CLICK_SCREEN_REGION"
+    DRAG_START = "DRAG_START"
+    DRAG_END = "DRAG_END"
+    MOVE = "MOVE"
+    MOVE_RELATIVE = "MOVE_RELATIVE"
+    SCROLL = "SCROLL"
+
+
+class MouseEvent(SneakySnekMouseEvent):
+
+    def __init__(self, event, button=None, direction=None, velocity=None, x=None, y=None, **kwargs):
+        super().__init__(event, button=button, direction=direction, velocity=velocity, x=x, y=y)
+        self.kwargs = kwargs
+
+    @property
+    def as_label(self):
+        if self.event == MouseEvents.CLICK and self.button == MouseButton.LEFT:
+            return "Mouse - Left Click"
+        elif self.event == MouseEvents.CLICK and self.button == MouseButton.RIGHT:
+            return "Mouse - Right Click"
+        elif self.event == MouseEvents.CLICK and self.button == MouseButton.MIDDLE:
+            return "Mouse - Middle Click"
+        elif self.event == MouseEvents.CLICK_DOWN and self.button == MouseButton.LEFT:
+            return "Mouse - Left Click - Pressed"
+        elif self.event == MouseEvents.CLICK_DOWN and self.button == MouseButton.RIGHT:
+            return "Mouse - Right Click - Pressed"
+        elif self.event == MouseEvents.CLICK_DOWN and self.button == MouseButton.MIDDLE:
+            return "Mouse - Middle Click - Pressed"
+        elif self.event == MouseEvents.CLICK_UP and self.button == MouseButton.LEFT:
+            return "Mouse - Left Click - Released"
+        elif self.event == MouseEvents.CLICK_UP and self.button == MouseButton.RIGHT:
+            return "Mouse - Right Click - Released"
+        elif self.event == MouseEvents.CLICK_UP and self.button == MouseButton.MIDDLE:
+            return "Mouse - Middle Click - Released"
+        elif self.event == MouseEvents.CLICK_SCREEN_REGION and self.button == MouseButton.LEFT:
+            return f"Mouse - Left Region Click - {self.kwargs['screen_region']}"
+        elif self.event == MouseEvents.CLICK_SCREEN_REGION and self.button == MouseButton.RIGHT:
+            return f"Mouse - Right Region Click - {self.kwargs['screen_region']}"
+        elif self.event == MouseEvents.CLICK_SCREEN_REGION and self.button == MouseButton.MIDDLE:
+            return f"Mouse - Middle Region Click - {self.kwargs['screen_region']}"
+        elif self.event == MouseEvents.DRAG_START and self.button == MouseButton.LEFT:
+            return f"Mouse - Left Drag Start - ({self.x}, {self.y})"
+        elif self.event == MouseEvents.DRAG_START and self.button == MouseButton.RIGHT:
+            return f"Mouse - Right Drag Start - ({self.x}, {self.y})"
+        elif self.event == MouseEvents.DRAG_START and self.button == MouseButton.MIDDLE:
+            return f"Mouse - Middle Drag Start - ({self.x}, {self.y})"
+        elif self.event == MouseEvents.DRAG_END and self.button == MouseButton.LEFT:
+            return f"Mouse - Left Drag End - ({self.x}, {self.y})"
+        elif self.event == MouseEvents.DRAG_END and self.button == MouseButton.RIGHT:
+            return f"Mouse - Right Drag End - ({self.x}, {self.y})"
+        elif self.event == MouseEvents.DRAG_END and self.button == MouseButton.MIDDLE:
+            return f"Mouse - Middle Drag End - ({self.x}, {self.y})"
+        elif self.event == MouseEvents.MOVE:
+            return f"Mouse - Move - ({self.x}, {self.y})"
+        elif self.event == MouseEvents.MOVE_RELATIVE:
+            return f"Mouse - Move (Relative) - ({self.x}, {self.y})"
+        elif self.event == MouseEvents.SCROLL and self.direction == "UP":
+            return "Mouse - Scroll Up"
+        elif self.event == MouseEvents.SCROLL and self.direction == "DOWN":
+            return "Mouse - Scroll Down"
+        else:
+            return "Mouse - Unknown"
+
+    @property
+    def as_input(self):
+        if self.event == MouseEvents.CLICK and self.button == MouseButton.LEFT:
+            return "MOUSE_LEFT_CLICK"
+        elif self.event == MouseEvents.CLICK and self.button == MouseButton.RIGHT:
+            return "MOUSE_RIGHT_CLICK"
+        elif self.event == MouseEvents.CLICK and self.button == MouseButton.MIDDLE:
+            return "MOUSE_MIDDLE_CLICK"
+        elif self.event == MouseEvents.CLICK_DOWN and self.button == MouseButton.LEFT:
+            return "MOUSE_LEFT_DOWN"
+        elif self.event == MouseEvents.CLICK_DOWN and self.button == MouseButton.RIGHT:
+            return "MOUSE_RIGHT_DOWN"
+        elif self.event == MouseEvents.CLICK_DOWN and self.button == MouseButton.MIDDLE:
+            return "MOUSE_MIDDLE_DOWN"
+        elif self.event == MouseEvents.CLICK_UP and self.button == MouseButton.LEFT:
+            return "MOUSE_LEFT_UP"
+        elif self.event == MouseEvents.CLICK_UP and self.button == MouseButton.RIGHT:
+            return "MOUSE_RIGHT_UP"
+        elif self.event == MouseEvents.CLICK_UP and self.button == MouseButton.MIDDLE:
+            return "MOUSE_MIDDLE_UP"
+        elif self.event == MouseEvents.CLICK_SCREEN_REGION and self.button == MouseButton.LEFT:
+            return "MOUSE_LEFT_REGION_CLICK"
+        elif self.event == MouseEvents.CLICK_SCREEN_REGION and self.button == MouseButton.RIGHT:
+            return "MOUSE_RIGHT_REGION_CLICK"
+        elif self.event == MouseEvents.CLICK_SCREEN_REGION and self.button == MouseButton.MIDDLE:
+            return "MOUSE_MIDDLE_REGION_CLICK"
+        elif self.event == MouseEvents.DRAG_START and self.button == MouseButton.LEFT:
+            return "MOUSE_LEFT_DRAG_START"
+        elif self.event == MouseEvents.DRAG_START and self.button == MouseButton.RIGHT:
+            return "MOUSE_RIGHT_DRAG_START"
+        elif self.event == MouseEvents.DRAG_START and self.button == MouseButton.MIDDLE:
+            return "MOUSE_MIDDLE_DRAG_START"
+        elif self.event == MouseEvents.DRAG_END and self.button == MouseButton.LEFT:
+            return "MOUSE_LEFT_DRAG_END"
+        elif self.event == MouseEvents.DRAG_END and self.button == MouseButton.RIGHT:
+            return "MOUSE_RIGHT_DRAG_END"
+        elif self.event == MouseEvents.DRAG_END and self.button == MouseButton.MIDDLE:
+            return "MOUSE_MIDDLE_DRAG_END"
+        elif self.event == MouseEvents.MOVE:
+            return "MOUSE_MOVE"
+        elif self.event == MouseEvents.MOVE_RELATIVE:
+            return "MOUSE_MOVE_RELATIVE"
+        elif self.event == MouseEvents.SCROLL and self.direction == "UP":
+            return "MOUSE_SCROLL_UP"
+        elif self.event == MouseEvents.SCROLL and self.direction == "DOWN":
+            return "MOUSE_SCROLL_DOWN"
+        else:
+            return "MOUSE_UNKNOWN"

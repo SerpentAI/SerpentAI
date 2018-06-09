@@ -9,8 +9,12 @@ __pycache__/
 .python-version
 
 plugins/
+dashboard/
 
 *.egg-info
 
 build/
 dist/
+key.priv
+key.pub
+node.pid

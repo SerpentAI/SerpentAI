@@ -23,19 +23,19 @@ class AnalyticsClient:
         self.broadcast = config["analytics"].get("broadcast", False)
         self.debug = config["analytics"].get("debug", False)
 
-        self.event_whitelist = config["analytics"].get("event_whitelist", list())
+        self.event_whitelist = config["analytics"].get("event_whitelist")
 
     @property
     def redis_key(self):
         return f"SERPENT:{self.project_key}:EVENTS"
 
-    def track(self, event_key=None, data=None):
-        if event_key in self.event_whitelist:
+    def track(self, event_key=None, data=None, timestamp=None):
+        if self.event_whitelist is None or event_key in self.event_whitelist:
             event = {
                 "project_key": self.project_key,
                 "event_key": event_key,
                 "data": data,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": timestamp if timestamp is not None else datetime.utcnow().isoformat()
             }
 
             if self.debug:

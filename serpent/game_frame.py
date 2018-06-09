@@ -6,6 +6,8 @@ import skimage.morphology
 
 import numpy as np
 
+from PIL import Image
+
 
 class GameFrameError(BaseException):
     pass
@@ -88,6 +90,13 @@ class GameFrame:
 
         return self.frame_variants["ssim"]
 
+    @property
+    def top_color(self):
+        height, width, channels = self.eighth_resolution_frame.shape
+        values, counts = np.unique(self.eighth_resolution_frame.reshape(width * height, channels), axis=0, return_counts=True)
+
+        return [int(i) for i in values[np.argsort(counts)[::-1][0]]]
+
     def compare_ssim(self, previous_game_frame):
         return skimage.measure.compare_ssim(previous_game_frame.ssim_frame, self.ssim_frame)
 
@@ -96,6 +105,9 @@ class GameFrame:
         previous = skimage.filters.gaussian(previous_game_frame.grayscale_frame, 8)
 
         return current - previous
+
+    def to_pil(self):
+        return Image.fromarray(self.frame)
 
     # TODO: Refactor Fraction of Resolution Frames...
     def _to_half_resolution(self):

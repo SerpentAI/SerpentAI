@@ -13,5 +13,5 @@ class SerpentGameAgent(GameAgent):
     def setup_play(self):
         pass
 
-    def handle_play(self, game_frame):
+    def handle_play(self, game_frame, game_frame_pipeline):
         pass

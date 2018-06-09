@@ -14,7 +14,7 @@ class GameAPI:
         if not self.game.is_launched:
             self.game.launch(dry_run=True)
 
-        self.input_controller = InputController(game=game)
+        self.input_controller = InputController(game=game, backend=game.input_controller)
 
         self.game_inputs = dict()
 

@@ -9,6 +9,9 @@ except(IOError, ImportError):
 
 packages = [
     "serpent",
+    "serpent.dashboard",
+    "serpent.dashboard.cefbrowser",
+    "serpent.dashboard.models",
     "serpent.game_agents",
     "serpent.game_launchers",
     "serpent.games",
@@ -18,12 +21,17 @@ packages = [
     "serpent.machine_learning.context_classification.context_classifiers",
     "serpent.machine_learning.reinforcement_learning",
     "serpent.machine_learning.reinforcement_learning.agents",
+    "serpent.machine_learning.object_recognition",
+    "serpent.machine_learning.object_recognition.object_recognizers",
     "serpent.visual_debugger",
     "serpent.wamp_components",
     "serpent.window_controllers"
 ]
 
 data_files = [
+    ("serpent/dashboard/cefbrowser", [
+        "serpent/dashboard/cefbrowser/cefbrowser.kv"
+    ]),
     ("serpent/templates/SerpentGameAgentPlugin", [
         "serpent/templates/SerpentGameAgentPlugin/plugin.py",
         "serpent/templates/SerpentGameAgentPlugin/__init__.py",
@@ -66,7 +74,12 @@ data_files = [
         "serpent/requirements.linux.txt",
         "serpent/requirements.win32.txt",
         "serpent/requirements.darwin.txt"
-    ])
+    ]),
+    ("dashboard", [
+        "dashboard/crossbar.json",
+        "dashboard/database.sqlite",
+        "dashboard/serpent.png"
+    ]),
 ]
 
 requires = [

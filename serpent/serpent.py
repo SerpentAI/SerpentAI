@@ -15,6 +15,10 @@ from serpent.window_controller import WindowController
 # Add the current working directory to sys.path to discover user plugins!
 sys.path.insert(0, os.getcwd())
 
+# On Windows, disable the Fortran CTRL-C handler that gets installed with SciPy
+if is_windows:
+    os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = 'T'
+
 VERSION = "2018.1.2"
 
 valid_commands = [
@@ -33,7 +37,9 @@ valid_commands = [
     "capture",
     "visual_debugger",
     "window_name",
-    "record_inputs"
+    "record_inputs",
+    "dashboard",
+    "object_recognition"
 ]
 
 
@@ -75,6 +81,8 @@ def setup(module=None):
         setup_gui()
     elif module == "ml":
         setup_ml()
+    elif module == "dashboard":
+        setup_dashboard()
     else:
         print(f"Invalid Setup Module: {module}")
 
@@ -189,12 +197,12 @@ def setup_gui():
     input("Press Enter to continue...")
 
     if is_linux():
-        subprocess.call(shlex.split("pip install Kivy"))
+        subprocess.call(shlex.split("pip install Kivy==1.10.0"))
     elif is_macos():
-        subprocess.call(shlex.split("pip install pygame Kivy"))
+        subprocess.call(shlex.split("pip install pygame Kivy==1.10.0"))
     elif is_windows():
         subprocess.call(shlex.split("pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew"))
-        subprocess.call(shlex.split("pip install Kivy"))
+        subprocess.call(shlex.split("pip install Kivy==1.10.0"))
 
     print("")
     print("GUI module setup complete!")
@@ -218,20 +226,58 @@ def setup_ml():
         tensorflow_backend = "CPU"
 
     if tensorflow_backend == "GPU":
-        if is_windows():
-            subprocess.call(shlex.split("pip install tensorflow-gpu==1.4.0"))
-        else:
-            subprocess.call(shlex.split("pip install tensorflow-gpu==1.4.1"))
+        subprocess.call(shlex.split("pip install tensorflow-gpu==1.5.1"))
     elif tensorflow_backend == "CPU":
-        if is_windows():
-            subprocess.call(shlex.split("pip install tensorflow==1.4.0"))
-        else:
-            subprocess.call(shlex.split("pip install tensorflow==1.4.1"))
+        subprocess.call(shlex.split("pip install tensorflow==1.5.1"))
 
     subprocess.call(shlex.split("pip install Keras tensorforce==0.3.5.1"))
 
     print("")
     print("ML module setup complete!")
+
+
+def setup_dashboard():
+    if is_linux():
+        print("Before continuing with the Dashboard module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Linux-Installation-Guide#dashboard")
+    elif is_macos():
+        print("Before continuing with the Dashboard module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/macOS-Installation-Guide#dashboard")
+    elif is_windows():
+        print("Before continuing with the Dashboard module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Windows-Installation-Guide#dashboard")
+
+    print("")
+    input("Press Enter to continue...")
+
+    # Copy the base dashboard directory to the install location
+    shutil.copytree(
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "dashboard"),
+        os.path.join(os.getcwd(), "dashboard")
+    )
+
+    # Copy the WAMP components to the install location dashboard directory
+    shutil.copy(
+        os.path.join(os.path.dirname(__file__), "wamp_components", "analytics_component.py"),
+        os.path.join(os.getcwd(), "dashboard", "analytics_component.py")
+    )
+
+    shutil.copy(
+        os.path.join(os.path.dirname(__file__), "wamp_components", "dashboard_api_component.py"),
+        os.path.join(os.getcwd(), "dashboard", "dashboard_api_component.py")
+    )
+
+    # Install Kivy
+    if is_linux():
+        subprocess.call(shlex.split("pip install Kivy==1.10.0"))
+    elif is_macos():
+        subprocess.call(shlex.split("pip install pygame Kivy==1.10.0"))
+    elif is_windows():
+        subprocess.call(shlex.split("pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew"))
+        subprocess.call(shlex.split("pip install Kivy==1.10.0"))
+
+    # Install CEFPython
+    subprocess.call(shlex.split("pip install cefpython3==57.1"))
+
+    # Install Pony ORM
+    subprocess.call(shlex.split("pip install pony==0.7.3"))
 
 
 def update():
@@ -288,7 +334,8 @@ def modules():
     serpent_modules = {
         "OCR": (exists("tesserocr") or exists("pytesseract")) is not None,
         "GUI": exists("kivy") is not None,
-        "ML": exists("keras") is not None and exists("tensorforce") is not None
+        "ML": exists("keras") is not None and exists("tensorforce") is not None,
+        "DASHBOARD": exists("kivy") is not None and exists("cefpython3") is not None and exists("pony") is not None
     }
 
     clear_terminal()
@@ -301,6 +348,7 @@ def modules():
     print(f"OCR => {'Yes' if serpent_modules['OCR'] else 'No; Install with `serpent setup ocr` if needed'}")
     print(f"GUI => {'Yes' if serpent_modules['GUI'] else 'No; Install with `serpent setup gui` if needed'}")
     print(f"ML => {'Yes' if serpent_modules['ML'] else 'No; Install with `serpent setup ml` if needed'}")
+    print(f"DASHBOARD => {'Yes' if serpent_modules['DASHBOARD'] else 'No; Install with `serpent setup dashboard` if needed'}")
 
     print("")
 
@@ -375,8 +423,8 @@ def record(game_name, game_agent_name, frame_count=4, frame_spacing=4):
     game.launch(dry_run=True)
 
     game.play(
-        game_agent_class_name=game_agent_name, 
-        frame_handler="RECORD", 
+        game_agent_class_name=game_agent_name,
+        frame_handler="RECORD",
         frame_count=int(frame_count),
         frame_spacing=int(frame_spacing)
     )
@@ -394,6 +442,8 @@ def generate(plugin_type):
 def train(training_type, *args):
     if training_type == "context":
         train_context(*args)
+    elif training_type == "object":
+        train_object(*args)
 
 
 def capture(capture_type, game_name, interval=1, extra=None, extra_2=None):
@@ -438,6 +488,20 @@ def record_inputs():
     input_recorder = InputRecorder()
 
     input_recorder.start()
+
+
+def dashboard():
+    from serpent.dashboard.dashboard_app import DashboardApp
+    DashboardApp().run()
+
+
+def object_recognition(game_agent_name, model_name):
+    model_path = f"plugins/{game_agent_name}Plugin/files/ml_models/object_recognition/{model_name}"
+
+    from serpent.machine_learning.object_recognition.object_recognizer import ObjectRecognizer
+    object_recognizer = ObjectRecognizer(model_name, model_path=model_path)
+
+    object_recognizer.predict_directory("datasets/collect_frames")
 
 
 def generate_game_plugin():
@@ -575,6 +639,28 @@ def train_context(epochs=3, validate=True, autosave=False):
     ContextClassifier.executable_train(epochs=int(epochs), validate=argv_is_true(validate), autosave=argv_is_true(autosave))
 
 
+def train_object(name, algorithm, *classes):
+    from serpent.machine_learning.object_recognition.object_recognizer import ObjectRecognizer, ObjectRecognizers
+
+    backend = "luminoth"
+
+    backend_mapping = {
+        "luminoth": ObjectRecognizers.LUMINOTH
+    }
+
+    object_recognizer = ObjectRecognizer(
+        name,
+        backend=backend_mapping[backend],
+        algorithm=algorithm,
+        classes=classes
+    )
+
+    import signal
+    signal.signal(signal.SIGINT, object_recognizer.on_interrupt)
+
+    object_recognizer.train()
+
+
 def initialize_game(game_name):
     game_class_name = f"Serpent{game_name}Game"
 
@@ -609,7 +695,9 @@ command_function_mapping = {
     "capture": capture,
     "visual_debugger": visual_debugger,
     "window_name": window_name,
-    "record_inputs": record_inputs
+    "record_inputs": record_inputs,
+    "dashboard": dashboard,
+    "object_recognition": object_recognition
 }
 
 command_description_mapping = {
@@ -628,7 +716,9 @@ command_description_mapping = {
     "capture": "Capture frames, screen regions and contexts from a game",
     "visual_debugger": "Launch the visual debugger",
     "window_name": "Launch a utility to find a game's window name",
-    "record_inputs": "Start the input recorder"
+    "record_inputs": "Start the input recorder",
+    "dashboard": "Launch the dashboard",
+    "object_recognition": "Perform object recognition on collected frames"
 }
 
 if __name__ == "__main__":

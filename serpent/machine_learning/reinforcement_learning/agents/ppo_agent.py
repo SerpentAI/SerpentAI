@@ -131,9 +131,23 @@ class PPOAgent(Agent):
             elif game_inputs_item["control_type"] == InputControlTypes.CONTINUOUS:
                 label = game_inputs_item["name"]
                 action = game_inputs_item["inputs"]["events"]
-                input_value = float(agent_actions[label])
 
-            actions.append((label, action, input_value))
+                if isinstance(agent_actions[label], np.ndarray):
+                    input_value = [float(f) for f in agent_actions[label]]
+                else:
+                    input_value = float(agent_actions[label])
+
+                actions.append((label, action, input_value))
+
+        for action in actions:
+            self.analytics_client.track(
+                event_key="AGENT_ACTION",
+                data={
+                    "label": action[0],
+                    "action": [str(a) for a in action[1]],
+                    "input_value": action[2]
+                }
+            )
 
         return actions
 
@@ -163,7 +177,7 @@ class PPOAgent(Agent):
         self.current_reward = reward
         self.cumulative_reward += reward
 
-        self.analytics_client.track(event_key="REWARD", data={"reward": self.current_reward})
+        self.analytics_client.track(event_key="REWARD", data={"reward": self.current_reward, "total_reward": self.cumulative_reward})
 
         if terminal:
             self.analytics_client.track(event_key="TOTAL_REWARD", data={"reward": self.cumulative_reward})
@@ -184,10 +198,18 @@ class PPOAgent(Agent):
             if game_inputs_item["control_type"] == InputControlTypes.DISCRETE:
                 actions_spec[game_inputs_item["name"]] = dict(type="int", num_actions=len(game_inputs_item["inputs"]))
             elif game_inputs_item["control_type"] == InputControlTypes.CONTINUOUS:
+                size = 1
+
+                if "size" in game_inputs_item["inputs"]:
+                    size = game_inputs_item["inputs"]["size"]
+
                 actions_spec[game_inputs_item["name"]] = dict(
                     type="float",
                     min_value=game_inputs_item["inputs"]["minimum"],
                     max_value=game_inputs_item["inputs"]["maximum"]
                 )
+
+                if size > 1:
+                    actions_spec[game_inputs_item["name"]]["shape"] = size
 
         return actions_spec

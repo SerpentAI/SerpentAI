@@ -32,6 +32,13 @@ class DarwinWindowController(WindowController):
             end tell
         ''').run()
 
+    def bring_window_to_top(self, window_id):
+        applescript.AppleScript(f'''
+            tell application "System Events" to tell process "{window_id}"
+                set frontmost to true
+            end tell
+        ''').run()
+
     def is_window_focused(self, window_id):
         return self.get_focused_window_name() == window_id
 

@@ -25,11 +25,38 @@ class RandomAgent(Agent):
             elif game_inputs_item["control_type"] == InputControlTypes.CONTINUOUS:
                 label = game_inputs_item["name"]
                 action = game_inputs_item["inputs"]["events"]
-                input_value = random.uniform(
-                    game_inputs_item["inputs"]["minimum"],
-                    game_inputs_item["inputs"]["maximum"]
-                )
+
+                size = 1
+
+                if "size" in game_inputs_item["inputs"]:
+                    size = game_inputs_item["inputs"]["size"]
+
+                if size == 1:
+                    input_value = random.uniform(
+                        game_inputs_item["inputs"]["minimum"],
+                        game_inputs_item["inputs"]["maximum"]
+                    )
+                else:
+                    input_value = list()
+
+                    for i in range(size):
+                        input_value.append(
+                            random.uniform(
+                                game_inputs_item["inputs"]["minimum"],
+                                game_inputs_item["inputs"]["maximum"]
+                            )
+                        )
 
                 actions.append((label, action, input_value))
+
+        for action in actions:
+            self.analytics_client.track(
+                event_key="AGENT_ACTION",
+                data={
+                    "label": action[0],
+                    "action": [str(a) for a in action[1]],
+                    "input_value": action[2]
+                }
+            )
 
         return actions

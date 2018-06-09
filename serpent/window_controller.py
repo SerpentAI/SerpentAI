@@ -22,6 +22,9 @@ class WindowController:
     def focus_window(self, window_id):
         self.adapter.focus_window(window_id)
 
+    def bring_window_to_top(self, window_id):
+        self.adapter.bring_window_to_top(window_id)
+
     def is_window_focused(self, window_id):
         return self.adapter.is_window_focused(window_id)
 

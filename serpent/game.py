@@ -23,7 +23,7 @@ from serpent.game_frame_limiter import GameFrameLimiter
 
 from serpent.sprite import Sprite
 
-from serpent.utilities import clear_terminal, is_windows
+from serpent.utilities import clear_terminal, is_windows, SerpentError
 
 import skimage.io
 import skimage.color
@@ -54,6 +54,8 @@ class Game(offshoot.Pluggable):
         self.window_name = kwargs.get("window_name")
         self.window_geometry = None
 
+        self.dashboard_window_id = None
+
         self.window_controller = WindowController()
 
         self.is_launched = False
@@ -72,6 +74,8 @@ class Game(offshoot.Pluggable):
         self.sprites = self._discover_sprites()
 
         self.redis_client = StrictRedis(**config["redis"])
+
+        self.pause_callback_fired = False
 
         self.kwargs = kwargs
 
@@ -156,11 +160,29 @@ class Game(offshoot.Pluggable):
     def after_launch(self):
         self.is_launched = True
 
-        time.sleep(5)
+        current_attempt = 1
 
-        self.window_id = self.window_controller.locate_window(self.window_name)
+        while current_attempt <= 100:
+            self.window_id = self.window_controller.locate_window(self.window_name)
+
+            if self.window_id not in [0, "0"]:
+                break
+
+            time.sleep(0.1)
+
+        time.sleep(0.5)
+
+        if self.window_id in [0, "0"]:
+            raise SerpentError("Game window not found...")
 
         self.window_controller.move_window(self.window_id, 0, 0)
+
+        self.dashboard_window_id = self.window_controller.locate_window("Serpent.AI Dashboard")
+
+        # TODO: Test on macOS and Linux
+        if self.dashboard_window_id is not None and self.dashboard_window_id not in [0, "0"]:
+            self.window_controller.bring_window_to_top(self.dashboard_window_id)
+
         self.window_controller.focus_window(self.window_id)
 
         self.window_geometry = self.extract_window_geometry()
@@ -197,18 +219,6 @@ class Game(offshoot.Pluggable):
 
         self.window_controller.focus_window(self.window_id)
 
-        frame_type = "FULL"
-
-        pipeline_frame_handlers = [
-            "COLLECT_FRAMES", 
-            "COLLECT_FRAME_REGIONS", 
-            "COLLECT_FRAMES_FOR_CONTEXT", 
-            "RECORD"
-        ]
-
-        if frame_handler in pipeline_frame_handlers and self.frame_transformation_pipeline_string is not None:
-            frame_type = "PIPELINE"
-
         # Override FPS Config?
         if frame_handler == "RECORD":
             self.game_frame_limiter = GameFrameLimiter(fps=10)
@@ -217,16 +227,18 @@ class Game(offshoot.Pluggable):
             while True:
                 self.game_frame_limiter.start()
 
-                game_frame = self.grab_latest_frame(frame_type=frame_type)
+                game_frame, game_frame_pipeline = self.grab_latest_frame()
 
                 try:
                     if self.is_focused:
-                        game_agent.on_game_frame(game_frame, frame_handler=frame_handler, **kwargs)
+                        self.pause_callback_fired = False
+                        game_agent.on_game_frame(game_frame, game_frame_pipeline, frame_handler=frame_handler, **kwargs)
                     else:
-                        clear_terminal()
-                        print("PAUSED\n")
+                        if not self.pause_callback_fired:
+                            print("PAUSED\n")
 
-                        game_agent.on_pause(frame_handler=frame_handler, **kwargs)
+                            game_agent.on_pause(frame_handler=frame_handler, **kwargs)
+                            self.pause_callback_fired = True
 
                         time.sleep(1)
                 except Exception as e:
@@ -278,10 +290,10 @@ class Game(offshoot.Pluggable):
         atexit.unregister(self._handle_signal)
 
     @offshoot.forbidden
-    def grab_latest_frame(self, frame_type="FULL"):
-        game_frame_buffer = FrameGrabber.get_frames([0], frame_type=frame_type)
+    def grab_latest_frame(self):
+        game_frame_buffer, game_frame_buffer_pipeline = FrameGrabber.get_frames_with_pipeline([0])
 
-        return game_frame_buffer.frames[0]
+        return game_frame_buffer.frames[0], game_frame_buffer_pipeline.frames[0]
 
     def _discover_sprites(self):
         plugin_path = offshoot.config["file_paths"]["plugins"]

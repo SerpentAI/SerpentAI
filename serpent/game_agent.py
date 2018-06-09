@@ -7,6 +7,7 @@ import uuid
 import pickle
 import h5py
 import random
+import json
 
 import subprocess
 import signal
@@ -98,6 +99,10 @@ class GameAgent(offshoot.Pluggable):
 
         self.analytics_client = AnalyticsClient(project_key=config["analytics"]["topic"])
 
+        if config["analytics"]["broadcast"]:
+            self.analytics_client.track(event_key="RESET_DASHBOARD", data={})
+            self.broadcast_previous_analytics_events()
+
         self.flag = None
 
         self.uuid = str(uuid.uuid4())
@@ -106,14 +111,14 @@ class GameAgent(offshoot.Pluggable):
         self.kwargs = kwargs
 
     @offshoot.forbidden
-    def on_game_frame(self, game_frame, frame_handler=None, **kwargs):
+    def on_game_frame(self, game_frame, game_frame_pipeline, frame_handler=None, **kwargs):
         if not self.frame_handler_setup_performed:
             self._setup_frame_handler(frame_handler=frame_handler, **kwargs)
             return None
 
         frame_handler = self.frame_handlers.get(frame_handler or self.config.get("frame_handler", "NOOP"))
 
-        frame_handler(game_frame, **kwargs)
+        frame_handler(game_frame, game_frame_pipeline, **kwargs)
 
         self.game_frame_buffer.add_game_frame(game_frame)
 
@@ -136,11 +141,13 @@ class GameAgent(offshoot.Pluggable):
         game_frame_buffer = FrameGrabber.get_frames([0], frame_type=frame_type)
         return game_frame_buffer.frames[0]
 
-    def handle_noop(self, game_frame, **kwargs):
+    def handle_noop(self, game_frame, game_frame_pipeline, **kwargs):
         time.sleep(1)
 
     def setup_collect_frames(self, **kwargs):
         self.game_frames = list()
+        self.game_frames_pipeline = list()
+
         self.collected_frame_count = 0
 
     def setup_collect_frame_regions(self, **kwargs):
@@ -154,21 +161,23 @@ class GameAgent(offshoot.Pluggable):
             os.mkdir(f"datasets/collect_frames_for_context/{context}")
 
         self.game_frames = list()
+
         self.collected_frame_count = 0
 
     def setup_handle_record(self, **kwargs):
         self.game_frame_buffers = list()
         self.input_recorder_process = None
-        
+
         self.frame_offsets = list(range(0, (self.kwargs["frame_count"] * self.kwargs["frame_spacing"]) - 1, self.kwargs["frame_spacing"]))
-        
+
         self._start_input_recorder()
 
         clear_terminal()
         print("Start playing the game! Focus out when you are done or want to save the collected data to that point.")
 
-    def handle_collect_frames(self, game_frame, **kwargs):
+    def handle_collect_frames(self, game_frame, game_frame_pipeline, **kwargs):
         self.game_frames.append(game_frame)
+        self.game_frames_pipeline.append(game_frame_pipeline)
 
         self.collected_frame_count += 1
 
@@ -177,7 +186,7 @@ class GameAgent(offshoot.Pluggable):
 
         time.sleep(kwargs.get("interval") or self.config.get("collect_frames_interval") or 1)
 
-    def handle_collect_frame_regions(self, game_frame, **kwargs):
+    def handle_collect_frame_regions(self, game_frame, game_frame_pipeline, **kwargs):
         region = kwargs.get("region")
 
         self.game_frames.append(game_frame)
@@ -189,7 +198,7 @@ class GameAgent(offshoot.Pluggable):
 
         time.sleep(kwargs.get("interval") or self.config.get("collect_frames_interval") or 1)
 
-    def handle_collect_frames_for_context(self, game_frame, **kwargs):
+    def handle_collect_frames_for_context(self, game_frame, game_frame_pipeline, **kwargs):
         context = kwargs.get("context") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["context"]
         interval = kwargs.get("interval") or config["frame_handlers"]["COLLECT_FRAMES_FOR_CONTEXT"]["interval"]
 
@@ -215,20 +224,40 @@ class GameAgent(offshoot.Pluggable):
 
         time.sleep(interval)
 
-    def handle_record(self, game_frame, **kwargs):
+    def handle_record(self, game_frame, game_frame_pipeline, **kwargs):
         game_frame_buffer = FrameGrabber.get_frames(
-            self.frame_offsets, 
+            self.frame_offsets,
             frame_type="PIPELINE"
         )
 
         self.game_frame_buffers.append(game_frame_buffer)
-    
+
+    def broadcast_previous_analytics_events(self):
+        log_file_name = f"{config['analytics']['topic']}.json"
+
+        if os.path.isfile(log_file_name):
+            with open(log_file_name, "r") as f:
+                for line in list(f):
+                    try:
+                        event = json.loads(line.strip())
+                        self.analytics_client.track(event_key=event["event_key"], data=event["data"], timestamp=event["timestamp"])
+                    except Exception:
+                        continue
+
     def on_collect_frames_pause(self, **kwargs):
         for i, game_frame in enumerate(self.game_frames):
             print(f"Saving image {i + 1}/{len(self.game_frames)} to disk...")
             skimage.io.imsave(f"datasets/collect_frames/frame_{game_frame.timestamp}.png", game_frame.frame)
 
+        if not os.path.exists("datasets/collect_frames/pipeline"):
+            os.mkdir("datasets/collect_frames/pipeline")
+
+        for i, game_frame in enumerate(self.game_frames_pipeline):
+            print(f"Saving pipeline image {i + 1}/{len(self.game_frames)} to disk...")
+            skimage.io.imsave(f"datasets/collect_frames/pipeline/frame_{game_frame.timestamp}.png", game_frame.frame)
+
         self.game_frames = list()
+        self.game_frames_pipeline = list()
 
     def on_collect_frame_regions_pause(self, **kwargs):
         region = kwargs["region"]
@@ -416,7 +445,7 @@ class GameAgent(offshoot.Pluggable):
     def _register_sprites(self):
         for sprite_name, sprite in self.game.sprites.items():
             self.sprite_identifier.register(sprite)
-    
+
     @offshoot.forbidden
     def _start_input_recorder(self):
         if self.input_recorder_process is not None:
@@ -449,7 +478,7 @@ class GameAgent(offshoot.Pluggable):
 
                 if do_exit:
                     exit()
-    
+
     @offshoot.forbidden
     def _merge_frames_and_input_events(self, input_events):
         game_frame_buffer_index = 0

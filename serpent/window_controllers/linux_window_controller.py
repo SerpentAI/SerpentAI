@@ -23,6 +23,9 @@ class LinuxWindowController(WindowController):
     def focus_window(self, window_id):
         subprocess.call(shlex.split(f"xdotool windowactivate {window_id}"))
 
+    def bring_window_to_top(self, window_id):
+        subprocess.call(shlex.split(f"xdotool windowactivate {window_id}"))
+
     def is_window_focused(self, window_id):
         focused_window_id = subprocess.check_output(shlex.split("xdotool getwindowfocus")).decode("utf-8").strip()
         return focused_window_id == window_id

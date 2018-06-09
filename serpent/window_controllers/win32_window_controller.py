@@ -1,6 +1,7 @@
 from serpent.window_controller import WindowController
 
 import win32gui
+import win32con
 
 
 class Win32WindowController(WindowController):
@@ -21,6 +22,12 @@ class Win32WindowController(WindowController):
 
     def focus_window(self, window_id):
         win32gui.SetForegroundWindow(window_id)
+
+    def bring_window_to_top(self, window_id):
+        x, y, width, height = win32gui.GetClientRect(window_id)
+
+        win32gui.SetWindowPos(window_id, win32con.HWND_TOPMOST, x, y, width, height, win32con.SWP_NOACTIVATE)
+        win32gui.SetWindowPos(window_id, win32con.HWND_NOTOPMOST, x, y, width, height, win32con.SWP_NOACTIVATE)
 
     def is_window_focused(self, window_id):
         focused_window_id = win32gui.GetForegroundWindow()

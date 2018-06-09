@@ -40,7 +40,7 @@ class Agent:
         self.current_reward = reward
         self.cumulative_reward += reward
 
-        self.analytics_client.track(event_key="REWARD", data={"reward": self.current_reward})
+        self.analytics_client.track(event_key="REWARD", data={"reward": self.current_reward, "total_reward": self.cumulative_reward})
 
         if terminal:
             self.analytics_client.track(event_key="TOTAL_REWARD", data={"reward": self.cumulative_reward})

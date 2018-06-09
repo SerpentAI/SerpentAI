@@ -154,3 +154,36 @@ class FrameGrabber:
             game_frame_buffer.add_game_frame(game_frame)
 
         return game_frame_buffer
+
+    @classmethod
+    def get_frames_with_pipeline(cls, frame_buffer_indices, **kwargs):
+        while True:
+            if redis_client.llen(config["frame_grabber"]["redis_key"]) > 149:
+                break
+
+            time.sleep(0.1)
+
+        game_frame_buffers = [
+            GameFrameBuffer(size=len(frame_buffer_indices)),
+            GameFrameBuffer(size=len(frame_buffer_indices))
+        ]
+
+        for i in frame_buffer_indices:
+            redis_keys = [config["frame_grabber"]["redis_key"], config["frame_grabber"]["redis_key"] + "_PIPELINE"]
+
+            for index, redis_key in enumerate(redis_keys):
+                frame_data = redis_client.lindex(redis_key, i)
+
+                timestamp, shape, dtype, frame_bytes = frame_data.split("~".encode("utf-8"), maxsplit=3)
+
+                if dtype == "PNG".encode("utf-8"):
+                    frame_array = frame_bytes
+                else:
+                    frame_shape = [int(i) for i in shape.decode("utf-8").split(", ")]
+                    frame_array = np.fromstring(frame_bytes, dtype=dtype.decode("utf-8")).reshape(frame_shape)
+
+                game_frame = GameFrame(frame_array, timestamp=float(timestamp))
+
+                game_frame_buffers[index].add_game_frame(game_frame)
+
+        return game_frame_buffers
