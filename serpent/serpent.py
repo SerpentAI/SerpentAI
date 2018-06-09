@@ -279,6 +279,9 @@ def setup_dashboard():
     # Install Pony ORM
     subprocess.call(shlex.split("pip install pony==0.7.3"))
 
+    # Install Crossbar
+    subprocess.call(shlex.split("pip install crossbar==18.6.1"))
+
 
 def update():
     clear_terminal()
