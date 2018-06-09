@@ -24,10 +24,10 @@ class Win32WindowController(WindowController):
         win32gui.SetForegroundWindow(window_id)
 
     def bring_window_to_top(self, window_id):
-        x, y, width, height = win32gui.GetClientRect(window_id)
-
-        win32gui.SetWindowPos(window_id, win32con.HWND_TOPMOST, x, y, width, height, win32con.SWP_NOACTIVATE)
-        win32gui.SetWindowPos(window_id, win32con.HWND_NOTOPMOST, x, y, width, height, win32con.SWP_NOACTIVATE)
+        win32gui.ShowWindow(window_id, win32con.SW_RESTORE)
+        win32gui.SetWindowPos(window_id, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)  
+        win32gui.SetWindowPos(window_id, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)  
+        win32gui.SetWindowPos(window_id, win32con.HWND_NOTOPMOST, 0, 0, 0, 0, win32con.SWP_SHOWWINDOW + win32con.SWP_NOMOVE + win32con.SWP_NOSIZE)
 
     def is_window_focused(self, window_id):
         focused_window_id = win32gui.GetForegroundWindow()
