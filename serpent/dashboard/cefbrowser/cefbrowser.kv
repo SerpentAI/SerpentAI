@@ -1,0 +1,179 @@
+# -----------------------------------------------------------------------------
+# JS Dialogs
+# -----------------------------------------------------------------------------
+<CEFBrowserJSAlert@ModalView>:
+    size_hint: None, None
+    size: 400, 150
+    text: ""
+    default_prompt_text: ""
+    js_continue: None
+    auto_dismiss: False
+    BoxLayout:
+        spacing: 5
+        padding: 5
+        orientation: "vertical"
+        Label:
+            padding: 5, 5
+            text: root.text
+            text_size: self.size
+            valign: 'middle'
+            halign: 'center'
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            spacing: 10
+            padding: 5
+            Widget:
+            Button:
+                text: "OK"
+                on_press:
+                    root.js_continue(True, "")
+                    root.dismiss()
+
+<CEFBrowserJSConfirm@ModalView>:
+    size_hint: None, None
+    size: 400, 150
+    text: ""
+    default_prompt_text: ""
+    js_continue: None
+    auto_dismiss: False
+    BoxLayout:
+        spacing: 5
+        padding: 5
+        orientation: "vertical"
+        Label:
+            padding: 5, 5
+            text: root.text
+            text_size: self.size
+            valign: 'middle'
+            halign: 'center'
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            spacing: 10
+            padding: 5
+            Button:
+                text: "Cancel"
+                on_press:
+                    root.js_continue(False, "")
+                    root.dismiss()
+            Button:
+                text: "OK"
+                on_press:
+                    root.js_continue(True, "")
+                    root.dismiss()
+
+<CEFBrowserJSPrompt@ModalView>:
+    size_hint: None, None
+    size: 400, 150
+    text: ""
+    default_prompt_text: ""
+    js_continue: None
+    auto_dismiss: False
+    BoxLayout:
+        spacing: 5
+        padding: 5
+        orientation: "vertical"
+        Label:
+            padding: 5, 5
+            text: root.text
+            text_size: self.size
+            valign: 'middle'
+            halign: 'center'
+        TextInput:
+            id: text_input
+            text: root.default_prompt_text
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            spacing: 10
+            padding: 5
+            Button:
+                text: "Cancel"
+                on_press:
+                    root.js_continue(False, text_input.text)
+                    root.dismiss()
+            Button:
+                text: "OK"
+                on_press:
+                    root.js_continue(True, text_input.text)
+                    root.dismiss()
+
+# -----------------------------------------------------------------------------
+# DragHandler
+# -----------------------------------------------------------------------------
+<HTML5DragIcon@Widget>:
+    texture: None
+    canvas.after:
+        Color:
+            rgba: 1,1,1,1
+        Rectangle:
+            pos: root.pos
+            size: root.size
+            texture: root.texture
+
+# -----------------------------------------------------------------------------
+# Authentication handler
+# -----------------------------------------------------------------------------
+<CEFBrowserAuthDialog@ModalView>:
+    size_hint: None, None
+    size: 400, 250
+    host: ""
+    scheme: ""
+    callback: None
+    auto_dismiss: False
+    BoxLayout:
+        spacing: 5
+        padding: 5
+        orientation: "vertical"
+        Label:
+            padding: 5, 5
+            text: "Please enter your login credentials (%s) for '%s' " % (root.scheme, root.host)
+            text_size: self.size
+            valign: 'middle'
+            halign: 'center'
+        GridLayout:
+            cols: 2
+            padding: 10
+            size_hint_y: None
+            height: 100
+            spacing: 5
+            Label:
+                text: "Username"
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+                size_hint_x: .5
+            TextInput:
+                id: text_input_username
+                multiline: False
+                write_tab: False
+            Label:
+                text: "Password"
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+                size_hint_x: .5
+            TextInput:
+                id: text_input_pw
+                password: True
+                multiline: False
+                write_tab: False
+                on_text_validate:
+                    login_button.trigger_action()
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            spacing: 10
+            padding: 5
+            Button:
+                text: "Cancel"
+                on_press:
+                    root.callback.Cancel()
+                    root.dismiss()
+            Button:
+                id: login_button
+                text: "Login"
+                on_press:
+                    root.callback.Continue(text_input_username.text, text_input_pw.text)
+                    root.dismiss()

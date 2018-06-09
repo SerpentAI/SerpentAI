@@ -9,7 +9,6 @@ __pycache__/
 .python-version
 
 plugins/
-dashboard/
 
 *.egg-info
 
