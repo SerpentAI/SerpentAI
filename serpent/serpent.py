@@ -493,9 +493,14 @@ def record_inputs():
     input_recorder.start()
 
 
-def dashboard():
+def dashboard(width=None, height=None):
     from serpent.dashboard.dashboard_app import DashboardApp
-    DashboardApp().run()
+
+    if width is not None and height is not None:
+        width = int(width)
+        height = int(height)
+
+    DashboardApp(width=width, height=height).run()
 
 
 def object_recognition(game_agent_name, model_name):

@@ -32,10 +32,17 @@ except ImportError:
 
 
 class DashboardApp(App):
-    def __init__(self):
+    def __init__(self, width=None, height=None):
         super().__init__()
 
-        self.width, self.height = self._determine_fullscreen_resolution()
+        self.display_width, self.display_height = self._determine_fullscreen_resolution()
+
+        if width is not None and height is not None:
+            self.width = width
+            self.height = height
+        else:
+            self.width = self.display_width
+            self.height = self.display_height
 
         self.configure()
 
@@ -56,8 +63,8 @@ class DashboardApp(App):
         Config.set("graphics", "left", 0)
         Config.set("graphics", "top", 0)
 
-        Config.set("graphics", "width", self.width)
-        Config.set("graphics", "height", self.height)
+        Config.set("graphics", "width", self.display_width)
+        Config.set("graphics", "height", self.display_height)
 
         Config.set("graphics", "borderless", 1)
         Config.set("graphics", "resizable", 0)
@@ -72,7 +79,7 @@ class DashboardApp(App):
 
         Window.clearcolor = (0.1373, 0.1922, 0.2510, 1)
 
-        self.root = DashboardRootWidget(self.width, self.height)
+        self.root = DashboardRootWidget(self.display_width, self.display_height, self.width, self.height)
 
         return self.root
 
@@ -172,10 +179,11 @@ class DashboardApp(App):
 
 
 class DashboardRootWidget(Widget):
-    def __init__(self, width, height):
+    def __init__(self, display_width, display_height, width, height):
         super().__init__()
 
-        self.size = (width, height)
+        self.size = (display_width, display_height)
+
         self.browser = None
 
         self.initialize_background_image(width, height)
@@ -186,7 +194,7 @@ class DashboardRootWidget(Widget):
 
         background_image.size = (height, height)
         background_image.opacity = 0.1
-        background_image.pos = ((width / 2) - (height / 2), 0)
+        background_image.pos = ((width / 2) - (height / 2), self.size[1] - height)
 
         self.add_widget(background_image)
 
@@ -194,6 +202,7 @@ class DashboardRootWidget(Widget):
         self.browser = CEFBrowser(url="http://dashboard.serpent.ai/dashboards")
 
         self.browser.size = (width, height)
+        self.browser.pos = (0, self.size[1] - height)
 
         self.add_widget(self.browser)
 
