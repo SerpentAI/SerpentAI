@@ -104,6 +104,10 @@ class Environment:
         for label, game_input, value in actions:
             # Discrete Space
             if value is None:
+                if len(game_input) == 0:
+                    discrete_keyboard_labels.add(label)
+                    continue
+
                 for game_input_item in game_input:
                     if isinstance(game_input_item, KeyboardEvent):
                         if game_input_item.event == KeyboardEvents.DOWN:
@@ -113,15 +117,10 @@ class Environment:
         discrete_keyboard_keys_sent = False
 
         for label, game_input, value in actions:
-            print(label, game_input, value)
-
-            if not len(game_input):
-                continue
-
             # Discrete
             if value is None:
                 # Discrete - Keyboard
-                if isinstance(game_input[0], KeyboardEvent):
+                if (len(discrete_keyboard_keys) == 0 and len(discrete_keyboard_labels) > 0) or isinstance(game_input[0], KeyboardEvent):
                     if not discrete_keyboard_keys_sent:
                         self.input_controller.handle_keys(list(discrete_keyboard_keys))
 
