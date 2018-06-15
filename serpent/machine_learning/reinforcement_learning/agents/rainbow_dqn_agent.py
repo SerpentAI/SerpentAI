@@ -118,7 +118,7 @@ class RainbowDQNAgent(Agent):
         self.observe_steps = agent_kwargs["observe_steps"]
         self.max_steps = agent_kwargs["max_steps"]
 
-        self.mode = RainbowDQNAgentModes.OBSERVE
+        self.set_mode(RainbowDQNAgentModes.OBSERVE)
 
         self.current_episode = 1
         self.current_step = 0
