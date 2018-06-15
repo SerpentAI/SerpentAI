@@ -53,7 +53,7 @@ class RainbowDQNAgent(Agent):
             self.device = torch.device("cpu")
 
         agent_kwargs = dict(
-            replay_memory_capacity=20000,  # Will require about 8 GB of RAM
+            replay_memory_capacity=100000,
             history=4,
             discount=0.99,
             multi_step=3,
@@ -169,6 +169,8 @@ class RainbowDQNAgent(Agent):
         self.agent.reset_noise()
 
         if self.mode == RainbowDQNAgentModes.OBSERVE:
+            self.analytics_client.track(event_key="AGENT_MODE", data={"mode": f"Observing - {self.observe_steps - self.current_step} Steps Remaining"})
+
             self.replay_memory.append(self.current_state, self.current_action, reward, terminal)
             self.current_step += 1
 
@@ -217,7 +219,7 @@ class RainbowDQNAgent(Agent):
 
         if self.mode == RainbowDQNAgentModes.OBSERVE:
             self.agent.train()
-            self.analytics_client.track(event_key="AGENT_MODE", data={"mode": "Observing"})
+            self.analytics_client.track(event_key="AGENT_MODE", data={"mode": f"Observing - {self.observe_steps - self.current_step} Steps Remaining"})
         elif self.mode == RainbowDQNAgentModes.TRAIN:
             self.agent.train()
             self.analytics_client.track(event_key="AGENT_MODE", data={"mode": "Training"})

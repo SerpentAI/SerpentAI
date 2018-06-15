@@ -34,7 +34,7 @@ class VisualDebugger:
             image_shape = self.redis_client.rpop(f"{config['visual_debugger']['redis_key_prefix']}:{bucket}:SHAPE")
             image_shape = pickle.loads(image_shape)
 
-            image_data = np.fromstring(response, dtype="uint8").reshape(image_shape)
+            image_data = np.fromstring(response, dtype="float64").reshape(image_shape)
 
             return bucket, image_data
 

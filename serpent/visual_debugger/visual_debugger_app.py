@@ -5,6 +5,11 @@ from serpent.utilities import SerpentError
 from serpent.config import config
 
 try:
+    from kivy.config import Config
+
+    Config.set("graphics", "width", 800)
+    Config.set("graphics", "height", 600)
+
     from kivy.app import App
 
     from kivy.core.window import Window
@@ -87,11 +92,10 @@ class VisualDebuggerCanvas(Widget):
 
         Window.bind(on_resize=self.on_window_resize)
         Window.clearcolor = (0.136, 0.191, 0.25, 1)
-        Window.fullscreen = False
-        Window.borderless = "1"
 
     def update(self, bucket, image_data):
-        image = PILImage.fromarray(image_data).convert("RGB")
+        image_data = image_data * 255
+        image = PILImage.fromarray(image_data).convert("L")
         image_file = io.BytesIO()
 
         image.save(image_file, "png")
