@@ -12,7 +12,7 @@ import os
 import numpy as np
 
 try:
-    from tensorforce.agents import PPOAgent as TFPPOAgent  # Currently matching the API of tensorforce 0.3.5.1
+    from tensorforce.agents import PPOAgent as TFPPOAgent  # Currently matching the API of tensorforce 0.4.2
 except ImportError:
     raise SerpentError("Setup has not been been performed for the ML module. Please run 'serpent setup ml'")
 
@@ -26,7 +26,7 @@ class PPOAgent(Agent):
         callbacks=None,
         input_shape=None,
         input_type=None,
-        use_tensorboard=True,
+        use_tensorboard=False,
         tensorforce_kwargs=None
     ):
         super().__init__(name, game_inputs=game_inputs, callbacks=callbacks)
@@ -37,9 +37,8 @@ class PPOAgent(Agent):
         if input_type is None or input_type not in ["bool", "int", "float"]:
             raise SerpentError("'input_type' should be one of bool|int|float...")
 
-        states_spec = {"type": input_type, "shape": input_shape}
-
-        actions_spec = self._generate_actions_spec()
+        states = {"type": input_type, "shape": input_shape}
+        actions = self._generate_actions_spec()
 
         summary_spec = None
 
@@ -57,37 +56,48 @@ class PPOAgent(Agent):
                 ]
             }
 
-        default_network_spec = [
+        default_network = [
             {"type": "conv2d", "size": 32, "window": 8, "stride": 4},
             {"type": "conv2d", "size": 64, "window": 4, "stride": 2},
             {"type": "conv2d", "size": 64, "window": 3, "stride": 1},
             {"type": "flatten"},
-            {"type": "dense", "size": 1024}
+            {"type": "dense", "size": 512}
         ]
 
         agent_kwargs = dict(
-            batch_size=1024,
-            batched_observe=1024,
-            network_spec=default_network_spec,
-            device=None,
-            session_config=None,
-            saver_spec=None,
-            distributed_spec=None,
-            discount=0.99,
+            batched_observe=True,
+            batching_capacity=100,
+            update_mode={
+                "unit": "episodes",
+                "batch_size": 5,
+                "frequency": 5
+            },
+            memory={
+                "type": "latest",
+                "include_next_states": False,
+                "capacity": 5000
+            },
+            network=default_network,
+            saver=None,
+            summarizer=summary_spec,
             variable_noise=None,
-            states_preprocessing_spec=None,
-            explorations_spec=None,
-            reward_preprocessing_spec=None,
-            distributions_spec=None,
+            states_preprocessing=None,
+            actions_exploration=None,
+            reward_preprocessing=None,
+            discount=0.99,
+            distributions=None,
             entropy_regularization=0.01,
-            keep_last_timestep=True,
             baseline_mode=None,
             baseline=None,
             baseline_optimizer=None,
             gae_lambda=None,
             likelihood_ratio_clipping=None,
-            step_optimizer=None,
-            optimization_steps=10
+            step_optimizer=dict(
+                type="adam",
+                learning_rate=1e-2
+            ),
+            subsampling_fraction=0.1,
+            optimization_steps=50
         )
 
         if isinstance(tensorforce_kwargs, dict):
@@ -96,10 +106,8 @@ class PPOAgent(Agent):
                     agent_kwargs[key] = value
 
         self.agent = TFPPOAgent(
-            states_spec=states_spec,
-            actions_spec=actions_spec,
-            summary_spec=summary_spec,
-            scope="ppo",
+            states=states,
+            actions=actions,
             **agent_kwargs
         )
 
@@ -107,6 +115,8 @@ class PPOAgent(Agent):
             self.restore_model()
         except Exception:
             pass
+
+        self.agent.reset()
 
     def generate_actions(self, state, **kwargs):
         if isinstance(state, GameFrame):
@@ -151,36 +161,39 @@ class PPOAgent(Agent):
 
         return actions
 
-    def observe(self, reward=0, terminal=False, **kwargs):
+    def observe(self, reward=0, terminal=False, episode=0, **kwargs):
         if self.current_state is None:
             return None
 
         if self.callbacks.get("before_observe") is not None:
             self.callbacks["before_observe"]()
 
-        will_update = self.agent.batch_count == self.agent.batch_size - 1
+        will_update = not episode % self.agent.update_mode["frequency"] and terminal
 
         if will_update:
             if self.callbacks.get("before_update") is not None:
                 self.callbacks["before_update"]()
 
-            self.agent.observe(reward=reward, terminal=terminal)
+            self.agent.observe(terminal, reward)
             self.save_model()
 
             if self.callbacks.get("after_update") is not None:
                 self.callbacks["after_update"]()
         else:
-            self.agent.observe(reward=reward, terminal=terminal)
+            self.agent.observe(terminal, reward)
 
         self.current_state = None
 
         self.current_reward = reward
         self.cumulative_reward += reward
 
+        print(self.cumulative_reward)
+
         self.analytics_client.track(event_key="REWARD", data={"reward": self.current_reward, "total_reward": self.cumulative_reward})
 
         if terminal:
             self.analytics_client.track(event_key="TOTAL_REWARD", data={"reward": self.cumulative_reward})
+            self.agent.reset()
 
         if self.callbacks.get("after_observe") is not None:
             self.callbacks["after_observe"]()

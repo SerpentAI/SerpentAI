@@ -118,14 +118,14 @@ class RainbowDQNAgent(Agent):
         self.observe_steps = agent_kwargs["observe_steps"]
         self.max_steps = agent_kwargs["max_steps"]
 
-        self.set_mode(RainbowDQNAgentModes.OBSERVE)
-
         self.current_episode = 1
         self.current_step = 0
 
         self.current_action = -1
 
         self.model = agent_kwargs["model"]
+
+        self.set_mode(RainbowDQNAgentModes.OBSERVE)
 
     def generate_actions(self, state, **kwargs):
         frames = list()
