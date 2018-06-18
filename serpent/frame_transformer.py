@@ -28,7 +28,7 @@ class FrameTransformer:
     @staticmethod
     def to_float(frame):
         return skimage.util.img_as_float(frame)
-    
+
     @staticmethod
     def to_png(frame):
         pil_frame = Image.fromarray(skimage.util.img_as_ubyte(frame))

@@ -3,15 +3,22 @@ from serpent.machine_learning.reinforcement_learning.agent import Agent
 from serpent.game_frame import GameFrame
 from serpent.game_frame_buffer import GameFrameBuffer
 
+from serpent.input_controller import KeyboardEvent, MouseEvent
+
 from serpent.enums import InputControlTypes
 
 from serpent.utilities import SerpentError
 
 import os
+import io
 import enum
 import random
 
 import numpy as np
+import h5py
+
+import skimage.io
+import skimage.util
 
 try:
     import torch
@@ -34,6 +41,7 @@ class RainbowDQNAgent(Agent):
         name,
         game_inputs=None,
         callbacks=None,
+        batched_training=False,
         rainbow_kwargs=None
     ):
         super().__init__(name, game_inputs=game_inputs, callbacks=callbacks)
@@ -69,7 +77,7 @@ class RainbowDQNAgent(Agent):
             noisy_std=0.1,
             learning_rate=0.0000625,
             adam_epsilon=1.5e-4,
-            target_update=5000,
+            target_update=10000,
             save_steps=5000,
             observe_steps=20000,
             max_steps=50000000,
@@ -114,6 +122,13 @@ class RainbowDQNAgent(Agent):
 
         self.target_update = agent_kwargs["target_update"]
 
+        self.batched_training = batched_training
+
+        self.episode_states = list()
+        self.episode_actions = list()
+        self.episode_rewards = list()
+        self.episode_terminals = list()
+
         self.save_steps = agent_kwargs["save_steps"]
         self.observe_steps = agent_kwargs["observe_steps"]
         self.max_steps = agent_kwargs["max_steps"]
@@ -127,6 +142,9 @@ class RainbowDQNAgent(Agent):
 
         self.set_mode(RainbowDQNAgentModes.OBSERVE)
 
+        if self._has_human_input_recording():
+            self.add_human_observations_to_replay_memory()
+
     def generate_actions(self, state, **kwargs):
         frames = list()
 
@@ -139,6 +157,9 @@ class RainbowDQNAgent(Agent):
             self.current_action = random.randint(0, len(self.game_inputs[0]["inputs"]) - 1)
         else:
             self.current_action = self.agent.act(self.current_state)
+
+            self.episode_states.append(self.current_state)
+            self.episode_actions.append(self.current_action)
 
         actions = list()
 
@@ -182,12 +203,16 @@ class RainbowDQNAgent(Agent):
             if terminal:
                 self.current_episode += 1
 
-            self.replay_memory.append(self.current_state, self.current_action, reward, terminal)
+            self.episode_rewards.append(reward)
+            self.episode_terminals.append(terminal)
+
             self.current_step += 1
 
-            self.replay_memory.priority_weight = min(self.replay_memory.priority_weight + self.priority_weight_increase, 1)
+            if not self.batched_training:
+                self.replay_memory.append(self.current_state, self.current_action, reward, terminal)
+                self.replay_memory.priority_weight = min(self.replay_memory.priority_weight + self.priority_weight_increase, 1)
 
-            self.agent.learn(self.replay_memory)
+                self.agent.learn(self.replay_memory)
 
             if self.current_step % self.target_update == 0:
                 self.agent.update_target_net()
@@ -211,6 +236,23 @@ class RainbowDQNAgent(Agent):
         if terminal and self.mode == RainbowDQNAgentModes.TRAIN:
             self.analytics_client.track(event_key="TOTAL_REWARD", data={"reward": self.cumulative_reward})
 
+            if self.batched_training:
+                for index, _ in enumerate(self.episode_actions):
+                    self.replay_memory.append(
+                        self.episode_states[index],
+                        self.episode_actions[index],
+                        self.episode_rewards[index],
+                        self.episode_terminals[index]
+                    )
+
+                    self.replay_memory.priority_weight = min(self.replay_memory.priority_weight + self.priority_weight_increase, 1)
+                    self.agent.learn(self.replay_memory)
+
+            self.episode_states = list()
+            self.episode_actions = list()
+            self.episode_rewards = list()
+            self.episode_terminals = list()
+
         if self.callbacks.get("after_observe") is not None and self.mode == RainbowDQNAgentModes.TRAIN:
             self.callbacks["after_observe"]()
 
@@ -224,5 +266,66 @@ class RainbowDQNAgent(Agent):
             self.agent.train()
             self.analytics_client.track(event_key="AGENT_MODE", data={"mode": "Training"})
 
+    def add_human_observations_to_replay_memory(self):
+        keyboard_key_value_label_mapping = self._generate_keyboard_key_value_mapping()
+        input_label_action_space_mapping = dict()
+
+        for label_action_space_value in list(enumerate(self.game_inputs[0]["inputs"])):
+            input_label_action_space_mapping[label_action_space_value[1]] = label_action_space_value[0]
+
+        with h5py.File(f"datasets/{self.name}_input_recording.h5", "r") as f:
+            timestamps = set()
+
+            for key in f.keys():
+                timestamps.add(float(key.split("-")[0]))
+
+            for timestamp in sorted(list(timestamps)):
+                # Frames
+                png_frames = f[f"{timestamp}-frames"].value
+                numpy_frames = [skimage.util.img_as_float(skimage.io.imread(io.BytesIO(b))) for b in png_frames]
+                pytorch_frames = [torch.tensor(torch.from_numpy(frame), dtype=torch.float32) for frame in numpy_frames]
+                frames = torch.stack(pytorch_frames, 0)
+
+                # Action
+                action_key = tuple(sorted([b.decode("utf-8") for b in f[f"{timestamp}-keyboard-inputs-active"]]))
+
+                if action_key not in keyboard_key_value_label_mapping:
+                    continue
+
+                label = keyboard_key_value_label_mapping[action_key]
+                action = input_label_action_space_mapping[label]
+
+                # Reward
+                reward = f[f"{timestamp}-reward"].value
+
+                # Terminal Flag
+                terminal = f[f"{timestamp}-terminal"].value
+
+                self.replay_memory.append(frames, action, reward, terminal)
+                self.current_step += 1
+
+                if self.current_step >= self.observe_steps:
+                    self.set_mode(RainbowDQNAgentModes.TRAIN)
+                    break
+
     def save_model(self):
         self.agent.save(self.model)
+
+    def _has_human_input_recording(self):
+        return os.path.isfile(f"datasets/{self.name}_input_recording.h5")
+
+    def _generate_keyboard_key_value_mapping(self):
+        mapping = dict()
+
+        for label, input_events in self.game_inputs[0]["inputs"].items():
+            keyboard_keys = list()
+
+            for input_event in input_events:
+                if isinstance(input_event, KeyboardEvent):
+                    keyboard_keys.append(input_event.keyboard_key.value)
+                elif isinstance(input_event, MouseEvent):
+                    pass  # TODO
+
+            mapping[tuple(sorted(keyboard_keys))] = label
+
+        return mapping

@@ -6,6 +6,8 @@ import skimage.morphology
 
 import numpy as np
 
+import io
+
 from PIL import Image
 
 
@@ -108,6 +110,20 @@ class GameFrame:
 
     def to_pil(self):
         return Image.fromarray(self.frame)
+
+    def to_png_bytes(self):
+        pil_frame = Image.fromarray(skimage.util.img_as_ubyte(self.frame))
+
+        if len(self.frame.shape) == 3:
+            pil_frame = pil_frame.convert("RGB")
+
+        png_frame = io.BytesIO()
+
+        pil_frame.save(png_frame, format="PNG", compress_level=3)
+        png_frame.seek(0)
+
+        return png_frame.read()
+
 
     # TODO: Refactor Fraction of Resolution Frames...
     def _to_half_resolution(self):

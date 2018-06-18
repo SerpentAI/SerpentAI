@@ -84,7 +84,7 @@ class GameAgent(offshoot.Pluggable):
         )
 
         self.reward_functions = dict(
-            TEST=self.reward_test   
+            TEST=self.reward_test 
         )
 
         self.frame_handler_setup_performed = False
@@ -495,7 +495,7 @@ class GameAgent(offshoot.Pluggable):
             else:
                 if game_frame_buffer_index <= (len(self.game_frame_buffers) - 1):
                     game_frame_buffer = self.game_frame_buffers[game_frame_buffer_index]
-                
+
                 if input_event_index <= (len(input_events) - 1):
                     input_event = input_events[input_event_index]
 
@@ -515,7 +515,7 @@ class GameAgent(offshoot.Pluggable):
                 else:
                     item = input_event
                     input_event_index += 1
-                
+
             merged.append(item)
 
         return merged

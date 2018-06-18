@@ -26,7 +26,7 @@ class InputRecorder:
         self.redis_key = self.__class__.redis_key
         self.redis_key_pause = self.__class__.redis_key_pause
         self.redis_key_stop = self.__class__.redis_key_stop
-        
+
         redis_client.delete(self.redis_key)
         redis_client.delete(self.redis_key_pause)
         redis_client.delete(self.redis_key_stop)
