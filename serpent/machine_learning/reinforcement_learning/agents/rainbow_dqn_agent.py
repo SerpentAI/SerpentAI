@@ -41,7 +41,6 @@ class RainbowDQNAgent(Agent):
         name,
         game_inputs=None,
         callbacks=None,
-        batched_training=False,
         rainbow_kwargs=None
     ):
         super().__init__(name, game_inputs=game_inputs, callbacks=callbacks)
@@ -122,13 +121,6 @@ class RainbowDQNAgent(Agent):
 
         self.target_update = agent_kwargs["target_update"]
 
-        self.batched_training = batched_training
-
-        self.episode_states = list()
-        self.episode_actions = list()
-        self.episode_rewards = list()
-        self.episode_terminals = list()
-
         self.save_steps = agent_kwargs["save_steps"]
         self.observe_steps = agent_kwargs["observe_steps"]
         self.max_steps = agent_kwargs["max_steps"]
@@ -157,9 +149,6 @@ class RainbowDQNAgent(Agent):
             self.current_action = random.randint(0, len(self.game_inputs[0]["inputs"]) - 1)
         else:
             self.current_action = self.agent.act(self.current_state)
-
-            self.episode_states.append(self.current_state)
-            self.episode_actions.append(self.current_action)
 
         actions = list()
 
@@ -203,16 +192,12 @@ class RainbowDQNAgent(Agent):
             if terminal:
                 self.current_episode += 1
 
-            self.episode_rewards.append(reward)
-            self.episode_terminals.append(terminal)
-
             self.current_step += 1
 
-            if not self.batched_training:
-                self.replay_memory.append(self.current_state, self.current_action, reward, terminal)
-                self.replay_memory.priority_weight = min(self.replay_memory.priority_weight + self.priority_weight_increase, 1)
+            self.replay_memory.append(self.current_state, self.current_action, reward, terminal)
+            self.replay_memory.priority_weight = min(self.replay_memory.priority_weight + self.priority_weight_increase, 1)
 
-                self.agent.learn(self.replay_memory)
+            self.agent.learn(self.replay_memory)
 
             if self.current_step % self.target_update == 0:
                 self.agent.update_target_net()
@@ -235,23 +220,6 @@ class RainbowDQNAgent(Agent):
 
         if terminal and self.mode == RainbowDQNAgentModes.TRAIN:
             self.analytics_client.track(event_key="TOTAL_REWARD", data={"reward": self.cumulative_reward})
-
-            if self.batched_training:
-                for index, _ in enumerate(self.episode_actions):
-                    self.replay_memory.append(
-                        self.episode_states[index],
-                        self.episode_actions[index],
-                        self.episode_rewards[index],
-                        self.episode_terminals[index]
-                    )
-
-                    self.replay_memory.priority_weight = min(self.replay_memory.priority_weight + self.priority_weight_increase, 1)
-                    self.agent.learn(self.replay_memory)
-
-            self.episode_states = list()
-            self.episode_actions = list()
-            self.episode_rewards = list()
-            self.episode_terminals = list()
 
         if self.callbacks.get("after_observe") is not None and self.mode == RainbowDQNAgentModes.TRAIN:
             self.callbacks["after_observe"]()
