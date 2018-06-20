@@ -200,8 +200,6 @@ class RainbowDQNAgent(Agent):
         elif self.mode == RainbowDQNAgentModes.TRAIN:
             if terminal:
                 self.current_episode += 1
-                if self.current_episode % self.evaluate_every == 0:
-                    self.set_mode(RainbowDQNAgentModes.EVALUATE)
 
             self.current_step += 1
 
@@ -223,11 +221,7 @@ class RainbowDQNAgent(Agent):
                     self.callbacks["after_update"]()
 
         elif self.mode == RainbowDQNAgentModes.EVALUATE:
-            if terminal:
-                self.remaining_evaluation_episodes -= 1
-
-                if self.remaining_evaluation_episodes == 0:
-                    self.set_mode(RainbowDQNAgentModes.TRAIN)
+            pass
 
         self.current_state = None
 
@@ -236,13 +230,21 @@ class RainbowDQNAgent(Agent):
 
         self.analytics_client.track(event_key="REWARD", data={"reward": self.current_reward, "total_reward": self.cumulative_reward})
 
+        if self.callbacks.get("after_observe") is not None and self.mode == RainbowDQNAgentModes.TRAIN:
+            self.callbacks["after_observe"]()
+
         if terminal and self.mode == RainbowDQNAgentModes.TRAIN:
             self.analytics_client.track(event_key="TOTAL_REWARD", data={"reward": self.cumulative_reward})
+
+            if self.current_episode % self.evaluate_every == 0:
+                self.set_mode(RainbowDQNAgentModes.EVALUATE)
         elif terminal and self.mode == RainbowDQNAgentModes.EVALUATE:
             self.analytics_client.track(event_key="TOTAL_REWARD_EVALUATE", data={"reward": self.cumulative_reward})
 
-        if self.callbacks.get("after_observe") is not None and self.mode == RainbowDQNAgentModes.TRAIN:
-            self.callbacks["after_observe"]()
+            self.remaining_evaluation_episodes -= 1
+
+            if self.remaining_evaluation_episodes == 0:
+                self.set_mode(RainbowDQNAgentModes.TRAIN)
 
     def set_mode(self, rainbow_dqn_mode):
         self.mode = rainbow_dqn_mode
