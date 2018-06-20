@@ -32,6 +32,7 @@ except ImportError:
 class RainbowDQNAgentModes(enum.Enum):
     OBSERVE = 0
     TRAIN = 1
+    EVALUATE = 2
 
 
 class RainbowDQNAgent(Agent):
@@ -41,6 +42,8 @@ class RainbowDQNAgent(Agent):
         name,
         game_inputs=None,
         callbacks=None,
+        evaluate_every=50,  # Every 50 episodes
+        evaluate_for=5,  # For 5 episodes
         rainbow_kwargs=None
     ):
         super().__init__(name, game_inputs=game_inputs, callbacks=callbacks)
@@ -72,14 +75,14 @@ class RainbowDQNAgent(Agent):
             v_min=-10,
             v_max=10,
             batch_size=32,
-            hidden_size=512,
+            hidden_size=1024,
             noisy_std=0.1,
             learning_rate=0.0000625,
             adam_epsilon=1.5e-4,
             target_update=10000,
             save_steps=5000,
-            observe_steps=20000,
-            max_steps=50000000,
+            observe_steps=50000,
+            max_steps=5000000,
             model=f"datasets/rainbow_dqn_{self.name}.pth"
         )
 
@@ -134,6 +137,11 @@ class RainbowDQNAgent(Agent):
 
         self.set_mode(RainbowDQNAgentModes.OBSERVE)
 
+        self.evaluate_every = evaluate_every
+        self.evaluate_for = evaluate_for
+
+        self.remaining_evaluation_episodes = 0
+
         if self._has_human_input_recording():
             self.add_human_observations_to_replay_memory()
 
@@ -147,7 +155,10 @@ class RainbowDQNAgent(Agent):
 
         if self.mode == RainbowDQNAgentModes.OBSERVE:
             self.current_action = random.randint(0, len(self.game_inputs[0]["inputs"]) - 1)
-        else:
+        elif self.mode == RainbowDQNAgentModes.TRAIN:
+            self.agent.reset_noise()
+            self.current_action = self.agent.act(self.current_state)
+        elif self.mode == RainbowDQNAgentModes.EVALUATE:
             self.current_action = self.agent.act(self.current_state)
 
         actions = list()
@@ -176,8 +187,6 @@ class RainbowDQNAgent(Agent):
         if self.callbacks.get("before_observe") is not None and self.mode == RainbowDQNAgentModes.TRAIN:
             self.callbacks["before_observe"]()
 
-        self.agent.reset_noise()
-
         if self.mode == RainbowDQNAgentModes.OBSERVE:
             self.analytics_client.track(event_key="AGENT_MODE", data={"mode": f"Observing - {self.observe_steps - self.current_step} Steps Remaining"})
 
@@ -191,6 +200,8 @@ class RainbowDQNAgent(Agent):
         elif self.mode == RainbowDQNAgentModes.TRAIN:
             if terminal:
                 self.current_episode += 1
+                if self.current_episode % self.evaluate_every == 0:
+                    self.set_mode(RainbowDQNAgentModes.EVALUATE)
 
             self.current_step += 1
 
@@ -211,6 +222,13 @@ class RainbowDQNAgent(Agent):
                 if self.callbacks.get("after_update") is not None:
                     self.callbacks["after_update"]()
 
+        elif self.mode == RainbowDQNAgentModes.EVALUATE:
+            if terminal:
+                self.remaining_evaluation_episodes -= 1
+
+                if self.remaining_evaluation_episodes == 0:
+                    self.set_mode(RainbowDQNAgentModes.TRAIN)
+
         self.current_state = None
 
         self.current_reward = reward
@@ -220,6 +238,8 @@ class RainbowDQNAgent(Agent):
 
         if terminal and self.mode == RainbowDQNAgentModes.TRAIN:
             self.analytics_client.track(event_key="TOTAL_REWARD", data={"reward": self.cumulative_reward})
+        elif terminal and self.mode == RainbowDQNAgentModes.EVALUATE:
+            self.analytics_client.track(event_key="TOTAL_REWARD_EVALUATE", data={"reward": self.cumulative_reward})
 
         if self.callbacks.get("after_observe") is not None and self.mode == RainbowDQNAgentModes.TRAIN:
             self.callbacks["after_observe"]()
@@ -233,6 +253,11 @@ class RainbowDQNAgent(Agent):
         elif self.mode == RainbowDQNAgentModes.TRAIN:
             self.agent.train()
             self.analytics_client.track(event_key="AGENT_MODE", data={"mode": "Training"})
+        elif self.mode == RainbowDQNAgentModes.EVALUATE:
+            self.agent.eval()
+            self.remaining_evaluation_episodes = self.evaluate_for
+
+            self.analytics_client.track(event_key="AGENT_MODE", data={"mode": "Evaluating"})
 
     def add_human_observations_to_replay_memory(self):
         keyboard_key_value_label_mapping = self._generate_keyboard_key_value_mapping()
