@@ -13,6 +13,7 @@ import os
 import io
 import enum
 import random
+import json
 
 import numpy as np
 import h5py
@@ -133,16 +134,21 @@ class RainbowDQNAgent(Agent):
 
         self.current_action = -1
 
+        self.observe_mode = "RANDOM"
+        self.set_mode(RainbowDQNAgentModes.OBSERVE)
+
         self.model = agent_kwargs["model"]
 
-        self.set_mode(RainbowDQNAgentModes.OBSERVE)
+        is os.path.isfile(self.model):
+            self.observe_mode = "MODEL"
+            self.restore_model()
 
         self.evaluate_every = evaluate_every
         self.evaluate_for = evaluate_for
 
         self.remaining_evaluation_episodes = 0
 
-        if self._has_human_input_recording():
+        if self._has_human_input_recording() and self.observe_mode == "RANDOM":
             self.add_human_observations_to_replay_memory()
 
     def generate_actions(self, state, **kwargs):
@@ -153,8 +159,11 @@ class RainbowDQNAgent(Agent):
 
         self.current_state = torch.stack(frames, 0)
 
-        if self.mode == RainbowDQNAgentModes.OBSERVE:
+        if self.mode == RainbowDQNAgentModes.OBSERVE and self.observe_mode == "RANDOM":
             self.current_action = random.randint(0, len(self.game_inputs[0]["inputs"]) - 1)
+        elif self.mode == RainbowDQNAgentModes.OBSERVE and self.observe_mode == "MODEL":
+            self.agent.reset_noise()
+            self.current_action = self.agent.act(self.current_state)
         elif self.mode == RainbowDQNAgentModes.TRAIN:
             self.agent.reset_noise()
             self.current_action = self.agent.act(self.current_state)
@@ -305,6 +314,26 @@ class RainbowDQNAgent(Agent):
 
     def save_model(self):
         self.agent.save(self.model)
+
+        with open(self.model.replace(".pth", ".json"), "w") as f:
+            data = {
+                "current_episode": self.current_episode,
+                "current_step": self.current_step
+            }
+
+            f.write(json.dumps(data))
+
+    def restore_model(self):
+        file_path = self.model.replace(".pth", ".json")
+
+        if os.path.isfile(file_path):
+            with open(file_path, "w") as f:
+                data = json.loads(f.read())
+
+            self.current_episode = data["current_episode"]
+            self.current_step = data["current_step"]
+
+        self.emit_persisted_events()
 
     def _has_human_input_recording(self):
         return os.path.isfile(f"datasets/{self.name}_input_recording.h5")

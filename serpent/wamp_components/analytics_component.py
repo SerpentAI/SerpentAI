@@ -45,16 +45,16 @@ class AnalyticsWAMPComponent(ApplicationSession):
 
         while True:
             redis_key, event = await self.redis_client.brpop(f"SERPENT:{config['analytics']['topic']}:EVENTS")
-            event = event.decode("utf-8")
 
-            if "RESET_DASHBOARD" not in event:
+            event = event.decode("utf-8")
+            event_parsed = json.loads(event)
+
+            if event_parsed["event_key"] in config["analytics"]["persisted_events"] and event_parsed["is_persistable"]:
                 self.log_file.write(f"{event}\n")
                 self.log_file.flush()
 
-            event = json.loads(event)
-
-            topic = event.pop("project_key")
-            self.publish(topic, event)
+            topic = event_parsed.pop("project_key")
+            self.publish(topic, event_parsed)
 
     async def _initialize_redis_client(self):
         return await aioredis.create_redis(

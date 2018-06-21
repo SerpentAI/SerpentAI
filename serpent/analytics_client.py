@@ -29,13 +29,14 @@ class AnalyticsClient:
     def redis_key(self):
         return f"SERPENT:{self.project_key}:EVENTS"
 
-    def track(self, event_key=None, data=None, timestamp=None):
+    def track(self, event_key=None, data=None, timestamp=None, is_persistable=True):
         if self.event_whitelist is None or event_key in self.event_whitelist:
             event = {
                 "project_key": self.project_key,
                 "event_key": event_key,
                 "data": data,
-                "timestamp": timestamp if timestamp is not None else datetime.utcnow().isoformat()
+                "timestamp": timestamp if timestamp is not None else datetime.utcnow().isoformat(),
+                "is_persistable": is_persistable
             }
 
             if self.debug:

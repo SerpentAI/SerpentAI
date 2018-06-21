@@ -101,7 +101,6 @@ class GameAgent(offshoot.Pluggable):
 
         if config["analytics"]["broadcast"]:
             self.analytics_client.track(event_key="RESET_DASHBOARD", data={})
-            # self.broadcast_previous_analytics_events()
 
         self.flag = None
 
