@@ -170,7 +170,7 @@ class Game(offshoot.Pluggable):
 
             time.sleep(0.1)
 
-        time.sleep(0.5)
+        time.sleep(3)
 
         if self.window_id in [0, "0"]:
             raise SerpentError("Game window not found...")

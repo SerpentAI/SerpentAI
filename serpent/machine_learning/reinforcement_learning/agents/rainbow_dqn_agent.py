@@ -129,6 +129,8 @@ class RainbowDQNAgent(Agent):
         self.observe_steps = agent_kwargs["observe_steps"]
         self.max_steps = agent_kwargs["max_steps"]
 
+        self.remaining_observe_steps = self.observe_steps
+
         self.current_episode = 1
         self.current_step = 0
 
@@ -139,7 +141,7 @@ class RainbowDQNAgent(Agent):
 
         self.model = agent_kwargs["model"]
 
-        is os.path.isfile(self.model):
+        if os.path.isfile(self.model):
             self.observe_mode = "MODEL"
             self.restore_model()
 
@@ -197,13 +199,12 @@ class RainbowDQNAgent(Agent):
             self.callbacks["before_observe"]()
 
         if self.mode == RainbowDQNAgentModes.OBSERVE:
-            self.analytics_client.track(event_key="AGENT_MODE", data={"mode": f"Observing - {self.observe_steps - self.current_step} Steps Remaining"})
+            self.analytics_client.track(event_key="AGENT_MODE", data={"mode": f"Observing - {self.remaining_observe_steps} Steps Remaining"})
 
             self.replay_memory.append(self.current_state, self.current_action, reward, terminal)
-            self.current_step += 1
+            self.remaining_observe_steps -= 1
 
-            if self.current_step >= self.observe_steps:
-                self.current_step = 0
+            if self.remaining_observe_steps == 0:
                 self.set_mode(RainbowDQNAgentModes.TRAIN)
 
         elif self.mode == RainbowDQNAgentModes.TRAIN:
@@ -306,9 +307,9 @@ class RainbowDQNAgent(Agent):
                 terminal = f[f"{timestamp}-terminal"].value
 
                 self.replay_memory.append(frames, action, reward, terminal)
-                self.current_step += 1
+                self.remaining_observe_steps -= 1
 
-                if self.current_step >= self.observe_steps:
+                if self.remaining_observe_steps == 0:
                     self.set_mode(RainbowDQNAgentModes.TRAIN)
                     break
 
@@ -327,7 +328,7 @@ class RainbowDQNAgent(Agent):
         file_path = self.model.replace(".pth", ".json")
 
         if os.path.isfile(file_path):
-            with open(file_path, "w") as f:
+            with open(file_path, "r") as f:
                 data = json.loads(f.read())
 
             self.current_episode = data["current_episode"]
