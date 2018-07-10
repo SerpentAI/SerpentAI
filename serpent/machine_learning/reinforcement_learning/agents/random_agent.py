@@ -3,6 +3,11 @@ from serpent.machine_learning.reinforcement_learning.agent import Agent
 from serpent.enums import InputControlTypes
 
 import random
+import enum
+
+
+class RandomAgentModes(enum.Enum):
+    OBSERVE = 0
 
 
 class RandomAgent(Agent):
@@ -12,6 +17,8 @@ class RandomAgent(Agent):
 
         if seed is not None:
             random.seed(seed)
+
+        self.mode = RandomAgentModes.OBSERVE
 
     def generate_actions(self, state, **kwargs):
         actions = list()

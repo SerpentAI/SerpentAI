@@ -21,6 +21,7 @@ class FrameTransformationPipeline:
         return {
             "RESIZE": self.game_frame_transformer.resize,
             "RESCALE": self.game_frame_transformer.rescale,
+            "CROP": self.game_frame_transformer.crop,
             "GRAYSCALE": self.game_frame_transformer.grayscale,
             "FLOAT": self.game_frame_transformer.to_float,
             "PNG": self.game_frame_transformer.to_png
