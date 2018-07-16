@@ -9,11 +9,13 @@ from serpent.utilities import SerpentError
 import os
 import json
 import time
+import random
 
+import numpy as np
 
 class Agent:
 
-    def __init__(self, name, game_inputs=None, callbacks=None):
+    def __init__(self, name, game_inputs=None, callbacks=None, seed=420133769):
         self.name = name
 
         if not isinstance(game_inputs, list):
@@ -30,6 +32,9 @@ class Agent:
         self.cumulative_reward = 0
 
         self.analytics_client = AnalyticsClient(project_key=config["analytics"]["topic"])
+
+        random.seed(seed)
+        np.random.seed(seed)
 
     def generate_actions(self, state, **kwargs):
         raise NotImplementedError()

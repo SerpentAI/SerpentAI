@@ -13,10 +13,7 @@ class RandomAgentModes(enum.Enum):
 class RandomAgent(Agent):
 
     def __init__(self, name, game_inputs=None, callbacks=None, seed=None):
-        super().__init__(name, game_inputs=game_inputs, callbacks=callbacks)
-
-        if seed is not None:
-            random.seed(seed)
+        super().__init__(name, game_inputs=game_inputs, callbacks=callbacks, seed=seed)
 
         self.mode = RandomAgentModes.OBSERVE
 

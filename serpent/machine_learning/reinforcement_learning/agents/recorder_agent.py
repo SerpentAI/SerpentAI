@@ -26,8 +26,8 @@ from redis import StrictRedis
 
 class RecorderAgent(Agent):
 
-    def __init__(self, name, game_inputs=None, callbacks=None, window_geometry=None):
-        super().__init__(name, game_inputs=game_inputs, callbacks=callbacks)
+    def __init__(self, name, game_inputs=None, callbacks=None, seed=None, window_geometry=None):
+        super().__init__(name, game_inputs=game_inputs, callbacks=callbacks, seed=seed)
 
         if window_geometry is None or not isinstance(window_geometry, dict):
             raise SerpentError("RecorderAgent expects a 'window_geometry' dict kwarg.")

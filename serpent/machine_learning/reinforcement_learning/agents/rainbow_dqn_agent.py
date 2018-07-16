@@ -43,11 +43,12 @@ class RainbowDQNAgent(Agent):
         name,
         game_inputs=None,
         callbacks=None,
+        seed=420133769,
         evaluate_every=50,  # Every 50 episodes
         evaluate_for=5,  # For 5 episodes
         rainbow_kwargs=None
     ):
-        super().__init__(name, game_inputs=game_inputs, callbacks=callbacks)
+        super().__init__(name, game_inputs=game_inputs, callbacks=callbacks, seed=seed)
 
         if len(game_inputs) > 1:
             raise SerpentError("RainbowDQNAgent only supports a single axis of game inputs.")
@@ -60,8 +61,12 @@ class RainbowDQNAgent(Agent):
 
             torch.set_default_tensor_type("torch.cuda.FloatTensor")
             torch.backends.cudnn.benchmark = True
+
+            torch.cuda.manual_seed_all(seed)
         else:
             self.device = torch.device("cpu")
+
+        torch.manual_seed(seed)
 
         agent_kwargs = dict(
             replay_memory_capacity=100000,

@@ -24,12 +24,13 @@ class PPOAgent(Agent):
         name,
         game_inputs=None,
         callbacks=None,
+        seed=None,
         input_shape=None,
         input_type=None,
         use_tensorboard=False,
         tensorforce_kwargs=None
     ):
-        super().__init__(name, game_inputs=game_inputs, callbacks=callbacks)
+        super().__init__(name, game_inputs=game_inputs, callbacks=callbacks, seed=seed)
 
         if input_shape is None or not isinstance(input_shape, tuple):
             raise SerpentError("'input_shape' should be a tuple...")

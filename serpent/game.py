@@ -248,7 +248,7 @@ class Game(offshoot.Pluggable):
 
                 self.game_frame_limiter.stop_and_delay()
         except Exception as e:
-            print(e)
+            raise e
         finally:
             self.stop_frame_grabber()
 
