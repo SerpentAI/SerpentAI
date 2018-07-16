@@ -5,6 +5,7 @@ __pycache__/
 *.py[cod]
 
 .ipynb_checkpoints/
+.pytest_cache/
 
 .python-version
 
