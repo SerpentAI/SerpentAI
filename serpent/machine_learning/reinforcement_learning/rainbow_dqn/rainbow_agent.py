@@ -4,7 +4,13 @@ import random
 import torch
 from torch import nn, optim
 
-from serpent.machine_learning.reinforcement_learning.rainbow_dqn.dqn import DQN
+from serpent.machine_learning.reinforcement_learning.rainbow_dqn.dqn import DQN3, DQN4
+
+
+conv_layers_dqn_class_mapping = {
+    3: DQN3,
+    4: DQN4
+}
 
 
 class RainbowAgent:
@@ -21,6 +27,7 @@ class RainbowAgent:
         multi_step=3,
         discount=0.99,
         history=4,
+        conv_layers=3,
         hidden_size=512,
         noisy_std=0.1,
         learning_rate=0.0000625,
@@ -44,6 +51,8 @@ class RainbowAgent:
 
         self.multi_step = multi_step
         self.discount = discount
+
+        DQN = conv_layers_dqn_class_mapping.get(conv_layers, DQN3)
 
         self.online_net = DQN(self.action_space, history=history, hidden_size=hidden_size, noisy_std=noisy_std, quantile=quantile).to(device=device)
 
