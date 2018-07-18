@@ -65,6 +65,7 @@ class RainbowDQNAgent(Agent):
             torch.cuda.manual_seed_all(seed)
         else:
             self.device = torch.device("cpu")
+            torch.set_num_threads(1)
 
         torch.manual_seed(seed)
 

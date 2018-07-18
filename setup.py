@@ -22,6 +22,7 @@ packages = [
     "serpent.machine_learning.reinforcement_learning",
     "serpent.machine_learning.reinforcement_learning.agents",
     "serpent.machine_learning.reinforcement_learning.rainbow_dqn",
+    "serpent.machine_learning.reinforcement_learning.ppo",
     "serpent.machine_learning.object_recognition",
     "serpent.machine_learning.object_recognition.object_recognizers",
     "serpent.visual_debugger",
