@@ -120,7 +120,7 @@ class Environment:
             # Discrete
             if value is None:
                 # Discrete - Keyboard
-                if (len(discrete_keyboard_keys) == 0 and len(discrete_keyboard_labels) > 0) or isinstance(game_input[0], KeyboardEvent):
+                if (len(discrete_keyboard_keys) == 0 and len(discrete_keyboard_labels) > 0) or isinstance(game_input[0] if len(game_input) else None, KeyboardEvent):
                     if not discrete_keyboard_keys_sent:
                         self.input_controller.handle_keys(list(discrete_keyboard_keys))
 
