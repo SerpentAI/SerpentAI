@@ -203,7 +203,8 @@ class PPOAgent(Agent):
 
             self.storage.compute_returns(next_value, self.gae, self.discount, self.gae_tau)
 
-            self.agent.update(self.storage)
+            value_loss, action_loss, entropy = self.agent.update(self.storage)
+            self.analytics_client.track(event_key="PPO_INTERNALS", data={"value_loss": value_loss, "action_loss": action_loss, "entropy": entropy})
 
             self.storage.after_update()
 
