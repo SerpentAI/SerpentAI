@@ -111,8 +111,9 @@ character_keyboard_key_mapping = {
 
 
 class InputControllers(enum.Enum):
-    PYAUTOGUI = 0
-    NATIVE_WIN32 = 1
+    CLIENT = 0
+    PYAUTOGUI = 1
+    NATIVE_WIN32 = 2
 
 
 class InputControllerError(BaseException):
@@ -121,7 +122,7 @@ class InputControllerError(BaseException):
 
 class InputController:
 
-    def __init__(self, backend=InputControllers.PYAUTOGUI, game=None, **kwargs):
+    def __init__(self, backend=InputControllers.CLIENT, game=None, **kwargs):
         self.game = game
         self.backend = self._initialize_backend(backend, **kwargs)
 
@@ -225,7 +226,10 @@ class InputController:
         )
 
     def _initialize_backend(self, backend, **kwargs):
-        if backend == InputControllers.PYAUTOGUI:
+        if backend == InputControllers.CLIENT:
+            from serpent.input_controllers.client_input_controller import ClientInputController
+            return ClientInputController(game=self.game, **kwargs)
+        elif backend == InputControllers.PYAUTOGUI:
             from serpent.input_controllers.pyautogui_input_controller import PyAutoGUIInputController
             return PyAutoGUIInputController(game=self.game, **kwargs)
         elif backend == InputControllers.NATIVE_WIN32:

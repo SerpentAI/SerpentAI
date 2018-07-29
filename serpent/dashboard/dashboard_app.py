@@ -49,11 +49,6 @@ class DashboardApp(App):
 
         self.configure()
 
-        self.crossbar_process = None
-        self.start_crossbar()
-
-        time.sleep(3)
-
         self.analytics_publisher_process = None
         self.start_analytics_publisher()
 
@@ -86,28 +81,6 @@ class DashboardApp(App):
         self.root = DashboardRootWidget(self.display_width, self.display_height, self.width, self.height)
 
         return self.root
-
-    def start_crossbar(self):
-        if self.crossbar_process is not None:
-            self.stop_crossbar()
-
-        crossbar_command = f"crossbar start --config dashboard/crossbar.json"
-
-        self.crossbar_process = subprocess.Popen(shlex.split(crossbar_command))
-
-        signal.signal(signal.SIGINT, self._handle_signal_crossbar)
-        signal.signal(signal.SIGTERM, self._handle_signal_crossbar)
-
-        atexit.register(self._handle_signal_crossbar, 15, None, False)
-
-    def stop_crossbar(self):
-        if self.crossbar_process is None:
-            return None
-
-        self.crossbar_process.kill()
-        self.crossbar_process = None
-
-        atexit.unregister(self._handle_signal_crossbar)
 
     def start_analytics_publisher(self):
         if self.analytics_publisher_process is not None:
@@ -159,14 +132,6 @@ class DashboardApp(App):
         else:
             monitors = mss.mss().monitors
             return monitors[0]["width"], monitors[0]["height"]
-
-    def _handle_signal_crossbar(self, signum=15, frame=None, do_exit=True):
-        if self.crossbar_process is not None:
-            if self.crossbar_process.poll() is None:
-                self.crossbar_process.send_signal(signum)
-
-                if do_exit:
-                    exit()
 
     def _handle_signal_analytics_publisher(self, signum=15, frame=None, do_exit=True):
         if self.analytics_publisher_process is not None:

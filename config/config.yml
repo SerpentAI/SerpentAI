@@ -26,8 +26,12 @@ frame_handlers:
 frame_grabber:
     redis_key: SERPENT:FRAMES
 
-input_recorder:
+input_controller:
     redis_key: SERPENT:INPUTS
+    backend: DEFAULT
+
+input_recorder:
+    redis_key: SERPENT:RECORDED_INPUTS
 
 visual_debugger:
     redis_key_prefix: SERPENT:VISUAL_DEBUGGER
