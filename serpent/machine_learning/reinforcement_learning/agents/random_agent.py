@@ -1,5 +1,7 @@
 from serpent.machine_learning.reinforcement_learning.agent import Agent
 
+from serpent.logger import Loggers
+
 from serpent.enums import InputControlTypes
 
 import random
@@ -12,10 +14,29 @@ class RandomAgentModes(enum.Enum):
 
 class RandomAgent(Agent):
 
-    def __init__(self, name, game_inputs=None, callbacks=None, seed=None):
-        super().__init__(name, game_inputs=game_inputs, callbacks=callbacks, seed=seed)
+    def __init__(
+        self, 
+        name, 
+        game_inputs=None, 
+        callbacks=None, 
+        seed=None,
+        logger=Loggers.NOOP,
+        logger_kwargs=None
+    ):
+        super().__init__(
+            name, 
+            game_inputs=game_inputs, 
+            callbacks=callbacks, 
+            seed=seed,
+            logger=logger,
+            logger_kwargs=logger_kwargs
+        )
 
         self.mode = RandomAgentModes.OBSERVE
+
+        self.logger.log_hyperparams(
+            {"seed": seed}
+        )
 
     def generate_actions(self, state, **kwargs):
         actions = list()

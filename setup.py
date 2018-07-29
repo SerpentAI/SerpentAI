@@ -16,6 +16,7 @@ packages = [
     "serpent.game_launchers",
     "serpent.games",
     "serpent.input_controllers",
+    "serpent.loggers",
     "serpent.machine_learning",
     "serpent.machine_learning.context_classification",
     "serpent.machine_learning.context_classification.context_classifiers",
@@ -75,10 +76,10 @@ data_files = [
         "serpent/offshoot.yml",
         "serpent/requirements.linux.txt",
         "serpent/requirements.win32.txt",
-        "serpent/requirements.darwin.txt"
+        "serpent/requirements.darwin.txt",
+        "serpent/crossbar.json"
     ]),
     ("dashboard", [
-        "dashboard/crossbar.json",
         "dashboard/database.sqlite",
         "dashboard/serpent.png"
     ]),

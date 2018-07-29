@@ -2,6 +2,9 @@ from serpent.config import config
 
 from serpent.analytics_client import AnalyticsClient
 
+from serpent.logger import Loggers
+from serpent.loggers import *
+
 from serpent.enums import InputControlTypes
 
 from serpent.utilities import SerpentError
@@ -13,9 +16,22 @@ import random
 
 import numpy as np
 
-class Agent:
 
-    def __init__(self, name, game_inputs=None, callbacks=None, seed=420133769):
+class Agent:
+    logger_mapping = {
+        Loggers.NOOP: NoopLogger,
+        Loggers.COMET_ML: CometMLLogger
+    }
+
+    def __init__(
+        self, 
+        name, 
+        game_inputs=None, 
+        callbacks=None, 
+        seed=420133769, 
+        logger=Loggers.NOOP,
+        logger_kwargs=None
+    ):
         self.name = name
 
         if not isinstance(game_inputs, list):
@@ -36,6 +52,8 @@ class Agent:
         random.seed(seed)
         np.random.seed(seed)
 
+        self.logger = Agent.logger_mapping[logger](logger_kwargs=logger_kwargs)
+
     def generate_actions(self, state, **kwargs):
         raise NotImplementedError()
 
@@ -52,6 +70,7 @@ class Agent:
 
         if terminal:
             self.analytics_client.track(event_key="TOTAL_REWARD", data={"reward": self.cumulative_reward})
+            self.logger.log_metric("episode_reward", self.cumulative_reward)
 
         if self.callbacks.get("after_observe") is not None:
             self.callbacks["after_observe"]()

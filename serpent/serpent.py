@@ -158,12 +158,20 @@ def setup_base():
         subprocess.call(shlex.split("conda install numpy scipy scikit-image scikit-learn h5py -y"), shell=True)
 
     subprocess.call(shlex.split("pip install -r requirements.txt"))
+    
+    # Install Crossbar
+    subprocess.call(shlex.split("pip install crossbar==18.6.1"))
 
     # Create Dataset Directories
     os.makedirs(os.path.join(os.getcwd(), "datasets/collect_frames"), exist_ok=True)
     os.makedirs(os.path.join(os.getcwd(), "datasets/collect_frames_for_context"), exist_ok=True)
     os.makedirs(os.path.join(os.getcwd(), "datasets/current"), exist_ok=True)
 
+    # Copy the Crossbar config
+    shutil.copy(
+        os.path.join(os.path.dirname(__file__), "crossbar.json"),
+        os.path.join(os.getcwd(), "crossbar.json")
+    )
 
 def setup_ocr():
     if is_linux():
@@ -279,10 +287,8 @@ def setup_dashboard():
     # Install Pony ORM
     subprocess.call(shlex.split("pip install pony==0.7.3"))
 
-    # Install Crossbar
-    subprocess.call(shlex.split("pip install crossbar==18.6.1"))
 
-
+# TODO: Bring this up to date for dev branch
 def update():
     clear_terminal()
     display_serpent_logo()

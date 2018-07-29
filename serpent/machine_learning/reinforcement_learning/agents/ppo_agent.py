@@ -5,6 +5,8 @@ from serpent.game_frame_buffer import GameFrameBuffer
 
 from serpent.enums import InputControlTypes
 
+from serpent.logger import Loggers
+
 from serpent.utilities import SerpentError
 
 import os
@@ -37,11 +39,20 @@ class PPOAgent(Agent):
         name,
         game_inputs=None,
         callbacks=None,
-        seed=420133769,  # For my Twitch audience :D
+        seed=420133769,
         input_shape=None,
-        ppo_kwargs=None
+        ppo_kwargs=None,
+        logger=Loggers.NOOP,
+        logger_kwargs=None
     ):
-        super().__init__(name, game_inputs=game_inputs, callbacks=callbacks, seed=seed)
+        super().__init__(
+            name, 
+            game_inputs=game_inputs, 
+            callbacks=callbacks, 
+            seed=seed,
+            logger=logger,
+            logger_kwargs=logger_kwargs
+        )
 
         if len(game_inputs) > 1:
             raise SerpentError("PPOAgent only supports a single axis of game inputs.")
@@ -77,7 +88,8 @@ class PPOAgent(Agent):
             gae=False,
             gae_tau=0.95,
             save_steps=10000,
-            model=f"datasets/ppo_{self.name}.pth"
+            model=f"datasets/ppo_{self.name}.pth",
+            seed=seed
         )
 
         if isinstance(ppo_kwargs, dict):
@@ -132,6 +144,8 @@ class PPOAgent(Agent):
         if os.path.isfile(self.model_path):
             self.restore_model()
 
+        self.logger.log_hyperparams(agent_kwargs)
+
     def generate_actions(self, state, **kwargs):
         frames = list()
 
@@ -185,7 +199,7 @@ class PPOAgent(Agent):
             self.current_action, 
             self.current_action_log_prob, 
             self.current_value, 
-            rewards, 
+            rewards,
             masks
         )
 
@@ -205,6 +219,10 @@ class PPOAgent(Agent):
 
             value_loss, action_loss, entropy = self.agent.update(self.storage)
             self.analytics_client.track(event_key="PPO_INTERNALS", data={"value_loss": value_loss, "action_loss": action_loss, "entropy": entropy})
+            
+            self.logger.log_metric("entropy", entropy, step=self.current_step)
+            self.logger.log_metric("value_loss", value_loss, step=self.current_step)
+            self.logger.log_metric("action_loss", action_loss, step=self.current_step)
 
             self.storage.after_update()
 
@@ -229,6 +247,7 @@ class PPOAgent(Agent):
 
         if terminal:
             self.analytics_client.track(event_key="TOTAL_REWARD", data={"reward": self.cumulative_reward})
+            self.logger.log_metric("episode_rewards", self.cumulative_reward, step=self.current_step)
 
         if self.callbacks.get("after_observe") is not None:
             self.callbacks["after_observe"]()
