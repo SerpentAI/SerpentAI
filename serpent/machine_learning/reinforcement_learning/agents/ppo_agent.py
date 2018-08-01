@@ -74,6 +74,7 @@ class PPOAgent(Agent):
         torch.manual_seed(seed)
 
         agent_kwargs = dict(
+            algorithm="PPO",
             is_recurrent=False,
             surrogate_objective_clip=0.2,
             epochs=4,

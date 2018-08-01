@@ -7,6 +7,8 @@ from serpent.input_controller import KeyboardEvent, MouseEvent
 
 from serpent.enums import InputControlTypes
 
+from serpent.logger import Loggers
+
 from serpent.utilities import SerpentError
 
 import os
@@ -46,9 +48,18 @@ class RainbowDQNAgent(Agent):
         seed=420133769,
         evaluate_every=50,  # Every 50 episodes
         evaluate_for=5,  # For 5 episodes
-        rainbow_kwargs=None
+        rainbow_kwargs=None,
+        logger=Loggers.NOOP,
+        logger_kwargs=None
     ):
-        super().__init__(name, game_inputs=game_inputs, callbacks=callbacks, seed=seed)
+        super().__init__(
+            name, 
+            game_inputs=game_inputs, 
+            callbacks=callbacks, 
+            seed=seed,
+            logger=logger,
+            logger_kwargs=logger_kwargs
+        )
 
         if len(game_inputs) > 1:
             raise SerpentError("RainbowDQNAgent only supports a single axis of game inputs.")
@@ -70,6 +81,7 @@ class RainbowDQNAgent(Agent):
         torch.manual_seed(seed)
 
         agent_kwargs = dict(
+            algorithm="Rainbow DQN",
             replay_memory_capacity=100000,
             history=4,
             discount=0.99,
@@ -155,6 +167,8 @@ class RainbowDQNAgent(Agent):
         self.evaluate_for = evaluate_for
 
         self.remaining_evaluation_episodes = 0
+
+        self.logger.log_hyperparams(agent_kwargs)
 
         if self._has_human_input_recording() and self.observe_mode == "RANDOM":
             self.add_human_observations_to_replay_memory()
@@ -251,6 +265,7 @@ class RainbowDQNAgent(Agent):
 
         if terminal and self.mode == RainbowDQNAgentModes.TRAIN:
             self.analytics_client.track(event_key="TOTAL_REWARD", data={"reward": self.cumulative_reward})
+            self.logger.log_metric("episode_rewards", self.cumulative_reward, step=self.current_step)
 
             if self.current_episode % self.evaluate_every == 0:
                 self.set_mode(RainbowDQNAgentModes.EVALUATE)

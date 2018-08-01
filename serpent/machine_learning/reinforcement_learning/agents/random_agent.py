@@ -1,8 +1,8 @@
 from serpent.machine_learning.reinforcement_learning.agent import Agent
 
-from serpent.logger import Loggers
-
 from serpent.enums import InputControlTypes
+
+from serpent.logger import Loggers
 
 import random
 import enum

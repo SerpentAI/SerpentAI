@@ -7,6 +7,8 @@ from serpent.utilities import SerpentError, clear_terminal
 
 from serpent.enums import InputControlTypes
 
+from serpent.logger import Loggers
+
 from serpent.config import config
 
 import random
@@ -26,8 +28,24 @@ from redis import StrictRedis
 
 class RecorderAgent(Agent):
 
-    def __init__(self, name, game_inputs=None, callbacks=None, seed=None, window_geometry=None):
-        super().__init__(name, game_inputs=game_inputs, callbacks=callbacks, seed=seed)
+    def __init__(
+        self, 
+        name, 
+        game_inputs=None, 
+        callbacks=None, 
+        seed=None, 
+        window_geometry=None,
+        logger=Loggers.NOOP,
+        logger_kwargs=None
+    ):
+        super().__init__(
+            name, 
+            game_inputs=game_inputs, 
+            callbacks=callbacks, 
+            seed=seed,
+            logger=logger,
+            logger_kwargs=logger_kwargs
+        )
 
         if window_geometry is None or not isinstance(window_geometry, dict):
             raise SerpentError("RecorderAgent expects a 'window_geometry' dict kwarg.")
