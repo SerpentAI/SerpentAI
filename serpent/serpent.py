@@ -8,7 +8,7 @@ import time
 
 import offshoot
 
-from serpent.utilities import clear_terminal, display_serpent_logo, is_linux, is_macos, is_windows, is_unix
+from serpent.utilities import clear_terminal, display_serpent_logo, is_linux, is_macos, is_windows, is_unix, wait_for_crossbar
 
 from serpent.window_controller import WindowController
 
@@ -500,12 +500,13 @@ def record_inputs():
 
 
 def dashboard(width=None, height=None):
-    from serpent.dashboard.dashboard_app import DashboardApp
-
     if width is not None and height is not None:
         width = int(width)
         height = int(height)
 
+    wait_for_crossbar()
+
+    from serpent.dashboard.dashboard_app import DashboardApp
     DashboardApp(width=width, height=height).run()
 
 

@@ -1,4 +1,4 @@
-from serpent.utilities import SerpentError, is_windows
+from serpent.utilities import SerpentError, is_windows, wait_for_crossbar
 
 from serpent.config import config
 
@@ -12,6 +12,7 @@ import subprocess
 import shlex
 import signal
 import atexit
+
 
 try:
     from serpent.dashboard.cefbrowser.cefbrowser import CEFBrowser
@@ -133,6 +134,7 @@ class DashboardApp(App):
             monitors = mss.mss().monitors
             return monitors[0]["width"], monitors[0]["height"]
 
+
     def _handle_signal_analytics_publisher(self, signum=15, frame=None, do_exit=True):
         if self.analytics_publisher_process is not None:
             if self.analytics_publisher_process.poll() is None:
@@ -148,7 +150,7 @@ class DashboardApp(App):
 
                 if do_exit:
                     exit()
-
+                    
 
 class DashboardRootWidget(Widget):
     def __init__(self, display_width, display_height, width, height):
@@ -179,4 +181,5 @@ class DashboardRootWidget(Widget):
         self.add_widget(self.browser)
 
 if __name__ == "__main__":
+    wait_for_crossbar()
     DashboardApp().run()
