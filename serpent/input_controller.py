@@ -186,12 +186,12 @@ class InputController:
 
     def click_sprite(self, button=MouseButton.LEFT, sprite=None, game_frame=None, **kwargs):
         self._is_game_launched_check()
-        self.backend.click_sprite(button=button, sprite=sprite, game_frame=game_frame, **kwargs)
+        return self.backend.click_sprite(button=button, sprite=sprite, game_frame=game_frame, **kwargs)
 
     # Requires the Serpent OCR module
     def click_string(self, query_string, button=MouseButton.LEFT, game_frame=None, fuzziness=2, ocr_preset=None, **kwargs):
         self._is_game_launched_check()
-        self.backend.click_string(query_string, button=button, game_frame=game_frame, fuzziness=fuzziness, ocr_preset=ocr_preset, **kwargs)
+        return self.backend.click_string(query_string, button=button, game_frame=game_frame, fuzziness=fuzziness, ocr_preset=ocr_preset, **kwargs)
 
     def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None, duration=1, **kwargs):
         self._is_game_launched_check()

@@ -71,10 +71,14 @@ class ClientInputController(InputController):
         payload = ("click_sprite", button, sprite, game_frame, kwargs)
         self.redis_client.lpush(config["input_controller"]["redis_key"], pickle.dumps(payload))
 
+        return True
+
     # Requires the Serpent OCR module
     def click_string(self, query_string, button=MouseButton.LEFT, game_frame=None, fuzziness=2, ocr_preset=None, **kwargs):
         payload = ("click_string", query_string, button, game_frame, fuzziness, ocr_preset, kwargs)
         self.redis_client.lpush(config["input_controller"]["redis_key"], pickle.dumps(payload))
+
+        return True
 
     def drag(self, button=MouseButton.LEFT, x0=None, y0=None, x1=None, y1=None, duration=1, **kwargs):
         payload = ("drag", button, x0, y0, x1, y1, duration, kwargs)
