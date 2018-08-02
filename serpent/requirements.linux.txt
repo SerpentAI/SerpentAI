@@ -19,6 +19,7 @@ h5py
 
 # Network
 autobahn
+crossbar
 
 # Misc
 editdistance

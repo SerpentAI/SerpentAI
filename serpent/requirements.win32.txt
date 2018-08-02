@@ -17,6 +17,7 @@ sneakysnek
 
 # Network
 autobahn
+crossbar
 
 # Misc
 editdistance

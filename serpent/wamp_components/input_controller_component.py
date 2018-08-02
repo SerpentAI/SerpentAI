@@ -21,9 +21,9 @@ class InputControllerComponent:
     def run(cls):
         print(f"Starting {cls.__name__}...")
 
-        url = "ws://%s:%s" % (config["analytics"]["host"], config["analytics"]["port"])
+        url = "ws://%s:%s" % (config["crossbar"]["host"], config["crossbar"]["port"])
 
-        runner = ApplicationRunner(url=url, realm=config["analytics"]["realm"])
+        runner = ApplicationRunner(url=url, realm=config["crossbar"]["realm"])
         runner.run(InputControllerWAMPComponent)
 
 
@@ -36,13 +36,13 @@ class InputControllerWAMPComponent(ApplicationSession):
         
 
     def onConnect(self):
-        self.join(config["analytics"]["realm"], ["wampcra"], config["analytics"]["auth"]["username"])
+        self.join(config["crossbar"]["realm"], ["wampcra"], config["crossbar"]["auth"]["username"])
 
     def onDisconnect(self):
         print("Disconnected from Crossbar!")
 
     def onChallenge(self, challenge):
-        secret = config["analytics"]["auth"]["password"]
+        secret = config["crossbar"]["auth"]["password"]
         signature = auth.compute_wcs(secret.encode('utf8'), challenge.extra['challenge'].encode('utf8'))
 
         return signature.decode('ascii')
@@ -67,12 +67,6 @@ class InputControllerWAMPComponent(ApplicationSession):
                 pass
 
         self.input_controller = InputController(game=game, backend=backend)
-
-        async def press_e(*args):
-            self.input_controller.tap_key(KeyboardKey.KEY_E)
-            return dict()
-        
-        await self.register(press_e, "serpent.press_e", options=RegisterOptions(invoke="roundrobin"))
 
         while True:
             payload = await self.redis_client.brpop(config["input_controller"]["redis_key"])

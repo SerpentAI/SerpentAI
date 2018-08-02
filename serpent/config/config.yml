@@ -9,6 +9,8 @@ analytics:
     topic: ANALYTICS_TOPIC
     persisted_events:
         - TOTAL_REWARD
+
+crossbar:
     host: 127.0.0.1
     port: 9999
     realm: serpent

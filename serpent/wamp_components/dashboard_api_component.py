@@ -17,9 +17,9 @@ class DashboardAPIComponent:
     def run(cls):
         print(f"Starting {cls.__name__}...")
 
-        url = "ws://%s:%s" % (config["analytics"]["host"], config["analytics"]["port"])
+        url = "ws://%s:%s" % (config["crossbar"]["host"], config["crossbar"]["port"])
 
-        runner = ApplicationRunner(url=url, realm=config["analytics"]["realm"])
+        runner = ApplicationRunner(url=url, realm=config["crossbar"]["realm"])
         runner.run(DashboardAPIWAMPComponent)
 
 
@@ -28,13 +28,13 @@ class DashboardAPIWAMPComponent(ApplicationSession):
         super().__init__(c)
 
     def onConnect(self):
-        self.join(config["analytics"]["realm"], ["wampcra"], config["analytics"]["auth"]["username"])
+        self.join(config["crossbar"]["realm"], ["wampcra"], config["crossbar"]["auth"]["username"])
 
     def onDisconnect(self):
         print("Disconnected from Crossbar!")
 
     def onChallenge(self, challenge):
-        secret = config["analytics"]["auth"]["password"]
+        secret = config["crossbar"]["auth"]["password"]
         signature = auth.compute_wcs(secret.encode('utf8'), challenge.extra['challenge'].encode('utf8'))
 
         return signature.decode('ascii')
@@ -142,14 +142,14 @@ class DashboardAPIWAMPComponent(ApplicationSession):
 
             return {"dashboard": dashboard.as_json()}
 
-        await self.register(list_dashboards, f"{config['analytics']['realm']}.list_dashboards", options=RegisterOptions(invoke="roundrobin"))
-        await self.register(fetch_dashboard, f"{config['analytics']['realm']}.fetch_dashboard", options=RegisterOptions(invoke="roundrobin"))
-        await self.register(create_dashboard, f"{config['analytics']['realm']}.create_dashboard", options=RegisterOptions(invoke="roundrobin"))
-        await self.register(delete_dashboard, f"{config['analytics']['realm']}.delete_dashboard", options=RegisterOptions(invoke="roundrobin"))
-        await self.register(create_dashboard_metric, f"{config['analytics']['realm']}.create_dashboard_metric", options=RegisterOptions(invoke="roundrobin"))
-        await self.register(update_dashboard_metric, f"{config['analytics']['realm']}.update_dashboard_metric", options=RegisterOptions(invoke="roundrobin"))
-        await self.register(delete_dashboard_metric, f"{config['analytics']['realm']}.delete_dashboard_metric", options=RegisterOptions(invoke="roundrobin"))
-        await self.register(save_dashboard_layout, f"{config['analytics']['realm']}.save_dashboard_layout", options=RegisterOptions(invoke="roundrobin"))
+        await self.register(list_dashboards, f"{config['crossbar']['realm']}.list_dashboards", options=RegisterOptions(invoke="roundrobin"))
+        await self.register(fetch_dashboard, f"{config['crossbar']['realm']}.fetch_dashboard", options=RegisterOptions(invoke="roundrobin"))
+        await self.register(create_dashboard, f"{config['crossbar']['realm']}.create_dashboard", options=RegisterOptions(invoke="roundrobin"))
+        await self.register(delete_dashboard, f"{config['crossbar']['realm']}.delete_dashboard", options=RegisterOptions(invoke="roundrobin"))
+        await self.register(create_dashboard_metric, f"{config['crossbar']['realm']}.create_dashboard_metric", options=RegisterOptions(invoke="roundrobin"))
+        await self.register(update_dashboard_metric, f"{config['crossbar']['realm']}.update_dashboard_metric", options=RegisterOptions(invoke="roundrobin"))
+        await self.register(delete_dashboard_metric, f"{config['crossbar']['realm']}.delete_dashboard_metric", options=RegisterOptions(invoke="roundrobin"))
+        await self.register(save_dashboard_layout, f"{config['crossbar']['realm']}.save_dashboard_layout", options=RegisterOptions(invoke="roundrobin"))
 
 
 if __name__ == "__main__":
