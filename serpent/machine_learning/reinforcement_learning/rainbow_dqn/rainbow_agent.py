@@ -109,7 +109,7 @@ class RainbowAgent:
             m.view(-1).index_add_(0, (l + offset).view(-1), (pns_a * (u.float() - b)).view(-1))
             m.view(-1).index_add_(0, (u + offset).view(-1), (pns_a * (b - l.float())).view(-1))
 
-            loss = -torch.sum(m * ps_a, 1)
+            loss = -torch.sum(m * log_ps_a, 1)
 
         loss = weights * loss
 
