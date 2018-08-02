@@ -4,13 +4,11 @@ from .noisy_linear import NoisyLinear
 
 
 class DQN3(torch.nn.Module):
-    def __init__(self, action_space, history=4, hidden_size=512, noisy_std=0.1, quantile=True):
+    def __init__(self, action_space, history=4, hidden_size=512, atoms=51, noisy_std=0.1):
         super().__init__()
 
-        self.atoms = 200 if quantile else 51
+        self.atoms = atoms
         self.action_space = action_space
-
-        self.quantile = quantile
 
         self.conv1 = torch.nn.Conv2d(history, 32, 8, stride=4, padding=1)
         self.conv2 = torch.nn.Conv2d(32, 64, 4, stride=2)
@@ -21,7 +19,7 @@ class DQN3(torch.nn.Module):
         self.fc_z_v = NoisyLinear(hidden_size, self.atoms, std_init=noisy_std)
         self.fc_z_a = NoisyLinear(hidden_size, action_space * self.atoms, std_init=noisy_std)
 
-    def forward(self, x):
+    def forward(self, x, log=False):
         x = torch.nn.functional.relu(self.conv1(x))
         x = torch.nn.functional.relu(self.conv2(x))
         x = torch.nn.functional.relu(self.conv3(x))
@@ -34,7 +32,9 @@ class DQN3(torch.nn.Module):
 
         q = v + a - a.mean(1, keepdim=True)
 
-        if not self.quantile:
+        if log:
+            q = torch.nn.functional.log_softmax(q, dim=2)
+        else:
             q = torch.nn.functional.softmax(q, dim=2)
 
         return q
@@ -46,13 +46,11 @@ class DQN3(torch.nn.Module):
 
 
 class DQN4(torch.nn.Module):
-    def __init__(self, action_space, history=4, hidden_size=512, noisy_std=0.1, quantile=True):
+    def __init__(self, action_space, history=4, hidden_size=512, atoms=51, noisy_std=0.1):
         super().__init__()
 
-        self.atoms = 200 if quantile else 51
+        self.atoms = atoms
         self.action_space = action_space
-
-        self.quantile = quantile
 
         self.conv1 = torch.nn.Conv2d(history, 64, 8, stride=4, padding=1)
         self.conv2 = torch.nn.Conv2d(64, 128, 4, stride=2)
@@ -64,7 +62,7 @@ class DQN4(torch.nn.Module):
         self.fc_z_v = NoisyLinear(hidden_size, self.atoms, std_init=noisy_std)
         self.fc_z_a = NoisyLinear(hidden_size, action_space * self.atoms, std_init=noisy_std)
 
-    def forward(self, x):
+    def forward(self, x, log=False):
         x = torch.nn.functional.relu(self.conv1(x))
         x = torch.nn.functional.relu(self.conv2(x))
         x = torch.nn.functional.relu(self.conv3(x))
@@ -78,7 +76,9 @@ class DQN4(torch.nn.Module):
 
         q = v + a - a.mean(1, keepdim=True)
 
-        if not self.quantile:
+        if log:
+            q = torch.nn.functional.log_softmax(q, dim=2)
+        else:
             q = torch.nn.functional.softmax(q, dim=2)
 
         return q

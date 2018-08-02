@@ -37,6 +37,7 @@ class RainbowDQNAgentModes(enum.Enum):
     TRAIN = 1
     EVALUATE = 2
 
+# Adapted for Serpent.AI from https://github.com/Kaixhin/Rainbow
 
 class RainbowDQNAgent(Agent):
 
@@ -69,7 +70,7 @@ class RainbowDQNAgent(Agent):
             self.device = torch.device("cuda")
 
             torch.set_default_tensor_type("torch.cuda.FloatTensor")
-            torch.backends.cudnn.benchmark = True
+            torch.backends.cudnn.enabled = False
 
             torch.cuda.manual_seed_all(seed)
         else:
@@ -86,8 +87,6 @@ class RainbowDQNAgent(Agent):
             multi_step=3,
             priority_weight=0.4,
             priority_exponent=0.5,
-            quantile=True,
-            quantiles=200,
             atoms=51,
             v_min=-10,
             v_max=10,
@@ -96,6 +95,7 @@ class RainbowDQNAgent(Agent):
             noisy_std=0.1,
             learning_rate=0.0000625,
             adam_epsilon=1.5e-4,
+            max_grad_norm=10,
             target_update=10000,
             save_steps=5000,
             observe_steps=50000,
@@ -112,8 +112,6 @@ class RainbowDQNAgent(Agent):
         self.agent = RainbowAgent(
             len(self.game_inputs[0]["inputs"]),
             self.device,
-            quantile=agent_kwargs["quantile"],
-            quantiles=agent_kwargs["quantiles"],
             atoms=agent_kwargs["atoms"],
             v_min=agent_kwargs["v_min"],
             v_max=agent_kwargs["v_max"],
@@ -125,6 +123,7 @@ class RainbowDQNAgent(Agent):
             noisy_std=agent_kwargs["noisy_std"],
             learning_rate=agent_kwargs["learning_rate"],
             adam_epsilon=agent_kwargs["adam_epsilon"],
+            max_grad_norm=agent_kwargs["max_grad_norm"],
             model=agent_kwargs["model"]
         )
 
@@ -323,6 +322,8 @@ class RainbowDQNAgent(Agent):
             f.write(json.dumps(data))
 
     def restore_model(self):
+        # PyTorch .pth file is already restored in RainbowAgent constructor
+
         file_path = self.model.replace(".pth", ".json")
 
         if os.path.isfile(file_path):

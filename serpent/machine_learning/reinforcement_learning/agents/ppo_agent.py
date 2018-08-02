@@ -83,7 +83,7 @@ class PPOAgent(Agent):
             entropy_regularization_coefficient=0.01,
             learning_rate=0.0001,
             adam_epsilon=0.00001,
-            epsilon=0.3,
+            max_grad_norm=0.3,
             memory_capacity=1024,
             discount=0.99,
             gae=False,
@@ -119,7 +119,7 @@ class PPOAgent(Agent):
             agent_kwargs["entropy_regularization_coefficient"],
             lr=agent_kwargs["learning_rate"],
             eps=agent_kwargs["adam_epsilon"],
-            max_grad_norm=agent_kwargs["epsilon"]
+            max_grad_norm=agent_kwargs["max_grad_norm"]
         )
 
         self.storage = RolloutStorage(
