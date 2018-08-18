@@ -3,6 +3,10 @@ from serpent.window_controller import WindowController
 import win32gui
 import win32con
 
+import re
+
+window_id = 0
+
 
 class Win32WindowController(WindowController):
 
@@ -10,7 +14,21 @@ class Win32WindowController(WindowController):
         pass
 
     def locate_window(self, name):
-        return win32gui.FindWindow(None, name)
+        global window_id
+        window_id = win32gui.FindWindow(None, name)
+
+        if window_id != 0:
+            return window_id
+
+        def callback(wid, pattern):
+            global window_id
+
+            if re.match(pattern, str(win32gui.GetWindowText(wid))) is not None:
+                window_id = wid
+
+        win32gui.EnumWindows(callback, name)
+
+        return window_id
 
     def move_window(self, window_id, x, y):
         x0, y0, x1, y1 = win32gui.GetWindowRect(window_id)
