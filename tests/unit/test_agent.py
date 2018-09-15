@@ -1,5 +1,7 @@
 import pytest
 
+import sys
+
 from serpent.machine_learning.reinforcement_learning.agent import Agent
 
 from serpent.input_controller import KeyboardKey, KeyboardEvent, KeyboardEvents
