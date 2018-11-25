@@ -7,6 +7,13 @@ import os
 
 
 def extract_region_from_image(image, region_bounding_box):
+    # fix index reversal -- https://github.com/SerpentAI/SerpentAI/issues/185
+    if (region_bounding_box[0] > region_bounding_box[2]):
+        region_bounding_box = (region_bounding_box[2],region_bounding_box[1],region_bounding_box[0],region_bounding_box[3])
+
+    if (region_bounding_box[1] > region_bounding_box[3]):
+        region_bounding_box = (region_bounding_box[0],region_bounding_box[3],region_bounding_box[2],region_bounding_box[1])
+
     return image[region_bounding_box[0]:region_bounding_box[2], region_bounding_box[1]:region_bounding_box[3]]
 
 
