@@ -2,20 +2,44 @@ from serpent.sprite import Sprite
 
 import serpent.cv
 
+import cv2
+
+import numpy as np
 
 class SpriteLocator:
 
     def __init__(self, **kwargs):
         pass
 
+    def better_locate(self, sprite=None, game_frame=None, threshold = 0.75):
+        """
+        kinda like locate function below only better
+        """
+        location = None
+        template = sprite.image_data[..., :3, 0]
+        frame = game_frame.frame
+
+        # need to use grayscale images now, next opencv version solves this
+        template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        search_result = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
+
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(search_result)
+
+        if max_val >= threshold:
+            location = (max_loc[0], max_loc[1], max_loc[0]+template.shape[0], max_loc[1]+template.shape[1])
+
+        return location
+
     def locate(self, sprite=None, game_frame=None, screen_region=None, use_global_location=True):
         """
         Locates the sprite within the defined game frame
 
         Parameters
-            sprite: The sprite to find\n
-            game_frame: The frame to search within\n
-            screen_region: (optional) region within which to search within the frame\n
+            sprite: The sprite to find
+            game_frame: The frame to search within
+            screen_region: (optional) region within which to search within the frame
             use_global_location: (optional) if using a region, whether to return global location or local to region
 
         Returns
