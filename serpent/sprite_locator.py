@@ -28,7 +28,7 @@ class SpriteLocator:
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(search_result)
 
         if max_val >= threshold:
-            location = (max_loc[0], max_loc[1], max_loc[0]+template.shape[0], max_loc[1]+template.shape[1])
+            location = (max_loc[1], max_loc[0], max_loc[1]+template.shape[0], max_loc[0]+template.shape[1])
 
         return location
 
