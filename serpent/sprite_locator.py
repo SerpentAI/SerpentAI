@@ -11,26 +11,47 @@ class SpriteLocator:
     def __init__(self, **kwargs):
         pass
 
-    def better_locate(self, sprite=None, game_frame=None, threshold = 0.85):
+    def better_locate(self, sprite=None, game_frame=None, threshold = 0.90, threshold_alpha = 0.999, grayscale = True):
         """
         kinda like locate function below only better
+        threshold is the match threshold for normal searches
+        threshold_alpha is the match threshold for sprites with alpha channels
+        they're different numbers because the search algorithms produce results in different regions
         """
         location = None
-        template = sprite.image_data[..., :3, 0]
+        use_alpha_mask = False
+        sprite_data_shape = sprite.image_data.shape
+        if sprite_data_shape[2] == 4: # the sprite has an alpha channel
+            template_alpha = sprite.image_data[:,:,3,0]
+            if np.count_nonzero(template_alpha) != sprite_data_shape[0]*sprite_data_shape[1]:
+                # only use alpha masked search method if
+                # there is an alpha channel in the sprite and it's in use
+                # because the search method that supports masking is slower
+                use_alpha_mask = True
+                threshold = threshold_alpha
+        template = sprite.image_data[:,:,:3,0]
         frame = game_frame.frame
+        
+        # grayscale matching is faster and seems to be good enough all the time
+        if grayscale == True:
+            template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        elif use_alpha_mask == True:
+            # need to make sure alpha channel dim matches in non-grayscale case
+            template_alpha = np.stack((template_alpha, template_alpha, template_alpha),axis=2)
 
-        # need to use grayscale images now, next opencv version solves this
-        template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-        search_result = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
+        if use_alpha_mask == False:
+            search_result = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
+        else:
+            search_result = cv2.matchTemplate(frame, template, cv2.TM_CCORR_NORMED, mask=template_alpha)
 
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(search_result)
 
         if max_val >= threshold:
-            location = (max_loc[1], max_loc[0], max_loc[1]+template.shape[0], max_loc[0]+template.shape[1])
-
+            location = (max_loc[1], max_loc[0], max_loc[1]+sprite_data_shape[0], max_loc[0]+sprite_data_shape[1])
+            
         return location
+
 
     def locate(self, sprite=None, game_frame=None, screen_region=None, use_global_location=True):
         """
