@@ -11,7 +11,7 @@ class SpriteLocator:
     def __init__(self, **kwargs):
         pass
 
-    def better_locate(self, sprite=None, game_frame=None, threshold = 0.75):
+    def better_locate(self, sprite=None, game_frame=None, threshold = 0.85):
         """
         kinda like locate function below only better
         """
