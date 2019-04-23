@@ -17,8 +17,8 @@ class ExecutableGameLauncher(GameLauncher):
             raise GameLauncherException("An 'executable_path' kwarg is required...")
 
         if is_linux():
-            subprocess.Popen(shlex.split(executable_path))
+            subprocess.Popen(executable_path)
         elif is_macos():
-            subprocess.Popen(shlex.split(executable_path))
+            subprocess.Popen(executable_path)
         elif is_windows():
-            subprocess.Popen(shlex.split(executable_path))
+            subprocess.Popen(executable_path)
