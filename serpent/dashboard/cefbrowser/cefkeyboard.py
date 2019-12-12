@@ -189,7 +189,7 @@ class CEFKeyboardManagerSingleton:
         #   'comma' worked fine, while 'dot' did not, but mapping all keys
         #   to make sure it will work correctly on all platforms.
         # - If some key mapping is missing launch wxpython.py and see
-        #   OnPreKeyEvent info for key events and replacate it here.
+        #   OnPreKeyEvent info for key events and replicate it here.
         #   (key codes can also be found on MSDN Virtual-key codes page)
 
         other_keys_map = {
