@@ -70,7 +70,6 @@ def test_get_focused_window_name_4():
 
     assert focused_name == name
 
-
 #Create a game window with an incredibly long name. Assert that the expected
 #   focused window name is the same string.
 def test_get_focused_window_name_5():
@@ -176,7 +175,7 @@ def test_resize_window_5():
 #Create a game window 100 x 100 pixels. Attempt to resize the window to 2000 x 500 pixels.
 #   Assert that the window will not resize past the resolution width. 
 def test_resize_window_6():
-    name = 'Resize_5'
+    name = 'Resize_6'
 
     window_controller = WindowController()
 
