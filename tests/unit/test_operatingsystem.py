@@ -20,6 +20,10 @@ def test_unix():
         for name in names:
             if name == actual:
                 assert name == actual
+    else
+        for name in names:
+            if name != actual:
+                assert name != actual
 
             
 def test_linux():
