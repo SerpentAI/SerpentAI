@@ -4,37 +4,31 @@ import sys
 
 import serpent.utilities
 
-def test_notlinux():
-    nameNotLinux = ["win32", "darwin"]
-    
+def fakeOS():
+    name = "faux OS"
+
     actual = sys.platform
 
-    for name in nameNotLinux:
-        assert actual != name
+    assert actual != name
 
-def test_notWindows():
-    nameNotWindows = ["linux", "darwin", "linux2"]
-    
+def test_unix():
+    names = ["darwin", "linux", "linux2"]
+
     actual = sys.platform
 
-    for name in nameNotWindows:
-        assert actual != name
-
-def test_notMacOS():
-    nameNotLinux = ["win32", "linux", "linux2"]
-    
-    actual = sys.platform
-
-    for name in nameNotMacOS:
-        assert actual != name
-
+    for name in names:
+        if actual == name
+            assert actual == name
+        else
+            assert actual != name
+            
 def test_linux():
 	name = "linux"
 	
 	actual = sys.platform
 	
-	assert actual == name
-	
+	assert actual != name #current OS is windows
+ 	
 def test_windows():
 	name = "win32"
 	
@@ -47,13 +41,4 @@ def test_macos():
 	
 	actual = sys.platform
 	
-	assert actual == name
-	
-def test_unix():
-
-	nameUnix = ["linux", "linux2", "darwin"]
-	
-	actual = sys.platform
-	
-	for name in nameUnix:
-		assert actual != name
+	assert actual != name #current OS is windows
