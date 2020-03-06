@@ -1,6 +1,7 @@
 import pytest
 import os
 import sys 
+import unittest 
 
 import serpent.utilities
 
@@ -16,11 +17,7 @@ def test_unix():
 
     actual = sys.platform
 
-    for name in names:
-        if actual == name
-            assert actual == name
-        else
-            assert actual != name
+    assertIn(actual, names)
             
 def test_linux():
 	name = "linux"
