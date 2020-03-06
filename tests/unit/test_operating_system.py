@@ -2,8 +2,7 @@ import pytest
 import os
 import sys
 
-from serpent.utilities import clear_terminal, display_serpent_logo, is_linux, is_macos, is_windows, is_unix
-from serpent.serpent import setup_gui, setup_ml
+from serpent import utilities
 
 def test_linux():
 	name = "linux"
@@ -35,6 +34,9 @@ def test_unix():
 	for name in nameUnix:
 		assert actual == name
 		
+def test_actual_os():
+    yourOS = sys.platform
+
 
 	
 	
