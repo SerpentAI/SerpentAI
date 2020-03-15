@@ -527,6 +527,7 @@ def generate_game_plugin():
     game_name = input("What is the name of the game? (Titleized, No Spaces i.e. AwesomeGame): \n")
     game_platform = input("How is the game launched? (One of: 'steam', 'executable', 'web_browser'): \n")
 
+    #Raise Exception if the game name entered contains a space character.      
     if " " in game_name:
         raise Exception("Game name cannot contain spaces.")
           
@@ -548,6 +549,7 @@ def generate_game_agent_plugin():
 
     game_agent_name = input("What is the name of the game agent? (Titleized, No Spaces i.e. AwesomeGameAgent): \n")
 
+    #Raise Exception if the game agent name entered contains a space character.  
     if " " in game_agent_name:
         raise Exception("Game agent name cannot contain spaces.")
           
