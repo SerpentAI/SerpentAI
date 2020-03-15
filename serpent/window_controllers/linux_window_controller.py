@@ -15,6 +15,7 @@ class LinuxWindowController(WindowController):
         return subprocess.check_output(shlex.split(f"xdotool search --onlyvisible --name \"^{name}$\"")).decode("utf-8").strip()
 
     def move_window(self, window_id, x, y):
+        y -= 30
         subprocess.call(shlex.split(f"xdotool windowmove {window_id} {x} {y}"))
 
     def resize_window(self, window_id, width, height):
