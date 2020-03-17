@@ -556,6 +556,8 @@ def generate_game_agent_plugin():
     if game_agent_name in [None, ""]:
         raise Exception("Invalid game agent name.")
 
+    if "/" in game_agent_name:
+          raise Exception("Game agent name can't contain forward slashes."
     prepare_game_agent_plugin(game_agent_name)
 
     subprocess.call(shlex.split(f"serpent activate Serpent{game_agent_name}GameAgentPlugin"))
