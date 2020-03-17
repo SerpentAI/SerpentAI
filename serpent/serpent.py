@@ -101,15 +101,18 @@ def setup_base():
 
         if not first_run:
             break
-
-    if not first_run:
-        confirm = input("It appears that the setup process had already been performed. Are you sure you want to proceed? Some important files will be overwritten! (One of: 'YES', 'NO'):\n")
-
-        if confirm not in ["YES", "NO"]:
-            confirm = "NO"
-
-        if confirm == "NO":
-            sys.exit()
+    
+    CheckInput = 1
+        while CheckInput == 1:
+            confirm = input("It appears that the setup process had already been performed. Are you sure you want to proceed? Some important files will be overwritten! (One of: 'YES', 'NO'):\n")
+            if confirm not in ["YES", "NO"] :
+                print("Error, invalid input given")
+                CheckInput = 1
+            elif confirm == "YES":
+                CheckInput = 0
+            
+            else :
+                sys.exit()
 
     shutil.rmtree(os.path.join(os.getcwd(), "config"), ignore_errors=True)
 
