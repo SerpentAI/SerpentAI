@@ -10,9 +10,13 @@
 [![](https://img.shields.io/badge/license-MIT-brightgreen.svg?colorB=007ec6&longCache=true)]()  
 [![](https://img.shields.io/badge/twitter-@Serpent__AI-brightgreen.svg?colorB=1da1f2&longCache=true)](https://twitter.com/Serpent_AI)
 
-## Warning: End of life (November 2018)
+## Update: Revival (May 2020)
 
-#### The development work on the framework has stopped. The necessary time to keep up with the crazy nature of reinforcement learning, the bug fixing and community support cannot be justified anymore (sadly). The repository will remain up as it should be, for people interested in the field, a very exhaustive resource code-wise to interact with games for machine learning. There is a ton to learn by snooping through the code. Have Fun!
+Development work has resumed on the framework with the aim of bringing it into 2020: Python 3.8+, Less Dependencies, Ease of Use (Installer, GUI) and much more! Still open-source with a permissive license and looking into a Steam distribution for non-technical users. 🐍
+
+## ~~Warning: End of life (November 2018)~~
+
+#### ~~The development work on the framework has stopped. The necessary time to keep up with the crazy nature of reinforcement learning, the bug fixing and community support cannot be justified anymore (sadly). The repository will remain up as it should be, for people interested in the field, a very exhaustive resource code-wise to interact with games for machine learning. There is a ton to learn by snooping through the code. Have Fun!~~
 
 Serpent.AI is a simple yet powerful, novel framework to assist developers in the creation of game agents. Turn ANY video game you own  into a sandbox environment ripe for experimentation, all with familiar Python code. The framework's _raison d'être_ is first and foremost to provide a valuable tool for Machine Learning & AI research. It also turns out to be ridiculously fun to use as a hobbyist (and dangerously addictive; a fair warning)!
 
