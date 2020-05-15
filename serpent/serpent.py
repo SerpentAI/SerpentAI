@@ -19,7 +19,7 @@ sys.path.insert(0, os.getcwd())
 if is_windows:
     os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = 'T'
 
-VERSION = "2018.1.2"
+VERSION = "2020.2.1"
 
 valid_commands = [
     "setup",
