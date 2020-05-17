@@ -4,6 +4,8 @@
 __pycache__/
 *.py[cod]
 
+.venv
+
 .ipynb_checkpoints/
 .pytest_cache/
 
@@ -18,3 +20,4 @@ dist/
 key.priv
 key.pub
 node.pid
+poetry.lock
