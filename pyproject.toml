@@ -49,9 +49,6 @@ include = [
     "serpent/config/config.plugins.yml",
     "serpent/offshoot.manifest.json",
     "serpent/offshoot.yml",
-    "serpent/requirements.linux.txt",
-    "serpent/requirements.win32.txt",
-    "serpent/requirements.darwin.txt",
     "serpent/crossbar.json",
     "dashboard/database.sqlite",
     "dashboard/serpent.png",
@@ -84,6 +81,10 @@ torchvision = [
 protobuf = "3.11.3"  # To resolve dependency issue...
 tensorflow = "~2.2"
 
+# CLI
+click = "~7.1"
+tqdm = "~4.46.0"
+
 # Screen Capture
 mss = "~5.0"
 
@@ -97,7 +98,6 @@ sneakysnek = "~0.1.1"
 
 # OCR
 pytesseract = "~0.3"
-tesserocr = { version = ">=2.5", markers = "sys_platform == 'linux'"}
 python-levenshtein-wheels = "~0.13.1"
 
 # Dashboard
@@ -122,7 +122,7 @@ ipython = "~7.14"
 notebook = "~6.0"
 
 [tool.poetry.scripts]
-serpent = "serpent.serpent:execute"
+serpent = "cli:cli"
 
 [build-system]
 requires = ["poetry>=0.12"]

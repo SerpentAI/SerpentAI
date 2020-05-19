@@ -1,3 +1,6 @@
+import pathlib
+import shutil
+
 import skimage.color
 import skimage.segmentation
 import skimage.filters
@@ -7,21 +10,44 @@ import skimage.transform
 import skimage.measure
 import skimage.io
 
-from serpent.utilities import is_unix, is_windows
-from serpent.utilities import SerpentError
-
-try:
-    if is_unix():
-        import tesserocr
-    elif is_windows():
-        import pytesseract
-except ImportError:
-    raise SerpentError("Setup has not been been performed for the OCR module. Please run 'serpent setup ocr'")
-
-import editdistance
+import pytesseract
 
 from PIL import Image
 
+from serpent.utilities import is_windows
+
+
+def is_tesseract_available():
+    # On Windows, using a portable version is supported if tesseract.exe
+    # can be found in 'tools/tesseract'
+    if is_windows():
+        source_path = pathlib.Path(__file__).parent.parent.absolute()
+        current_path = pathlib.Path(".").absolute()
+
+        for path in (source_path, current_path):
+            if path.joinpath("tools/tesseract/tesseract.exe").exists():
+                return True
+
+    return shutil.which("tesseract") is not None
+
+def get_tesseract_executable():
+    if not is_tesseract_available():
+        return None
+
+    tesseract_executable = "tesseract"
+
+    if is_windows():
+        source_path = pathlib.Path(__file__).parent.parent.absolute()
+        current_path = pathlib.Path(".").absolute()
+
+        for path in (source_path, current_path):
+            path = path.joinpath("tools/tesseract/tesseract.exe")
+
+            if path.exists():
+                tesseract_executable = str(path.as_posix())
+                break
+
+    return tesseract_executable
 
 def locate_string(query_string, image, fuzziness=0, ocr_preset=None, offset_x=0, offset_y=0):
     images, text_regions = extract_ocr_candidates(
@@ -123,11 +149,7 @@ def perform_ocr(image, scale=10, order=5, horizontal_closing=10, vertical_closin
 
     image = skimage.util.img_as_ubyte(image)
 
-    if is_unix():
-        return tesserocr.image_to_text(
-            Image.fromarray(image),
-            psm=tesserocr.PSM.SINGLE_LINE,
-            oem=tesserocr.OEM.TESSERACT_ONLY
-        ).strip()
-    elif is_windows():
-        return pytesseract.image_to_string(Image.fromarray(image))
+    return pytesseract.image_to_string(Image.fromarray(image))
+
+
+pytesseract.pytesseract.tesseract_cmd = get_tesseract_executable()
