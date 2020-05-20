@@ -1,5 +1,5 @@
 from serpent.game_launcher import GameLauncher, GameLauncherException
-from serpent.utilities import is_linux, is_macos, is_windows
+from serpent.utilities import is_linux, is_windows
 
 import shlex
 import subprocess
@@ -17,8 +17,6 @@ class ExecutableGameLauncher(GameLauncher):
             raise GameLauncherException("An 'executable_path' kwarg is required...")
 
         if is_linux():
-            subprocess.Popen(shlex.split(executable_path))
-        elif is_macos():
             subprocess.Popen(shlex.split(executable_path))
         elif is_windows():
             subprocess.Popen(shlex.split(executable_path))

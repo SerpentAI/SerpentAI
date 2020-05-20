@@ -8,7 +8,7 @@ import time
 
 import offshoot
 
-from serpent.utilities import clear_terminal, display_serpent_logo, is_linux, is_macos, is_windows, is_unix, wait_for_crossbar
+from serpent.utilities import clear_terminal, display_serpent_logo, is_linux, is_windows, wait_for_crossbar
 
 from serpent.window_controller import WindowController
 
@@ -135,11 +135,6 @@ def setup_base():
             os.path.join(os.path.dirname(__file__), "requirements.linux.txt"),
             os.path.join(os.getcwd(), "requirements.txt")
         )
-    elif is_macos():
-        shutil.copy(
-            os.path.join(os.path.dirname(__file__), "requirements.darwin.txt"),
-            os.path.join(os.getcwd(), "requirements.txt")
-        )
     elif is_windows():
         shutil.copy(
             os.path.join(os.path.dirname(__file__), "requirements.win32.txt"),
@@ -151,8 +146,6 @@ def setup_base():
 
     if is_linux():
         subprocess.call(shlex.split("pip install python-xlib"))
-    elif is_macos():
-        subprocess.call(shlex.split("pip install python-xlib pyobjc-framework-Quartz py-applescript"))
     elif is_windows():
         # Anaconda Packages
         subprocess.call(shlex.split("conda install numpy scipy scikit-image scikit-learn h5py -y"), shell=True)
@@ -176,15 +169,13 @@ def setup_base():
 def setup_ocr():
     if is_linux():
         print("Before continuing with the OCR module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Linux-Installation-Guide#ocr")
-    elif is_macos():
-        print("Before continuing with the OCR module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/macOS-Installation-Guide#ocr")
     elif is_windows():
         print("Before continuing with the OCR module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Windows-Installation-Guide#ocr")
 
     print("")
     input("Press Enter to continue...")
 
-    if is_unix():
+    if is_linux():
         subprocess.call(shlex.split("pip install tesserocr"))
     elif is_windows():
         subprocess.call(shlex.split("pip install pytesseract"))
@@ -196,8 +187,6 @@ def setup_ocr():
 def setup_gui():
     if is_linux():
         print("Before continuing with the GUI module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Linux-Installation-Guide#gui")
-    elif is_macos():
-        print("Before continuing with the GUI module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/macOS-Installation-Guide#gui")
     elif is_windows():
         print("Before continuing with the GUI module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Windows-Installation-Guide#gui")
 
@@ -206,8 +195,6 @@ def setup_gui():
 
     if is_linux():
         subprocess.call(shlex.split("pip install Kivy==1.10.0"))
-    elif is_macos():
-        subprocess.call(shlex.split("pip install pygame Kivy==1.10.0"))
     elif is_windows():
         subprocess.call(shlex.split("pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew"))
         subprocess.call(shlex.split("pip install Kivy==1.10.0"))
@@ -219,8 +206,6 @@ def setup_gui():
 def setup_ml():
     if is_linux():
         print("Before continuing with the ML module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Linux-Installation-Guide#ml")
-    elif is_macos():
-        print("Before continuing with the ML module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/macOS-Installation-Guide#ml")
     elif is_windows():
         print("Before continuing with the ML module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Windows-Installation-Guide#ml")
 
@@ -247,8 +232,6 @@ def setup_ml():
 def setup_dashboard():
     if is_linux():
         print("Before continuing with the Dashboard module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Linux-Installation-Guide#dashboard")
-    elif is_macos():
-        print("Before continuing with the Dashboard module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/macOS-Installation-Guide#dashboard")
     elif is_windows():
         print("Before continuing with the Dashboard module setup, please read and perform the installation steps from the wiki: https://github.com/SerpentAI/SerpentAI/wiki/Windows-Installation-Guide#dashboard")
 
@@ -275,8 +258,6 @@ def setup_dashboard():
     # Install Kivy
     if is_linux():
         subprocess.call(shlex.split("pip install Kivy==1.10.0"))
-    elif is_macos():
-        subprocess.call(shlex.split("pip install pygame Kivy==1.10.0"))
     elif is_windows():
         subprocess.call(shlex.split("pip install docutils pygments pypiwin32 kivy.deps.sdl2 kivy.deps.glew"))
         subprocess.call(shlex.split("pip install Kivy==1.10.0"))
@@ -301,11 +282,6 @@ def update():
     if is_linux():
         shutil.copy(
             os.path.join(os.path.dirname(__file__), "requirements.linux.txt"),
-            os.path.join(os.getcwd(), "requirements.txt")
-        )
-    elif is_macos():
-        shutil.copy(
-            os.path.join(os.path.dirname(__file__), "requirements.darwin.txt"),
             os.path.join(os.getcwd(), "requirements.txt")
         )
     elif is_windows():

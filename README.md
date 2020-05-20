@@ -16,13 +16,13 @@ Development work has resumed on the framework with the aim of bringing it into 2
 
 ## ~~Warning: End of life (November 2018)~~
 
-#### ~~The development work on the framework has stopped. The necessary time to keep up with the crazy nature of reinforcement learning, the bug fixing and community support cannot be justified anymore (sadly). The repository will remain up as it should be, for people interested in the field, a very exhaustive resource code-wise to interact with games for machine learning. There is a ton to learn by snooping through the code. Have Fun!~~
-
 Serpent.AI is a simple yet powerful, novel framework to assist developers in the creation of game agents. Turn ANY video game you own  into a sandbox environment ripe for experimentation, all with familiar Python code. The framework's _raison d'être_ is first and foremost to provide a valuable tool for Machine Learning & AI research. It also turns out to be ridiculously fun to use as a hobbyist (and dangerously addictive; a fair warning)!
 
 The framework features a large assortment of supporting modules that provide solutions to commonly encountered scenarios when using video games as environments  as well as CLI tools to accelerate development. It provides some useful conventions but is absolutely NOT opiniated about what you put in your agents: Want to use the latest, cutting-edge deep reinforcement learning algorithm? ALLOWED. Want to use computer vision techniques, image processing and trigonometry? ALLOWED. Want to randomly press the Left or Right buttons? _sigh_ ALLOWED. To top it all off, Serpent.AI was designed to be entirely plugin-based (for both game support and game agents) so your experiments are actually portable and distributable to your peers and random strangers on the Internet.
 
-You'll also be glad to hear that all 3 major OSes are supported: Linux, Windows & macOS.
+Serpent.AI supports Linux, Windows ~~& macOS~~.
+
+_The next version of the framework will officially stop supporting macOS. Apple's aversion to Nvidia in their products means no recent macOS machine can run CUDA, an essential piece of technology for Serpent.AI's real-time training. Other decisions like preventing 32-bit applications from running in Catalina and deprecating OpenGL do not help make a case to support the OS._ 
 
 ![](https://s3.ca-central-1.amazonaws.com/serpent-ai-assets/demo_isaac.gif)
 

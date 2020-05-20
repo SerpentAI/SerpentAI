@@ -182,7 +182,7 @@ class Game(offshoot.Pluggable):
 
         self.dashboard_window_id = self.window_controller.locate_window("Serpent.AI Dashboard")
 
-        # TODO: Test on macOS and Linux
+        # TODO: Test on Linux
         if self.dashboard_window_id is not None and self.dashboard_window_id not in [0, "0"]:
             self.window_controller.bring_window_to_top(self.dashboard_window_id)
 

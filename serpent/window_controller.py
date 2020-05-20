@@ -1,4 +1,4 @@
-from serpent.utilities import is_linux, is_macos, is_windows
+from serpent.utilities import is_linux, is_windows
 
 
 class WindowControllerError(BaseException):
@@ -38,9 +38,6 @@ class WindowController:
         if is_linux():
             from serpent.window_controllers.linux_window_controller import LinuxWindowController
             return LinuxWindowController
-        elif is_macos():
-            from serpent.window_controllers.darwin_window_controller import DarwinWindowController
-            return DarwinWindowController
         elif is_windows():
             from serpent.window_controllers.win32_window_controller import Win32WindowController
             return Win32WindowController

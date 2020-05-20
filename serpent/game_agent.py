@@ -19,7 +19,7 @@ import os.path
 
 import serpent.cv
 
-from serpent.utilities import clear_terminal, is_unix
+from serpent.utilities import clear_terminal
 
 from serpent.frame_grabber import FrameGrabber
 from serpent.input_recorder import InputRecorder

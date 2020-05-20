@@ -1,6 +1,6 @@
 from serpent.game_launcher import GameLauncher, GameLauncherException
 
-from serpent.utilities import is_linux, is_macos, is_windows
+from serpent.utilities import is_linux, is_windows
 
 import enum
 import webbrowser
@@ -12,7 +12,6 @@ class WebBrowser(enum.Enum):
     CHROMIUM = 2
     FIREFOX = 3
     OPERA = 4
-    SAFARI = 5
 
 
 class WebBrowserGameLauncher(GameLauncher):
@@ -39,8 +38,6 @@ class WebBrowserGameLauncher(GameLauncher):
             raise GameLauncherException("An 'url' kwarg is required...")
 
         if is_linux():
-            webbrowser.get(self.web_browsers.get(browser.name)).open_new(url)
-        elif is_macos():
             webbrowser.get(self.web_browsers.get(browser.name)).open_new(url)
         elif is_windows():
             webbrowser.get(self.web_browsers.get(browser.name)).open_new(url)

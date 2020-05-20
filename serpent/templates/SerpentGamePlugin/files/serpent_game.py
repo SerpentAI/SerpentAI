@@ -2,7 +2,7 @@ from serpent.game import Game
 
 from .api.api import MyGameAPI
 
-from serpent.utilities import Singleton
+from serpent.utilities import SerpentError, Singleton
 
 from serpent.game_launchers.web_browser_game_launcher import WebBrowser
 
@@ -60,7 +60,7 @@ class SerpentGame(Game, metaclass=Singleton):
 
         self.dashboard_window_id = self.window_controller.locate_window("Serpent.AI Dashboard")
 
-        # TODO: Test on macOS and Linux
+        # TODO: Test on Linux
         if self.dashboard_window_id is not None and self.dashboard_window_id not in [0, "0"]:
             self.window_controller.bring_window_to_top(self.dashboard_window_id)
 
