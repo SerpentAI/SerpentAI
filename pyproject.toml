@@ -1,0 +1,129 @@
+[tool.poetry]
+name = "SerpentAI"
+version = "2020.2.1"
+description = "Game Agent Development Kit. Helping you create AIs / Bots that learn to play any game you own!"
+readme = "README.md"
+authors = ["Nicholas Brochu <nicholas@serpent.ai>"]
+license = "MIT"
+homepage = "https://serpent.ai"
+repository = "https://github.com/SerpentAI/SerpentAI"
+documentation = "https://github.com/SerpentAI/SerpentAI/wiki"
+keywords = ["AI", "Artificial Intelligence", "Machine Learning", "Reinforcement Learning", "Games"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: GPU :: NVIDIA CUDA",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Games/Entertainment"
+]
+packages = [
+    {include = "serpent"},
+]
+include = [
+    "serpent/dashboard/cefbrowser/cefbrowser.kv",
+    "serpent/templates/SerpentGameAgentPlugin/plugin.py",
+    "serpent/templates/SerpentGameAgentPlugin/__init__.py",
+    "serpent/templates/SerpentGameAgentPlugin/.gitignore",
+    "serpent/templates/SerpentGameAgentPlugin/.gitattributes",
+    "serpent/templates/SerpentGameAgentPlugin/files/serpent_game_agent.py",
+    "serpent/templates/SerpentGameAgentPlugin/files/__init__.py",
+    "serpent/templates/SerpentGameAgentPlugin/files/ml_models/.gitkeep",
+    "serpent/templates/SerpentGameAgentPlugin/files/helpers/.gitkeep",
+    "serpent/templates/SerpentGamePlugin/plugin.py",
+    "serpent/templates/SerpentGamePlugin/__init__.py",
+    "serpent/templates/SerpentGamePlugin/.gitignore",
+    "serpent/templates/SerpentGamePlugin/files/serpent_game.py",
+    "serpent/templates/SerpentGamePlugin/files/__init__.py",
+    "serpent/templates/SerpentGamePlugin/files/data/sprites/.gitkeep",
+    "serpent/templates/SerpentGamePlugin/files/api/api.py",
+    "serpent/templates/SerpentGamePlugin/files/api/__init__.py",
+    "serpent/config/config.yml",
+    "serpent/config/config.plugins.yml",
+    "serpent/offshoot.manifest.json",
+    "serpent/offshoot.yml",
+    "serpent/crossbar.json",
+    "dashboard/database.sqlite",
+    "dashboard/serpent.png",
+    "vendor/Twisted-20.3.0-cp38-cp38-win_amd64.whl",  # Temporary until Crossbar removal...
+    "vendor/lmdb-0.98-cp38-cp38-win_amd64.whl",  # Temporary until Crossbar removal...
+    "vendor/setproctitle-1.1.10-cp38-cp38-win_amd64.whl"  # Temporary until Crossbar removal...
+]
+
+[tool.poetry.dependencies]
+python = ">=3.8"
+
+# Scientific Computing
+numpy = "~1.18"
+scipy = "~1.4"
+scikit-image = "~0.17.1"
+scikit-learn = "~0.22"
+h5py = "~2.10"
+
+## PyTorch (with CUDA 10.1 to accomodate Tensorflow)
+## Cool Stuff: If PyTorch is imported first, importing Tensorflow will detect CUDA + cuDNN bundled with PyTorch
+torch = [
+    { url = "https://download.pytorch.org/whl/cu101/torch-1.5.0%2Bcu101-cp38-cp38-win_amd64.whl", markers = "sys_platform == 'win32'" },
+    { url = "https://download.pytorch.org/whl/cu101/torch-1.5.0%2Bcu101-cp38-cp38-linux_x86_64.whl", markers = "sys_platform == 'linux'" },
+]
+torchvision = [
+    { url = "https://download.pytorch.org/whl/cu101/torchvision-0.6.0%2Bcu101-cp38-cp38-win_amd64.whl", markers = "sys_platform == 'win32'" },
+    { url = "https://download.pytorch.org/whl/cu101/torchvision-0.6.0%2Bcu101-cp38-cp38-linux_x86_64.whl", markers = "sys_platform == 'linux'" },
+]
+## Tensorflow
+protobuf = "3.11.3"  # To resolve dependency issue...
+tensorflow = "~2.2"
+
+# CLI
+click = "~7.1"
+tqdm = "~4.46.0"
+
+# Screen Capture
+mss = "~5.0"
+
+# Window Control
+pywin32 = { version = "227", markers = "sys_platform == 'win32'"}
+python-xlib = { version = ">=0.27", markers = "sys_platform == 'linux'"}
+
+# Input
+pyautogui = "~0.9.50"
+sneakysnek = "~0.1.1"
+
+# OCR
+pytesseract = "~0.3"
+python-levenshtein-wheels = "~0.13.1"
+
+# Dashboard
+cefpython3 = "~66.0"
+pony = "~0.7.13"
+
+# To Be Deprecated
+offshoot = "~0.1.6"
+Cython = "~0.29.14"
+Twisted = { path = "vendor/Twisted-20.3.0-cp38-cp38-win_amd64.whl", markers = "sys_platform == 'win32'"}  # No 3.8 wheel in PyPI
+lmdb = { path = "vendor/lmdb-0.98-cp38-cp38-win_amd64.whl", markers = "sys_platform == 'win32'"}  # No 3.8 wheel in PyPI
+setproctitle = { path = "vendor/setproctitle-1.1.10-cp38-cp38-win_amd64.whl", markers = "sys_platform == 'win32'"}  # No 3.8 wheel in PyPI
+autobahn = "18.12.1"
+crossbar = "18.12.1"
+redis = "~3.4"
+aioredis = "~1.3"
+kivy = "2.0.0rc2"
+
+[tool.poetry.dev-dependencies]
+pytest = "~5.4"
+ipython = "~7.14"
+notebook = "~6.0"
+
+[tool.poetry.scripts]
+serpent = "cli:cli"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

@@ -1,15 +1,24 @@
-datasets/
-ml_models/
-
 .idea
+.vscode
 
 __pycache__/
 *.py[cod]
 
+.venv
+
 .ipynb_checkpoints/
+.pytest_cache/
 
 .python-version
 
-*.ipynb
+plugins/
+tools
 
-config/config.private.yml
+*.egg-info
+
+build/
+dist/
+key.priv
+key.pub
+node.pid
+poetry.lock
