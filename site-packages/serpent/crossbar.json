@@ -1,0 +1,70 @@
+{
+    "version": 2,
+    "controller": {},
+    "workers": [{
+        "type": "router",
+        "options": {},
+        "realms": [
+            {
+                "name": "serpent",
+                "roles": [{
+                        "name": "backend",
+                        "permissions": [{
+                            "uri": "*",
+                            "allow": {
+                                "call": true,
+                                "register": true,
+                                "publish": true,
+                                "subscribe": true
+                            },
+                            "disclose": {
+                                "caller": true,
+                                "publisher": true
+                            }
+                        }]
+                    },
+                    {
+                        "name": "client",
+                        "permissions": [{
+                            "uri": "*",
+                            "allow": {
+                                "call": true,
+                                "register": false,
+                                "publish": false,
+                                "subscribe": true
+                            },
+                            "disclose": {
+                                "caller": true,
+                                "publisher": true
+                            },
+                            "cache": true
+                        }]
+                    }
+                ]
+            }
+        ],
+        "transports": [{
+            "type": "websocket",
+            "endpoint": {
+                "interface": "0.0.0.0",
+                "type": "tcp",
+                "port": 9999
+            },
+            "auth": {
+                "wampcra": {
+                    "type": "static",
+                    "users": {
+                        "serpent": {
+                            "secret": "serpent",
+                            "role": "backend"
+                        },
+                        "dashboard": {
+                            "secret": "serpent",
+                            "role": "client"
+                        }
+                    }
+                }
+            }
+        }]
+    }]
+}
