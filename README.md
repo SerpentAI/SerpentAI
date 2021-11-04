@@ -12,8 +12,7 @@
 
 ### Plugin Showcases - Martyn:
 
-[Bullet Heaven 2 Game Plugin](https://github.com/Martyn0324/SerpentBullet_HeavenGamePlugin)
-[Bullet Heaven 2 Game Agent](https://github.com/Martyn0324/SerpentNimbleAngelGameAgentPlugin)
+[Bullet Heaven 2 Game Plugin](https://github.com/Martyn0324/SerpentBullet_HeavenGamePlugin) ---- [Bullet Heaven 2 Game Agent](https://github.com/Martyn0324/SerpentNimbleAngelGameAgentPlugin)
 
 
 ## Update: Shaking off the dust (October 2021) - Martyn
