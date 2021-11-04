@@ -63,9 +63,6 @@ class RainbowDQNAgent(Agent):
         if len(game_inputs) > 1:
             raise SerpentError("RainbowDQNAgent only supports a single axis of game inputs.")
 
-        if game_inputs[0]["control_type"] != InputControlTypes.DISCRETE:
-            raise SerpentError("RainbowDQNAgent only supports discrete input spaces")
-
         if torch.cuda.is_available():
             self.device = torch.device("cuda")
 
@@ -187,8 +184,9 @@ class RainbowDQNAgent(Agent):
 
         label = self.game_inputs_mappings[0][self.current_action]
         action = self.game_inputs[0]["inputs"][label]
+        value = self.game_inputs[0]["value"]
 
-        actions.append((label, action, None))
+        actions.append((label, action, value))
 
         for action in actions:
             self.analytics_client.track(
@@ -343,13 +341,18 @@ class RainbowDQNAgent(Agent):
 
         for label, input_events in self.game_inputs[0]["inputs"].items():
             keyboard_keys = list()
+            mouse_keys = list()
 
             for input_event in input_events:
                 if isinstance(input_event, KeyboardEvent):
                     keyboard_keys.append(input_event.keyboard_key.value)
                 elif isinstance(input_event, MouseEvent):
-                    pass  # TODO
+                    mouse_keys.append(input_event.button.value)
+            
+            total_keys = []
+            total_keys.append(keyboard_keys)
+            total_keys.append(mouse_keys)
 
-            mapping[tuple(sorted(keyboard_keys))] = label
+            mapping[tuple(sorted(total_keys))] = label
 
         return mapping
