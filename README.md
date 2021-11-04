@@ -19,7 +19,7 @@
 
 ## Update: Shaking off the dust (October 2021) - Martyn
 
-Unfortunately, Nicholas Brochu(the founder of SerpentAI) seems to have definitely ceased developing SerpentAI. However, since this project is, probably, the only one that is really interesting in terms of Reinforcement Learning thanks to the possibility of using AIs to play **ANY** game, I decided to make a fork and try to modify a few things in order to make SerpentAI functional.
+Unfortunately, Nicholas Brochu(the founder of SerpentAI) seems to have definitely ceased developing SerpentAI. However, since this project is, probably, the only one that is really interesting in terms of Reinforcement Learning thanks to the possibility of using AIs to play **ANY** game, I've decided to make a fork and try to modify a few things in order to make SerpentAI functional.
 
 I've began to study programming in order to be able to develop AIs capable of playing games, initially, and then able to do anything that could prove useful(like predicting stock market).
 However, as I've studied and searched about Reinforcement Learning, I discovered that this area is really underrated or, at least, doesn't arouse that much interest between programmers in general. Why's that? Well, because every algorithm people develop is to be played in OpenAI's Gym, which only allows for playing games from Atari, SNES, etc. The only option that would go a little bit further than that is OpenAI's Universe, which only allows for playing browser games.
