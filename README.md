@@ -14,6 +14,8 @@
 
 [Bullet Heaven 2 Game Plugin](https://github.com/Martyn0324/SerpentBullet_HeavenGamePlugin) ---- [Bullet Heaven 2 Game Agent](https://github.com/Martyn0324/SerpentNimbleAngelGameAgentPlugin)
 
+[Jigoku Kisetsukan Game Plugin](https://github.com/Martyn0324/SerpentJigoku_kisetsukanGamePlugin) ------- [Jigoku Kisetsukan Game Agent](https://github.com/Martyn0324/SerpentTenshiGameAgentPlugin)
+
 
 ## Update: Shaking off the dust (October 2021) - Martyn
 
