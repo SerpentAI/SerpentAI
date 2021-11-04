@@ -10,6 +10,12 @@
 [![](https://img.shields.io/badge/license-MIT-brightgreen.svg?colorB=007ec6&longCache=true)]()  
 [![](https://img.shields.io/badge/twitter-@Serpent__AI-brightgreen.svg?colorB=1da1f2&longCache=true)](https://twitter.com/Serpent_AI)
 
+### Plugin Showcases - Martyn:
+
+[Bullet Heaven 2 Game Plugin](https://github.com/Martyn0324/SerpentBullet_HeavenGamePlugin)
+[Bullet Heaven 2 Game Agent](https://github.com/Martyn0324/SerpentNimbleAngelGameAgentPlugin)
+
+
 ## Update: Shaking off the dust (October 2021) - Martyn
 
 Unfortunately, Nicholas Brochu(the founder of SerpentAI) seems to have definitely ceased developing SerpentAI. However, since this project is, probably, the only one that is really interesting in terms of Reinforcement Learning thanks to the possibility of using AIs to play **ANY** game, I decided to make a fork and try to modify a few things in order to make SerpentAI functional.
