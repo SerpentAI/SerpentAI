@@ -38,7 +38,7 @@ Then, I managed to make SerpentAI functional. And, to make your life easier, I'v
 
 **PLEASE READ THIS IN ORDER TO UPDATE YOUR SERPENT FILES AND AVOID TRACEBACK ERRORS**
 
-You'll proceed to do everything Nicholas Brochu tells you to do [in this video](https://www.youtube.com/watch?v=5d4Ceq1L8hg) - Which is basically the same thing that is written [in the wiki](https://github.com/SerpentAI/SerpentAI/wiki)
+You'll proceed to do everything Nicholas Brochu tells you to do [in this video](https://www.youtube.com/watch?v=5d4Ceq1L8hg) - Which is basically the same thing that is written [in the wiki](https://github.com/Martyn0324/SerpentAI/wiki/Windows-Installation-Guide)
 
 Then, follow these steps:
 
