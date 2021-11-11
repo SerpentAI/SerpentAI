@@ -1,92 +1,8 @@
-﻿absl-py==0.14.1
-aioredis==2.0.0
-astunparse==1.6.3
-async-timeout==3.0.1
-autobahn==21.2.1
-bleach==1.5.0
-cached-property==1.5.2
-cachetools==4.2.4
-certifi==2021.5.30
-cffi==1.14.6
-charset-normalizer==2.0.6
-clang==5.0
-cloudpickle @ file:///tmp/build/80754af9/cloudpickle_1632508026186/work
-cryptography==35.0.0
-cycler==0.10.0
 Cython==0.26.1
-cytoolz==0.11.0
-dask @ file:///tmp/build/80754af9/dask-core_1615055117017/work
-dataclasses==0.8
-decorator @ file:///tmp/build/80754af9/decorator_1632776554403/work
-docutils==0.17.1
-editdistance==0.5.3
-enum34==1.1.10
-flatbuffers==1.12
-gast==0.4.0
-google-auth==1.35.0
-google-auth-oauthlib==0.4.6
-google-pasta==0.2.0
-grpcio==1.41.0
-h5py==3.1.0
-html5lib==0.9999999
-hyperlink==21.0.0
-idna==3.2
-imagecodecs @ file:///C:/ci/imagecodecs_1603253467096/work
-imageio @ file:///tmp/build/80754af9/imageio_1617700267927/work
-importlib-metadata==4.8.1
-joblib @ file:///tmp/build/80754af9/joblib_1613502643832/work
 Keras==1.2.2
 Keras-Preprocessing==1.1.2
-Kivy==2.0.0
-kivy-deps.angle==0.3.0
-kivy-deps.glew==0.3.0
-kivy-deps.sdl2==0.3.1
-Kivy-Garden==0.1.4
-kiwisolver @ file:///C:/ci/kiwisolver_1612282446297/work
-Markdown==3.3.4
-matplotlib @ file:///C:/ci/matplotlib-suite_1613408055530/work
-mkl-fft==1.3.0
-mkl-random==1.1.1
-mkl-service==2.3.0
-MouseInfo==0.1.3
-mss==6.1.0
-networkx @ file:///tmp/build/80754af9/networkx_1598376031484/work
-numpy @ file:///C:/ci/numpy_and_numpy_base_1603480701039/work
-oauthlib==3.1.1
-offshoot==0.1.6
-olefile==0.46
-opt-einsum==3.3.0
-Pillow @ file:///C:/ci/pillow_1625663293114/work
-protobuf==3.18.0
-pyasn1==0.4.8
-pyasn1-modules==0.2.8
-PyAutoGUI==0.9.53
-pycparser==2.20
-PyGetWindow==0.0.9
-Pygments==2.10.0
-PyMsgBox==1.0.9
-pyparsing @ file:///home/linux1/recipes/ci/pyparsing_1610983426697/work
-pyperclip==1.8.2
-pypiwin32==223
-pyreadline==2.1
-PyRect==0.1.4
-PyScreeze==0.1.28
-pytesseract==0.3.8
-python-dateutil @ file:///tmp/build/80754af9/python-dateutil_1626374649649/work
-pytweening==1.0.4
-PyWavelets @ file:///C:/ci/pywavelets_1601658410782/work
-pywin32==301
-PyYAML==5.4.1
-redis==3.5.3
-requests==2.26.0
-requests-oauthlib==1.3.0
-rsa==4.7.2
 scikit-image==0.14.2
-scikit-learn @ file:///C:/ci/scikit-learn_1622739439730/work
-scipy @ file:///C:/ci/scipy_1597675683670/work
 SerpentAI==2018.1.2
-six==1.15.0
-sneakysnek==0.1.1
 tensorboard==2.6.0
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.0
@@ -95,20 +11,6 @@ tensorflow-estimator==2.6.0
 tensorflow-gpu==2.6.0
 tensorflow-tensorboard==1.5.1
 termcolor==1.1.0
-Theano==1.0.5
-threadpoolctl @ file:///Users/ktietz/demo/mc3/conda-bld/threadpoolctl_1629802263681/work
-tifffile @ file:///tmp/build/80754af9/tifffile_1616096039718/work
-toolz @ file:///home/linux1/recipes/ci/toolz_1610987900194/work
 torch==1.9.1+cu111
 torchaudio==0.9.1
 torchvision==0.10.1+cu111
-tornado @ file:///C:/ci/tornado_1606942379977/work
-txaio==21.2.1
-typing-extensions==3.7.4.3
-urllib3==1.26.7
-Werkzeug==2.0.1
-win32core==221.36
-win32gui==221.6
-wincertstore==0.2
-wrapt==1.12.1
-zipp==3.6.0
