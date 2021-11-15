@@ -1,3 +1,11 @@
+## 2021.0.0
+
+* FIX - Locking keras version to 1.2.2 to avoid importation problems when using DQN and DDQN. All other algorithms(Random, Recorder, PPO and RainbowDQN) uses Pytorch which makes keras and tensorflow irrelevant.
+* FIX - Offshoot now won't cause UnicodeDecodeError.
+* FIX - Now win32gui will return the correct window size for an application
+* FIX - RainbowDQN shall now correctly save and load input and weights in the appropriate device(CPU when using CPU, GPU when using GPU) instead of saving inputs in the CPU and weights in the GPU.
+* IMPROVEMENT - RainbowDQN now allows for mouse inputs, including moving the cursor and clicking.
+
 ## 2018.1.2
 
 * FEATURE - analytics client is now automatically initialized and in scope for a game agent
