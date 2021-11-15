@@ -20,6 +20,7 @@ If everything goes on smoothly, the pull request will be accepted.
 ## Contributing to the Community Wiki
 
 While still moderated, the wiki is currently open to anyone with a GitHub account. Feel free to add tips, gotchas or even entirely new articles. Translation efforts are also extremely appreciated.
+
 *Just, please, try not messing it all up. Having to upload the wiki backup files is boring*
 
 ## Reporting Issues
