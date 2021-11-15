@@ -1,4 +1,4 @@
-## 2021.0.0
+## 2021.4.0
 
 * FIX - Locking keras version to 1.2.2 to avoid importation problems when using DQN and DDQN. All other algorithms(Random, Recorder, PPO and RainbowDQN) uses Pytorch which makes keras and tensorflow irrelevant.
 * FIX - Offshoot now won't cause UnicodeDecodeError.
