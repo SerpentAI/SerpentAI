@@ -2,12 +2,12 @@
 
 While the very warm and unexpected reception from the community is appreciated, Serpent.AI will, for the foreseeable future, remain a personal project of [@nbrochu](https://github.com/nbrochu). It is a labor of love with a vision and as such, the adopted stance on external contributions will be stiffer than usual.
 
-### For this fork, however, we'll be doing thing differently
+### For this fork, however, we'll be doing things differently
 
-[I](https://github.com/Martyn0324) have quite some zeal towards this fork, since I've spent quite some time debugging SerpentAI, making many searches in Google and testing the code(and I'm still on it, since SerpentAI, though functional, still has some small issues).
+[I](https://github.com/Martyn0324) also have quite some zeal towards this fork, since I've spent quite some time debugging SerpentAI, making many searches in Google and testing the code(and I'm still on it, since SerpentAI, though functional, still has some small issues).
 However, all the changes I made were, all in all, small changes. One argument here, an imported module there, different library being installed over there... Since SerpentAI turned out to be very unstable(now your code works, then it doesn't), I'm very fearful about making some big changes(perhaps some lack of self confidence may help, too).
 
-That being said, I'll be looking forward to any contribution one desire to make to this project.
+That being said, I'll be looking forward to any contribution one may desire to make to this project.
 
 ### Any unsolicited pull request will be GREATLY APPRECIATED
 
