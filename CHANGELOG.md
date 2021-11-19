@@ -4,7 +4,7 @@
 * FIX - Offshoot now won't cause UnicodeDecodeError.
 * FIX - Now win32gui will return the correct window size for an application
 * FIX - RainbowDQN shall now correctly save and load input and weights in the appropriate device(CPU when using CPU, GPU when using GPU) instead of saving inputs in the CPU and weights in the GPU.
-* IMPROVEMENT - RainbowDQN now allows for mouse inputs, including moving the cursor and clicking.
+* IMPROVEMENT - RainbowDQN now allows for mouse inputs, including moving the cursor and clicking. Search for the functions `generate_mouse_coordinates()` and `generate_mouse_actions()` in RainbowDQNAgent code.
 
 ## 2018.1.2
 
