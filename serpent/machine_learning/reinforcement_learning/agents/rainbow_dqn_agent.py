@@ -3,7 +3,7 @@ from serpent.machine_learning.reinforcement_learning.agent import Agent
 from serpent.game_frame import GameFrame
 from serpent.game_frame_buffer import GameFrameBuffer
 
-from serpent.input_controller import KeyboardEvent, MouseEvent
+from serpent.input_controller import KeyboardEvent, MouseEvent, MouseEvents
 
 from serpent.enums import InputControlTypes
 
@@ -70,6 +70,7 @@ class RainbowDQNAgent(Agent):
             torch.backends.cudnn.enabled = False
 
             torch.cuda.manual_seed_all(seed)
+
         else:
             self.device = torch.device("cpu")
             torch.set_num_threads(1)
@@ -167,7 +168,7 @@ class RainbowDQNAgent(Agent):
         frames = list()
 
         for game_frame in state.frames:
-            frames.append(torch.tensor(torch.from_numpy(game_frame.frame), dtype=torch.float32))
+            frames.append(torch.tensor(torch.from_numpy(game_frame.frame), dtype=torch.float32, device=self.device))
 
         self.current_state = torch.stack(frames, 0)
 
@@ -182,7 +183,7 @@ class RainbowDQNAgent(Agent):
 
         actions = list()
 
-        label = self.game_inputs_mappings[0][self.current_action]
+        label = self.game_inputs_mappings[0][self.current_action] # current_action is a number, simply a number
         action = self.game_inputs[0]["inputs"][label]
         value = self.game_inputs[0]["value"]
 
@@ -198,7 +199,61 @@ class RainbowDQNAgent(Agent):
                 }
             )
 
-        return actions
+        return actions # Actions template: [(label, [<serpent.input_controller.event object at XXXXXXX>], value)]
+
+    def generate_mouse_coordinates(self, state, **kwargs):
+        '''
+        Returns a number according according to the coordinates given in game_inputs.
+        This number itself won't do anything, but it can be passed as either X or Y argument in generate_mouse_actions()
+        to return a MouseEvent.MOVE command.
+        '''
+
+        frames = []
+
+        for game_frame in state.frames:
+            frames.append(torch.tensor(torch.from_numpy(game_frame.frame), dtype=torch.float32, device=self.device))
+
+        self.current_state = torch.stack(frames, 0)
+
+        if self.mode == RainbowDQNAgentModes.OBSERVE and self.observe_mode == "RANDOM":
+            self.current_action = random.randint(0, len(self.game_inputs[0]["inputs"]) - 1)
+        elif self.mode == RainbowDQNAgentModes.OBSERVE and self.observe_mode == "MODEL":
+            self.agent.reset_noise()
+            self.current_action = self.agent.act(self.current_state)
+        elif self.mode == RainbowDQNAgentModes.TRAIN:
+            self.agent.reset_noise()
+            self.current_action = self.agent.act(self.current_state)
+
+        label = self.game_inputs_mappings[0][self.current_action]
+        number = self.game_inputs[0]["inputs"][label]
+
+        return number
+
+    def generate_mouse_actions(self, X, width, Y, height, **kwargs):
+        '''
+        Returns a MouseEvent.MOVE command with x=X and y=Y.
+        If Y is higher than height, then Y will be equal to a proportion of width as it follows:
+        (Supposing that Y is 1650, k is the new Y value)
+        1650/1920 = k/1080 ---> k = (1650*1080)/1920
+
+        The output of this function will be something like
+        [("X, Y", [<serpent.input_controller.MouseEvent object at 0xAAAAAAAAAAAAAAA>], value)]
+        which follows the same template as the one from generate_actions()
+        '''
+
+        if Y > height:
+            Y = Y*height/width
+            Y = round(Y)
+        
+        mouse_actions = []
+
+        label = str(X) + "," + str(Y)
+        action = [MouseEvent(MouseEvents.MOVE, x=X, y=Y)]
+        value = self.game_inputs[0]["value"]
+                
+        mouse_actions.append((label, action, value))
+
+        return mouse_actions
 
     def observe(self, reward=0, terminal=False, **kwargs):
         if self.current_state is None:
