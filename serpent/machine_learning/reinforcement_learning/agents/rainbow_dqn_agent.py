@@ -172,6 +172,17 @@ class RainbowDQNAgent(Agent):
 
         self.current_state = torch.stack(frames, 0)
 
+        # The following statement is gonna be used for colored frames
+
+        if self.current_state.shape[3] != 1:
+            self.current_state = self.current_state.view(self.agent_kwargs['history'], self.current_state.shape[1], self.current_state.shape[2])
+
+        '''The first training session is gonna get through the 1st if statement
+        that is, the RainbowDQNAgent mode = OBSERVE and observe_mode = RANDOM
+        The second session is gonna get through the second if statement
+        The 3rd statement probably is in case one explictly defines self.mode = TRAIN. But, since it's equivalent to
+        OBSERVE with observe_mode = Model, I can't see that much motives to do so'''
+        
         if self.mode == RainbowDQNAgentModes.OBSERVE and self.observe_mode == "RANDOM":
             self.current_action = random.randint(0, len(self.game_inputs[0]["inputs"]) - 1)
         elif self.mode == RainbowDQNAgentModes.OBSERVE and self.observe_mode == "MODEL":
@@ -215,6 +226,17 @@ class RainbowDQNAgent(Agent):
 
         self.current_state = torch.stack(frames, 0)
 
+        # The following statement is gonna be used for colored frames
+
+        if self.current_state.shape[3] != 1:
+            self.current_state = self.current_state.view(self.agent_kwargs['history'], self.current_state.shape[1], self.current_state.shape[2])
+
+        '''The first training session is gonna get through the 1st if statement
+        that is, the RainbowDQNAgent mode = OBSERVE and observe_mode = RANDOM
+        The second session is gonna get through the second if statement
+        The 3rd statement probably is in case one explictly defines self.mode = TRAIN. But, since it's equivalent to
+        OBSERVE with observe_mode = Model, I can't see that much motives to do so'''
+        
         if self.mode == RainbowDQNAgentModes.OBSERVE and self.observe_mode == "RANDOM":
             self.current_action = random.randint(0, len(self.game_inputs[0]["inputs"]) - 1)
         elif self.mode == RainbowDQNAgentModes.OBSERVE and self.observe_mode == "MODEL":
