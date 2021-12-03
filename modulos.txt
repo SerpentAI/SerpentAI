@@ -1,16 +1,7 @@
-Cython==0.26.1
 Keras==1.2.2
 Keras-Preprocessing==1.1.2
 scikit-image==0.14.2
-SerpentAI==2018.1.2
-tensorboard==2.6.0
-tensorboard-data-server==0.6.1
-tensorboard-plugin-wit==1.8.0
 tensorflow==1.5.1
 tensorflow-estimator==2.6.0
 tensorflow-gpu==2.6.0
 tensorflow-tensorboard==1.5.1
-termcolor==1.1.0
-torch==1.9.1+cu111
-torchaudio==0.9.1
-torchvision==0.10.1+cu111
