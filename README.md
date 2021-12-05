@@ -10,12 +10,17 @@
 [![](https://img.shields.io/badge/license-MIT-brightgreen.svg?colorB=007ec6&longCache=true)]()  
 [![](https://img.shields.io/badge/twitter-@Serpent__AI-brightgreen.svg?colorB=1da1f2&longCache=true)](https://twitter.com/Serpent_AI)
 
-### Plugin Showcases - Martyn:
+![hakisa](https://user-images.githubusercontent.com/28028007/144729200-01c67fe1-fe43-44d8-8285-9b176975cb55.gif)
 
-[Bullet Heaven 2 Game Plugin](https://github.com/Martyn0324/SerpentBullet_HeavenGamePlugin) ---- [Bullet Heaven 2 Game Agent](https://github.com/Martyn0324/SerpentNimbleAngelGameAgentPlugin)
+_Game agent learning to play Bullet Heaven 2 - a bullet hell game - using only the mouse controller_
 
-[Jigoku Kisetsukan Game Plugin](https://github.com/Martyn0324/SerpentJigoku_kisetsukanGamePlugin) ------- [Jigoku Kisetsukan Game Agent](https://github.com/Martyn0324/SerpentTenshiGameAgentPlugin)
+## Update: Discussions tab (December 2021)
 
+While trying to get into college, I was having quite some free time and, because of that, I was able to spend quite some effort in trying to make Serpent functional. I didn't expect it to take so much time and researches, but I think that, in the end, everything's fine now.
+
+However, I'm afraid that I won't be able to dedicate myself that much into Serpent for now, especially since I don't plan on making a career in programming. But I still have some ideas to make Serpent better, especially involving creating more and better algorithms, capable of achieving great performance in the complex games that we play(I, for instance, am a big fan of MOBAs and Battle Royales).
+
+Since ideas, when not put in practice to either fail or succeed, are a waste, I'll be using the "discussion" tab to post some ideas for Serpent as if some kind of notebook. In the case of model suggestions, I'll also try to include papers and, if possible, a possible repository from where we could extract and adapt the code for Serpent. Perhaps one day I'll try to implement those ideas into Serpent, or even someone else could do that. Feel free to do that if you're interested.
 
 ## Update: Shaking off the dust (October 2021) - Martyn
 
