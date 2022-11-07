@@ -14,6 +14,17 @@
 
 _Game agent learning to play Bullet Heaven 2 - a bullet hell game - using only the mouse controller_
 
+
+## Update: Trying to cut intermediaries (November 2022) - In case you're here for AI and Reinforcement Learning
+
+After studying other models and other techniques in deep learning, I thought that perhaps it might be possible to use different architectures for a RL model in order to make it lighter and able to be run in a personal computer. I've also took another look into RainbowDQN [which is included in Serpent's code](https://github.com/Martyn0324/SerpentAI/tree/dev/serpent/machine_learning/reinforcement_learning/rainbow_dqn) and tried to make a model based on that.
+This had as result a model that I call Hakisa, a model made in Pytorch and, by using the same tricks SerpentAI does(such as using keyboard and mouse modules for input commands and mss for real-time screen capture), is able to play any game you want, running way more faster than Serpent does, thanks to the fact that Hakisa doesn't relies on many functions and libraries.
+
+Of course, the code is way more crude and isn't nearly as organized and beautiful as Serpent's, but the idea was making something efficient, not cute.
+
+If you want to check it out: https://github.com/Martyn0324/Hakisa - *I don't know if it's really functional as I couldn't make Hakisa train for that many epochs or play for that much time, but perhaps it might help you on what you desire.*
+
+
 ## Update: Discussions tab (December 2021)
 
 While trying to get into college, I was having quite some free time and, because of that, I was able to spend quite some effort in trying to make Serpent functional. I didn't expect it to take so much time and researches, but I think that, in the end, everything's fine now.
