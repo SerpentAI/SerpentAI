@@ -1,0 +1,7 @@
+Keras==1.2.2
+Keras-Preprocessing==1.1.2
+scikit-image==0.14.2
+tensorflow==1.5.1
+tensorflow-estimator==2.6.0
+tensorflow-gpu==2.6.0
+tensorflow-tensorboard==1.5.1

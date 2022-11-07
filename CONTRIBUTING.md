@@ -2,31 +2,30 @@
 
 While the very warm and unexpected reception from the community is appreciated, Serpent.AI will, for the foreseeable future, remain a personal project of [@nbrochu](https://github.com/nbrochu). It is a labor of love with a vision and as such, the adopted stance on external contributions will be stiffer than usual.
 
-As a general principle, the following statement will hold true:
+### For this fork, however, we'll be doing things differently
 
-### Any unsolicited pull request will be automatically closed
+[I](https://github.com/Martyn0324) also have quite some zeal towards this fork, since I've spent quite some time debugging SerpentAI, making many searches in Google and testing the code(and I'm still on it, since SerpentAI, though functional, still has some small issues).
+However, all the changes I made were, all in all, small changes. One argument here, an imported module there, different library being installed over there... Since SerpentAI turned out to be very unstable(now your code works, then it doesn't), I'm very fearful about making some big changes(perhaps some lack of self confidence may help, too).
 
-This being said, there *are* ways of contributing to the project:
+That being said, I'll be looking forward to any contribution one may desire to make to this project.
+
+### Any unsolicited pull request will be GREATLY APPRECIATED
+
+When making a pull request, please state why you're making your changes, try to explain how your code will work and, if possible, try to attach an example of the working code or repository that you've used for the code.
+
+Whoever sees that code can test it out and return a feedback. I'll try testing it out, too.
+
+If everything goes on smoothly, the pull request will be accepted.
 
 ## Contributing to the Community Wiki
 
 While still moderated, the wiki is currently open to anyone with a GitHub account. Feel free to add tips, gotchas or even entirely new articles. Translation efforts are also extremely appreciated.
 
+*Just, please, try not messing it all up. Having to upload the wiki backup files is boring*
+
 ## Reporting Issues
 
 Found a bug? Something misbehaving? Reporting issues is a great and accessible way to improve the project for everyone.
-
-## Fixing Issues
-
-Pull requests for outstanding issues clearly labeled with *BUG* will be accepted.
-
-## Performance Improvements
-
-Pull requests demonstrating and including a significantly faster way of doing something Serpent.AI currently does will be accepted.
-
-## Feature Requests
-
-Got a feature idea? Start a GitHub issue describing your idea. A *SUGGESTION* label will be applied to it. The issue will be used for discussion. Accepted feature ideas will be labeled as *PLANNED FEATURE*
 
 ## Help Wanted
 

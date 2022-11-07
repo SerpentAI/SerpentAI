@@ -1,0 +1,24 @@
+offshoot
+
+# Redis
+redis
+aioredis
+
+# Frame Capture
+mss
+
+# Input
+PyAutoGUI
+sneakysnek
+
+# SciPy
+numpy
+scikit-learn
+scikit-image
+h5py
+
+# Network
+autobahn
+
+# Misc
+editdistance
